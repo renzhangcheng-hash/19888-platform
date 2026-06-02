@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>1688 管理后台</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0B0E11; --bg2: #1A1D23; --card: #1E2028; --input: #2A2D35;
+      --red: #DC143C; --gold: #DAA520; --text: #EAECEF; --text2: #848E9C;
+      --border: #2B2F36; --green: #03A66D;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; background: var(--bg); color: var(--text); padding: 20px; }
+    h1 { color: var(--gold); font-size: 22px; margin-bottom: 20px; }
+    h2 { font-size: 16px; color: var(--gold); margin: 20px 0 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+
+    .login-box { max-width: 360px; margin: 100px auto; background: var(--card); border-radius: 14px; padding: 30px; border: 1px solid var(--border); }
+    .login-box input { width: 100%; padding: 12px; margin-bottom: 12px; background: var(--input); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; }
+    .login-box button { width: 100%; padding: 12px; background: var(--red); color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; }
+
+    .dashboard { display: none; }
+    .dashboard.active { display: block; }
+
+    .stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .stat-card { background: var(--card); border-radius: 10px; padding: 16px; border: 1px solid var(--border); }
+    .stat-card .label { font-size: 11px; color: var(--text2); }
+    .stat-card .value { font-size: 24px; font-weight: 900; color: var(--gold); margin-top: 4px; }
+
+    table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+    th { background: var(--bg2); padding: 10px 12px; text-align: left; font-size: 12px; color: var(--text2); font-weight: 600; }
+    td { padding: 10px 12px; font-size: 13px; border-top: 1px solid var(--border); }
+
+    .btn { padding: 6px 14px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; font-weight: 600; }
+    .btn-edit { background: var(--gold); color: #000; }
+    .btn-del { background: var(--red); color: #fff; }
+    .btn-add { background: var(--green); color: #fff; padding: 8px 20px; font-size: 13px; }
+    .btn-settle { background: #667eea; color: #fff; }
+
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+    .modal-overlay.show { display: flex; }
+    .modal { background: var(--card); border-radius: 14px; width: 100%; max-width: 500px; border: 1px solid var(--border); overflow: hidden; }
+    .modal-header { padding: 15px 18px; background: var(--bg2); font-weight: 700; border-bottom: 1px solid var(--border); }
+    .modal-body { padding: 20px; }
+    .modal-body input, .modal-body select { width: 100%; padding: 10px 12px; margin-bottom: 10px; background: var(--input); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 13px; }
+    .modal-body label { font-size: 12px; color: var(--text2); display: block; margin: 8px 0 4px; }
+    .modal-footer { padding: 12px 18px; display: flex; gap: 8px; justify-content: flex-end; border-top: 1px solid var(--border); }
+    .modal-footer .btn { padding: 8px 20px; font-size: 13px; }
+
+    .tab-nav { display: flex; gap: 4px; margin-bottom: 15px; }
+    .tab-nav button { padding: 8px 16px; background: var(--bg2); color: var(--text2); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-size: 13px; }
+    .tab-nav button.active { background: var(--red); color: #fff; border-color: var(--red); }
+
+    .toast { position: fixed; top: 20px; right: 20px; background: var(--green); color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 13px; z-index: 999; opacity: 0; transition: opacity 0.3s; }
+    .toast.show { opacity: 1; }
+    .toast.error { background: var(--red); }
+
+    .empty { text-align: center; padding: 40px; color: var(--text2); }
+  </style>
+</head>
+<body>
+
+<!-- Login -->
+<div class="login-box" id="loginBox">
+  <h1 style="text-align:center">🏆 1688 管理后台</h1>
+  <input type="text" id="loginUser" placeholder="用户名" value="admin">
+  <input type="password" id="loginPass" placeholder="密码" value="1688admin">
+  <button onclick="doLogin()">登录</button>
+  <p style="text-align:center;margin-top:10px;font-size:11px;color:var(--text2)">默认: admin / 1688admin</p>
+</div>
+
+<!-- Dashboard -->
+<div class="dashboard" id="dashboard">
+  <h1>🏆 1688 管理后台</h1>
+  <div class="stats" id="statsGrid"></div>
+
+  <div class="tab-nav">
+    <button class="active" onclick="switchTab('matches')">赛事管理</button>
+    <button onclick="switchTab('teams')">冠亚赔率</button>
+    <button onclick="switchTab('bets')">投注记录</button>
+  </div>
+
+  <!-- Matches Tab -->
+  <div id="tab-matches">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <h2 style="margin:0;border:none">比赛列表</h2>
+      <button class="btn btn-add" onclick="openModal('add')">+ 添加比赛</button>
+    </div>
+    <table><thead><tr>
+      <th>ID</th><th>联赛</th><th>主队</th><th>客队</th><th>时间</th><th>主胜</th><th>平局</th><th>客胜</th><th>状态</th><th>操作</th>
+    </tr></thead><tbody id="matchesTbody"></tbody></table>
+    <div class="empty" id="matchesEmpty" style="display:none">暂无比赛</div>
+  </div>
+
+  <!-- Teams Tab -->
+  <div id="tab-teams" style="display:none">
+    <h2>冠亚预测赔率</h2>
+    <table><thead><tr><th>ID</th><th>球队</th><th>冠军赔率</th><th>亚军赔率</th><th>操作</th></tr></thead>
+    <tbody id="teamsTbody"></tbody></table>
+  </div>
+
+  <!-- Bets Tab -->
+  <div id="tab-bets" style="display:none">
+    <h2>投注记录</h2>
+    <table><thead><tr><th>ID</th><th>用户</th><th>球队</th><th>类型</th><th>金额</th><th>赔率</th><th>潜在收益</th><th>状态</th><th>操作</th></tr></thead>
+    <tbody id="betsTbody"></tbody></table>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header" id="modalTitle">添加比赛</div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer">
+      <button class="btn" style="background:var(--input);color:var(--text2)" onclick="closeModal()">取消</button>
+      <button class="btn" style="background:var(--red);color:#fff" id="modalSave" onclick="saveModal()">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let token = localStorage.getItem('1688_admin_token') || '';
+let currentEdit = null;
+
+// ── Auth ──────────────────────────────────────────
+async function doLogin() {
+  const u = document.getElementById('loginUser').value;
+  const p = document.getElementById('loginPass').value;
+  try {
+    const r = await fetch('/api/admin/login', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({username:u, password:p})
+    });
+    const d = await r.json();
+    if (d.code === 0) {
+      token = d.data.token;
+      localStorage.setItem('1688_admin_token', token);
+      document.getElementById('loginBox').style.display = 'none';
+      document.getElementById('dashboard').classList.add('active');
+      loadAll();
+    } else {
+      toast(d.msg, 'error');
+    }
+  } catch(e) { toast('连接失败', 'error'); }
+}
+
+// ── API Calls ─────────────────────────────────────
+async function api(path, opts = {}) {
+  const url = path.startsWith('http') ? path : path;
+  const res = await fetch(url, {
+    ...opts,
+    headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+token, ...(opts.headers||{}) }
+  });
+  return res.json();
+}
+
+// ── Load All ──────────────────────────────────────
+async function loadAll() {
+  await Promise.all([loadStats(), loadMatches(), loadTeams(), loadBets()]);
+}
+
+async function loadStats() {
+  try {
+    const d = await api('/api/admin/stats');
+    document.getElementById('statsGrid').innerHTML = `
+      <div class="stat-card"><div class="label">比赛总数</div><div class="value">${d.data.totalMatches}</div></div>
+      <div class="stat-card"><div class="label">投注数</div><div class="value">${d.data.totalBets}</div></div>
+      <div class="stat-card"><div class="label">总流水</div><div class="value">${d.data.totalVolume} USDT</div></div>
+      <div class="stat-card"><div class="label">用户数</div><div class="value">${d.data.totalUsers}</div></div>
+    `;
+  } catch(e) {}
+}
+
+async function loadMatches() {
+  try {
+    const d = await api('/api/admin/matches');
+    const tbody = document.getElementById('matchesTbody');
+    if (d.data.length === 0) {
+      tbody.innerHTML = '';
+      document.getElementById('matchesEmpty').style.display = 'block';
+      return;
+    }
+    document.getElementById('matchesEmpty').style.display = 'none';
+    tbody.innerHTML = d.data.map(m => `
+      <tr>
+        <td>${m.id}</td><td>${m.league}</td><td>${m.home}</td><td>${m.away}</td>
+        <td style="font-size:11px">${m.time}</td>
+        <td>${m.odds_home}</td><td>${m.odds_draw}</td><td>${m.odds_away}</td>
+        <td>${m.status === 'upcoming' ? '⏳未开赛' : m.status === 'live' ? '🔴直播中' : '✅已结束'}</td>
+        <td>
+          <button class="btn btn-edit" onclick="editMatch(${m.id})">编辑</button>
+          <button class="btn btn-del" onclick="deleteMatch(${m.id})">删除</button>
+        </td>
+      </tr>`).join('');
+  } catch(e) { console.error(e); }
+}
+
+async function loadTeams() {
+  try {
+    const d = await api('/api/admin/teams');
+    document.getElementById('teamsTbody').innerHTML = d.data.map(t => `
+      <tr>
+        <td>${t.id}</td><td>${t.name}</td>
+        <td>${t.championship_odds}</td><td>${t.runner_up_odds}</td>
+        <td><button class="btn btn-edit" onclick="editTeam(${t.id})">调整赔率</button></td>
+      </tr>`).join('');
+  } catch(e) {}
+}
+
+async function loadBets() {
+  try {
+    const d = await api('/api/admin/bets');
+    const tbody = document.getElementById('betsTbody');
+    if (d.data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text2)">暂无投注记录</td></tr>';
+      return;
+    }
+    tbody.innerHTML = d.data.map(b => `
+      <tr>
+        <td>${b.id}</td>
+        <td style="font-size:11px">${b.address.substring(0,8)}...</td>
+        <td>${b.team_name}</td><td>${b.bet_type_name}</td>
+        <td>${b.amount} USDT</td><td>${b.odds}</td><td>${b.potential_win} USDT</td>
+        <td style="color:${b.status==='won'?'var(--green)':b.status==='lost'?'var(--red)':'var(--gold)'}">
+          ${b.status==='won'?'✅赢':b.status==='lost'?'❌输':'⏳待定'}
+        </td>
+        <td>${b.status === 'pending' ? `<button class="btn btn-settle" onclick="settleBet(${b.id})">结算</button>` : '—'}</td>
+      </tr>`).join('');
+  } catch(e) {}
+}
+
+// ── Actions ───────────────────────────────────────
+function openModal(type) {
+  currentEdit = type;
+  document.getElementById('modalOverlay').classList.add('show');
+
+  if (type === 'add') {
+    document.getElementById('modalTitle').textContent = '添加比赛';
+    document.getElementById('modalBody').innerHTML = `
+      <label>联赛</label><input id="f-league" value="英超">
+      <label>主队</label><input id="f-home" value="曼联">
+      <label>客队</label><input id="f-away" value="热刺">
+      <label>时间</label><input id="f-time" type="datetime-local" value="${new Date().toISOString().slice(0,16)}">
+      <label>主胜赔率</label><input id="f-oh" type="number" step="0.01" value="2.10">
+      <label>平局赔率</label><input id="f-od" type="number" step="0.01" value="3.50">
+      <label>客胜赔率</label><input id="f-oa" type="number" step="0.01" value="3.80">
+      <label>状态</label><select id="f-status"><option value="upcoming">未开赛</option><option value="live">直播中</option><option value="finished">已结束</option></select>
+    `;
+  }
+}
+
+function closeModal() { document.getElementById('modalOverlay').classList.remove('show'); }
+
+async function saveModal() {
+  if (currentEdit === 'add') {
+    const body = {
+      league: document.getElementById('f-league').value,
+      home: document.getElementById('f-home').value,
+      away: document.getElementById('f-away').value,
+      time: document.getElementById('f-time').value.replace('T', ' '),
+      odds_home: +document.getElementById('f-oh').value,
+      odds_draw: +document.getElementById('f-od').value,
+      odds_away: +document.getElementById('f-oa').value,
+      status: document.getElementById('f-status').value,
+    };
+    await api('/api/admin/matches', { method:'POST', body:JSON.stringify(body) });
+    toast('比赛已添加');
+  }
+  closeModal();
+  loadMatches();
+  loadStats();
+}
+
+async function editMatch(id) {
+  const d = await api('/api/admin/matches');
+  const m = d.data.find(x => x.id === id);
+  if (!m) return;
+
+  currentEdit = { type:'edit', id };
+  document.getElementById('modalOverlay').classList.add('show');
+  document.getElementById('modalTitle').textContent = '编辑比赛 #' + id;
+  document.getElementById('modalBody').innerHTML = `
+    <label>联赛</label><input id="f-league" value="${m.league}">
+    <label>主队</label><input id="f-home" value="${m.home}">
+    <label>客队</label><input id="f-away" value="${m.away}">
+    <label>时间</label><input id="f-time" type="datetime-local" value="${m.time.replace(' ','T')}">
+    <label>主胜赔率</label><input id="f-oh" type="number" step="0.01" value="${m.odds_home}">
+    <label>平局赔率</label><input id="f-od" type="number" step="0.01" value="${m.odds_draw}">
+    <label>客胜赔率</label><input id="f-oa" type="number" step="0.01" value="${m.odds_away}">
+    <label>状态</label><select id="f-status">
+      <option value="upcoming" ${m.status==='upcoming'?'selected':''}>未开赛</option>
+      <option value="live" ${m.status==='live'?'selected':''}>直播中</option>
+      <option value="finished" ${m.status==='finished'?'selected':''}>已结束</option>
+    </select>
+  `;
+}
+
+// Override saveModal for edit
+const origSave = saveModal;
+saveModal = async function() {
+  if (currentEdit?.type === 'edit') {
+    const body = {
+      league: document.getElementById('f-league').value,
+      home: document.getElementById('f-home').value,
+      away: document.getElementById('f-away').value,
+      time: document.getElementById('f-time').value.replace('T', ' '),
+      odds_home: +document.getElementById('f-oh').value,
+      odds_draw: +document.getElementById('f-od').value,
+      odds_away: +document.getElementById('f-oa').value,
+      status: document.getElementById('f-status').value,
+    };
+    await api('/api/admin/matches/' + currentEdit.id, { method:'PUT', body:JSON.stringify(body) });
+    toast('比赛已更新');
+    closeModal();
+    loadMatches();
+    return;
+  }
+  origSave();
+};
+
+async function deleteMatch(id) {
+  if (!confirm('确定删除比赛 #' + id + '？')) return;
+  await api('/api/admin/matches/' + id, { method:'DELETE' });
+  toast('已删除');
+  loadMatches();
+  loadStats();
+}
+
+async function editTeam(id) {
+  const d = await api('/api/admin/teams');
+  const t = d.data.find(x => x.id === id);
+  if (!t) return;
+
+  const cOdds = prompt(`修改 ${t.name} 的冠军赔率:`, t.championship_odds);
+  if (cOdds === null) return;
+  const rOdds = prompt(`修改 ${t.name} 的亚军赔率:`, t.runner_up_odds);
+  if (rOdds === null) return;
+
+  await api('/api/admin/teams/' + id, {
+    method:'PUT',
+    body:JSON.stringify({ championship_odds:+cOdds, runner_up_odds:+rOdds })
+  });
+  toast('赔率已更新');
+  loadTeams();
+}
+
+async function settleBet(id) {
+  const result = confirm('此投注是赢？\n确定 = 赢 / 取消 = 输');
+  await api('/api/admin/bets/' + id + '/settle', {
+    method:'PUT',
+    body:JSON.stringify({ result: result ? 'win' : 'loss' })
+  });
+  toast(result ? '已结算(赢)' : '已结算(输)');
+  loadBets();
+  loadStats();
+}
+
+function switchTab(tab) {
+  ['matches','teams','bets'].forEach(t => {
+    document.getElementById('tab-'+t).style.display = t === tab ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab-nav button').forEach((b,i) => {
+    b.classList.toggle('active', ['matches','teams','bets'][i] === tab);
+  });
+}
+
+function toast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast ' + type + ' show';
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ── Init ──────────────────────────────────────────
+if (token) {
+  api('/api/admin/stats').then(d => {
+    if (d.code === 0) {
+      document.getElementById('loginBox').style.display = 'none';
+      document.getElementById('dashboard').classList.add('active');
+      loadAll();
+    } else {
+      token = ''; localStorage.removeItem('1688_admin_token');
+    }
+  });
+}
+
+document.getElementById('modalOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+</script>
+</body>
+</html>
