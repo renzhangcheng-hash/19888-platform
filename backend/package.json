@@ -2,6 +2,7 @@
   "name": "19888-api",
   "version": "1.0.0",
   "description": "19888 反波膽平台 Backend API",
+  "license": "UNLICENSED",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
