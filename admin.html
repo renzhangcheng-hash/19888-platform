@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>1688 管理后台</title>
+  <title>19888 管理后台</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -62,16 +62,16 @@
 
 <!-- Login -->
 <div class="login-box" id="loginBox">
-  <h1 style="text-align:center">🏆 1688 管理后台</h1>
+  <h1 style="text-align:center">🏆 19888 管理后台</h1>
   <input type="text" id="loginUser" placeholder="用户名" value="admin">
-  <input type="password" id="loginPass" placeholder="密码" value="1688admin">
+  <input type="password" id="loginPass" placeholder="密码" value="19888admin">
   <button onclick="doLogin()">登录</button>
-  <p style="text-align:center;margin-top:10px;font-size:11px;color:var(--text2)">默认: admin / 1688admin</p>
+  <p style="text-align:center;margin-top:10px;font-size:11px;color:var(--text2)">默认: admin / 19888admin</p>
 </div>
 
 <!-- Dashboard -->
 <div class="dashboard" id="dashboard">
-  <h1>🏆 1688 管理后台</h1>
+  <h1>🏆 19888 管理后台</h1>
   <div class="stats" id="statsGrid"></div>
 
   <div class="tab-nav">
@@ -122,7 +122,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-let token = localStorage.getItem('1688_admin_token') || '';
+let token = localStorage.getItem('19888_admin_token') || '';
 let currentEdit = null;
 
 // ── Auth ──────────────────────────────────────────
@@ -137,7 +137,7 @@ async function doLogin() {
     const d = await r.json();
     if (d.code === 0) {
       token = d.data.token;
-      localStorage.setItem('1688_admin_token', token);
+      localStorage.setItem('19888_admin_token', token);
       document.getElementById('loginBox').style.display = 'none';
       document.getElementById('dashboard').classList.add('active');
       loadAll();
@@ -381,7 +381,7 @@ if (token) {
       document.getElementById('dashboard').classList.add('active');
       loadAll();
     } else {
-      token = ''; localStorage.removeItem('1688_admin_token');
+      token = ''; localStorage.removeItem('19888_admin_token');
     }
   });
 }

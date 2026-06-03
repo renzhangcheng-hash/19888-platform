@@ -1,6 +1,6 @@
 <?php
 /**
- * 1688 API - Simple PHP Backend
+ * 19888 API - Simple PHP Backend
  * Handles: wallet auth, matches, bets, user data
  * Storage: JSON files (no DB required for MVP)
  */
@@ -222,7 +222,7 @@ if ($method === 'GET' && $uri === '/user/balance') {
 
 // GET /status — Health check
 if ($method === 'GET' && ($uri === '/status' || $uri === '' || $uri === '/')) {
-    success(['status' => 'ok', 'version' => '1.0.0', 'name' => '1688 API']);
+    success(['status' => 'ok', 'version' => '1.0.0', 'name' => '19888 API']);
 }
 
 // 404

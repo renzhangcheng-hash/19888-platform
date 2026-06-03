@@ -1,5 +1,5 @@
 /**
- * 1688 API Server — Express.js
+ * 19888 API Server — Express.js
  * Full CRUD: matches, teams, odds, bets, users, wallet auth
  * Storage: JSON files (zero-dependency persistence)
  */
@@ -48,7 +48,7 @@ function seed() {
 
   const now = new Date();
   const matches = [
-    { id:1, league:'法甲', home:'巴黎圣日耳曼', away:'马赛', time: fmt(now,1,3,0), odds_home:1.82, odds_draw:3.50, odds_away:4.20, status:'upcoming' },
+    { id:1, league:'法甲', home:'巴黎圣日耳曼', away:'马赛', time: fmt(now,0,1,0), odds_home:1.82, odds_draw:3.50, odds_away:4.20, status:'live' },
     { id:2, league:'英超', home:'曼城', away:'利物浦', time: fmt(now,1,0,30), odds_home:2.10, odds_draw:3.30, odds_away:3.40, status:'upcoming' },
     { id:3, league:'西甲', home:'皇马', away:'巴萨', time: fmt(now,2,4,0), odds_home:2.40, odds_draw:3.20, odds_away:2.90, status:'upcoming' },
     { id:4, league:'意甲', home:'尤文图斯', away:'国米', time: fmt(now,2,2,45), odds_home:2.15, odds_draw:3.10, odds_away:3.50, status:'upcoming' },
@@ -72,7 +72,7 @@ function seed() {
   write('champion_teams', teams);
 
   // Default admin account
-  write('admins', [{ username: 'admin', password: hashPassword('1688admin') }]);
+  write('admins', [{ username: 'admin', password: hashPassword('19888admin') }]);
 
   console.log('Seed data created');
 }
@@ -86,7 +86,7 @@ function fmt(date, addDays, hour, min) {
 
 // ── Auth Helpers ──────────────────────────────────
 function hashPassword(pw) {
-  return crypto.createHash('sha256').update(pw + '1688salt').digest('hex');
+  return crypto.createHash('sha256').update(pw + '19888salt').digest('hex');
 }
 
 function verifyPassword(pw, hash) {
@@ -115,7 +115,7 @@ function generate18Grid() {
 
 // Health check
 app.get('/api/status', (req, res) => {
-  res.json({ status:'ok', version:'1.0.0', name:'1688 API' });
+  res.json({ status:'ok', version:'1.0.0', name:'19888 API' });
 });
 
 // ── Wallet Auth ───────────────────────────────────
@@ -231,7 +231,7 @@ app.get('/api/user/balance', (req, res) => {
 //  ADMIN API (protected by simple token)
 // ═══════════════════════════════════════════════════
 
-const ADMIN_SECRET = '1688-admin-secret-token';
+const ADMIN_SECRET = '19888-admin-secret-token';
 
 function adminAuth(req, res, next) {
   const token = req.headers.authorization?.replace('Bearer ', '') || req.query.token || '';
@@ -355,7 +355,7 @@ app.get('/api/admin/stats', adminAuth, (req, res) => {
 seed();
 
 app.listen(PORT, () => {
-  console.log(`\n🏆 1688 API Server running on http://localhost:${PORT}`);
+  console.log(`\n🏆 19888 API Server running on http://localhost:${PORT}`);
   console.log(`   Frontend:  http://localhost:${PORT}/`);
   console.log(`   Admin:     http://localhost:${PORT}/admin.html`);
   console.log(`   API:       http://localhost:${PORT}/api/status\n`);

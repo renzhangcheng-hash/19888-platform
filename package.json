@@ -1,5 +1,5 @@
 {
-  "name": "1688-platform",
+  "name": "19888-platform",
   "version": "1.0.0",
   "scripts": {
     "start": "node backend/server.js"

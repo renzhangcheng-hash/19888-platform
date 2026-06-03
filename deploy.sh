@@ -1,9 +1,9 @@
 #!/bin/bash
-# 1688 Platform Deployment
+# 19888 Platform Deployment
 # One-command deploy to Render.com
 set -e
 
-echo "🏆 1688 部署脚本"
+echo "🏆 19888 部署脚本"
 echo "================="
 echo ""
 
@@ -23,7 +23,7 @@ fi
 
 # Create GitHub repo
 echo "📦 Creating GitHub repository..."
-gh repo create 1688-platform --public --source=. --remote=origin --push 2>/dev/null || {
+gh repo create 19888-platform --public --source=. --remote=origin --push 2>/dev/null || {
   echo "⚠️  Repo may already exist, pushing..."
   git push -u origin main
 }
@@ -38,7 +38,7 @@ echo ""
 echo "1. Go to https://dashboard.render.com"
 echo "2. Sign up (free) with GitHub"
 echo "3. Click 'New Web Service'"
-echo "4. Select '1688-platform' repo"
+echo "4. Select '19888-platform' repo"
 echo "5. Settings:"
 echo "   - Build Command: npm install"
 echo "   - Start Command: node backend/server.js"
@@ -48,4 +48,4 @@ echo "That's it! Your platform will be live in 2 minutes."
 echo ""
 echo "Admin panel: https://YOUR-APP.onrender.com/admin.html"
 echo "Username: admin"
-echo "Password: 1688admin"
+echo "Password: 19888admin"

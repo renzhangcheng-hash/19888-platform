@@ -1,4 +1,4 @@
-# 1688 反波膽競猜平台
+# 19888 反波膽競猜平台
 
 > 不猜结果，反猜意外 · 让每一脚射门都有价值
 
@@ -14,7 +14,7 @@ open index.html
 
 ### 方式 2: PHP 开发服务器 (含后端 API)
 ```bash
-cd /path/to/1688-platform
+cd /path/to/19888-platform
 php -S localhost:8080
 ```
 然后访问 http://localhost:8080
@@ -25,7 +25,7 @@ php -S localhost:8080
 ## 项目结构
 
 ```
-1688-platform/
+19888-platform/
 ├── index.html          # 主 SPA (6 页面合一)
 ├── css/
 │   └── style.css       # 完整样式 (dark theme)
@@ -52,7 +52,7 @@ php -S localhost:8080
 
 ## 配色方案
 
-1688 品牌色系:
+19888 品牌色系:
 - 背景: #0B0E11 (深黑)
 - 主色: #DC143C (中国红)
 - 辅色: #DAA520 (金)

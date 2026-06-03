@@ -1,5 +1,5 @@
 /**
- * Generate SVG team logo placeholders for 1688 platform
+ * Generate SVG team logo placeholders for 19888 platform
  * Each logo is a colored circle with team initials
  */
 
