@@ -356,11 +356,13 @@ app.get('/api/admin/stats', adminAuth, (req, res) => {
 // ═══════════════════════════════════════════════════
 //  START
 // ═══════════════════════════════════════════════════
-seed();
-
-app.listen(PORT, () => {
-  console.log(`\n🏆 19888 API Server running on http://localhost:${PORT}`);
-  console.log(`   Frontend:  http://localhost:${PORT}/`);
-  console.log(`   Admin:     http://localhost:${PORT}/admin.html`);
-  console.log(`   API:       http://localhost:${PORT}/api/status\n`);
-});
+try {
+  seed();
+  app.listen(PORT, () => {
+    console.log(`🏆 19888 API running on port ${PORT}`);
+  });
+} catch(e) {
+  console.error('Startup error:', e.message);
+  // Start anyway
+  app.listen(PORT, () => console.log(`🏆 Started (seed skipped: ${e.message})`));
+}
