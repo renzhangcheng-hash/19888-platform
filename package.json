@@ -1,7 +1,12 @@
 {
   "name": "19888-platform",
   "version": "1.0.0",
+  "license": "UNLICENSED",
   "scripts": {
-    "start": "node backend/server.js"
+    "start": "node backend/server.js",
+    "install": "cd backend && npm install"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
