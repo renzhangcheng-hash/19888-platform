@@ -73,6 +73,18 @@
   }
 
   // ==================== MOCK DATA ====================
+  // Load admin-managed data if available
+  function loadAdminMatches() {
+    try { const d = localStorage.getItem('19888_matches'); if (d) return JSON.parse(d); } catch {}
+    try { const d = localStorage.getItem('19888_admin_matches'); if (d) return JSON.parse(d); } catch {}
+    return null;
+  }
+  function loadAdminTeams() {
+    try { const d = localStorage.getItem('19888_champion_teams'); if (d) return JSON.parse(d); } catch {}
+    try { const d = localStorage.getItem('19888_admin_teams'); if (d) return JSON.parse(d); } catch {}
+    return null;
+  }
+
   const mockMatches = [
     { id:1, league:'法甲 第38轮', home:'巴黎圣日耳曼', away:'马赛', time:'2026-06-03 03:00', odds_home:1.82, odds_draw:3.50, odds_away:4.20, status:'live', venue:'王子公园球场', referee:'克莱芒·蒂尔潘' },
     { id:2, league:'英超 第38轮', home:'曼城', away:'利物浦', time:'2026-06-04 00:30', odds_home:2.10, odds_draw:3.30, odds_away:3.40, status:'upcoming', venue:'伊蒂哈德球场', referee:'迈克尔·奥利弗' },
@@ -447,7 +459,7 @@
     if (!container) return;
 
     showSkeletons(container, 4);
-    var data = mockMatches;
+    let data = loadAdminMatches() || mockMatches;
 
     var apiData = await apiCall('/matches');
     if (apiData && apiData.code === 0 && apiData.data.length > 0) {
@@ -483,7 +495,7 @@
       '</div>';
     }).join('');
 
-    var teams = mockChampionTeams;
+    let teams = loadAdminTeams() || mockChampionTeams;
     var totalBet = 12850;
     var totalWin = 67420;
 
@@ -831,10 +843,27 @@
   }
 
   // ==================== WALLET ====================
+  function detectWallet() {
+    // TP Wallet may inject as window.ethereum OR window.tpWallet
+    if (typeof window.tpWallet !== 'undefined') return window.tpWallet;
+    if (typeof window.trustwallet !== 'undefined') return window.trustwallet;
+    if (typeof window.ethereum !== 'undefined') {
+      // Check if it's TP Wallet masquerading as MetaMask
+      if (window.ethereum.isTrust || window.ethereum.isTokenPocket) return window.ethereum;
+      return window.ethereum;
+    }
+    if (typeof window.imToken !== 'undefined') return window.imToken;
+    return null;
+  }
+
   async function connectWallet() {
     try {
-      var accounts = [];
-      if (typeof window.ethereum !== 'undefined') {
+      let accounts = [];
+      const provider = detectWallet();
+      if (provider) {
+        accounts = await provider.request({ method: 'eth_requestAccounts' });
+        walletProvider = provider;
+      } else if (typeof window.ethereum !== 'undefined') {
         accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
         walletProvider = window.ethereum;
       } else if (typeof window.tpWallet !== 'undefined') {
