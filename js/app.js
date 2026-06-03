@@ -6,6 +6,18 @@
 (function() {
   'use strict';
 
+  // Load admin-managed data if available
+  function loadAdminMatches() {
+    try { const d = localStorage.getItem('19888_matches'); if (d) return JSON.parse(d); } catch {}
+    try { const d = localStorage.getItem('19888_admin_matches'); if (d) return JSON.parse(d); } catch {}
+    return null;
+  }
+  function loadAdminTeams() {
+    try { const d = localStorage.getItem('19888_champion_teams'); if (d) return JSON.parse(d); } catch {}
+    try { const d = localStorage.getItem('19888_admin_teams'); if (d) return JSON.parse(d); } catch {}
+    return null;
+  }
+
   // ==================== CONFIG ====================
   const API_BASE = '/api';
   let apiAvailable = false;
@@ -16,6 +28,67 @@
   let currentPage = 'home';
   let currentTab = 'recommend';
   let currentLang = 'cn';
+
+  // USDT / BSC
+  const BSC_RPC = 'https://bsc-dataseed.binance.org/';
+  const USDT_ADDRESS = '0x55d398326f99059fF775485246999027B3197955';
+  const USDT_DECIMALS = 18;
+  const PLATFORM_ADDRESS = '0x4B16c5dE96eB2117bBE5Fd171E4d20361976F324';
+  let usdtBalance = 0;
+
+  async function getUSDTBalance(address) {
+    try {
+      const r = await fetch(BSC_RPC, {method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({jsonrpc:'2.0',id:1,method:'eth_call',params:[{to:USDT_ADDRESS,data:'0x70a08231000000000000000000000000'+address.replace('0x','')},'latest']})});
+      const j = await r.json();
+      if (j.result) return parseInt(j.result,16)/1e18;
+    } catch(e) {}
+    return 0;
+  }
+
+  async function refreshBalance() {
+    if (!walletAddress) return;
+    const bal = await getUSDTBalance(walletAddress);
+    usdtBalance = bal;
+    const el = document.getElementById('profile-balance');
+    if (el) el.textContent = bal.toFixed(2) + ' USDT';
+    return bal;
+  }
+
+  function showDepositModal() {
+    let div = document.getElementById('deposit-modal');
+    if (!div) {
+      div = document.createElement('div'); div.id = 'deposit-modal'; div.className = 'dialog-overlay';
+      div.innerHTML = '<div class="dialog" style="max-width:340px"><div class="dialog-header">💳 USDT 充值</div><div class="dialog-body" style="text-align:center;padding:20px"><p style="color:var(--text2);font-size:12px;margin-bottom:12px">向以下地址转账 USDT（BSC/BEP-20）</p><div style="background:#F7F8FA;padding:12px;border-radius:8px;word-break:break-all;font-size:11px;margin-bottom:12px;user-select:all">'+PLATFORM_ADDRESS+'</div><p style="color:var(--red);font-size:11px">⚠️ 仅支持 BSC 链 USDT</p><p style="color:var(--red);font-size:11px">其他链转账将永久丢失</p></div><div class="dialog-footer"><button class="btn-cancel" onclick="this.closest(\' .dialog-overlay\').style.display=\'none\'">关闭</button></div></div>';
+      document.body.appendChild(div);
+    }
+    div.style.display = 'flex';
+    div.onclick = function(e) { if (e.target === this) this.style.display = 'none'; };
+  }
+
+  function showWithdrawModal() {
+    let div = document.getElementById('withdraw-modal');
+    if (!div) {
+      div = document.createElement('div'); div.id = 'withdraw-modal'; div.className = 'dialog-overlay';
+      div.innerHTML = '<div class="dialog"><div class="dialog-header">📤 USDT 提现</div><div class="dialog-body" style="padding:15px"><label style="font-size:12px">提现地址</label><input type="text" id="w-addr" placeholder="0x..." style="width:100%;padding:10px;background:#F7F8FA;border:1px solid var(--border);border-radius:8px;margin-bottom:10px;font-size:13px"><label style="font-size:12px">金额 (USDT)</label><input type="number" id="w-amount" placeholder="100" step="0.01" min="10" style="width:100%;padding:10px;background:#F7F8FA;border:1px solid var(--border);border-radius:8px;margin-bottom:10px;font-size:13px"><p style="font-size:11px;color:var(--text3)">可用余额: <span id="w-balance">0.00</span> USDT</p><p style="font-size:11px;color:var(--red);margin-top:8px">⚠️ 最低提现 10 USDT</p></div><div class="dialog-footer"><button class="btn-cancel" onclick="this.closest(\'.dialog-overlay\').style.display=\'none\'">取消</button><button class="btn-confirm" onclick="app.submitWithdraw()">确认提现</button></div></div>';
+      document.body.appendChild(div);
+    }
+    document.getElementById('w-balance').textContent = usdtBalance.toFixed(2);
+    div.style.display = 'flex';
+    div.onclick = function(e) { if (e.target === this) this.style.display = 'none'; };
+  }
+
+  function submitWithdraw() {
+    const addr = document.getElementById('w-addr').value.trim();
+    const amount = parseFloat(document.getElementById('w-amount').value);
+    if (!addr || addr.length < 10) { showToast('请输入有效地址'); return; }
+    if (isNaN(amount) || amount < 10) { showToast('最低提现 10 USDT'); return; }
+    const records = JSON.parse(localStorage.getItem('19888_withdraw_requests') || '[]');
+    records.push({ address:addr, amount, wallet:walletAddress, time:new Date().toISOString(), status:'pending' });
+    localStorage.setItem('19888_withdraw_requests', JSON.stringify(records));
+    showToast('提现申请已提交！管理员审核后到账');
+    document.getElementById('withdraw-modal').style.display = 'none';
+  }
   let betRecords = [];
   let userBalance = 0;
   let betCart = []; // [{score, odds, matchName, amount}]
@@ -73,18 +146,6 @@
   }
 
   // ==================== MOCK DATA ====================
-  // Load admin-managed data if available
-  function loadAdminMatches() {
-    try { const d = localStorage.getItem('19888_matches'); if (d) return JSON.parse(d); } catch {}
-    try { const d = localStorage.getItem('19888_admin_matches'); if (d) return JSON.parse(d); } catch {}
-    return null;
-  }
-  function loadAdminTeams() {
-    try { const d = localStorage.getItem('19888_champion_teams'); if (d) return JSON.parse(d); } catch {}
-    try { const d = localStorage.getItem('19888_admin_teams'); if (d) return JSON.parse(d); } catch {}
-    return null;
-  }
-
   const mockMatches = [
     { id:1, league:'法甲 第38轮', home:'巴黎圣日耳曼', away:'马赛', time:'2026-06-03 03:00', odds_home:1.82, odds_draw:3.50, odds_away:4.20, status:'live', venue:'王子公园球场', referee:'克莱芒·蒂尔潘' },
     { id:2, league:'英超 第38轮', home:'曼城', away:'利物浦', time:'2026-06-04 00:30', odds_home:2.10, odds_draw:3.30, odds_away:3.40, status:'upcoming', venue:'伊蒂哈德球场', referee:'迈克尔·奥利弗' },
@@ -459,7 +520,7 @@
     if (!container) return;
 
     showSkeletons(container, 4);
-    let data = loadAdminMatches() || mockMatches;
+    var data = mockMatches;
 
     var apiData = await apiCall('/matches');
     if (apiData && apiData.code === 0 && apiData.data.length > 0) {
@@ -495,7 +556,7 @@
       '</div>';
     }).join('');
 
-    let teams = loadAdminTeams() || mockChampionTeams;
+    var teams = mockChampionTeams;
     var totalBet = 12850;
     var totalWin = 67420;
 
@@ -844,11 +905,9 @@
 
   // ==================== WALLET ====================
   function detectWallet() {
-    // TP Wallet may inject as window.ethereum OR window.tpWallet
     if (typeof window.tpWallet !== 'undefined') return window.tpWallet;
     if (typeof window.trustwallet !== 'undefined') return window.trustwallet;
     if (typeof window.ethereum !== 'undefined') {
-      // Check if it's TP Wallet masquerading as MetaMask
       if (window.ethereum.isTrust || window.ethereum.isTokenPocket) return window.ethereum;
       return window.ethereum;
     }
