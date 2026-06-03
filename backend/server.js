@@ -113,7 +113,11 @@ function generate18Grid() {
 //  PUBLIC API
 // ═══════════════════════════════════════════════════
 
-// Health check
+// Health check + serve index
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'index.html'));
+});
+
 app.get('/api/status', (req, res) => {
   res.json({ status:'ok', version:'1.0.0', name:'19888 API' });
 });
