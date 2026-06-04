@@ -39,6 +39,132 @@
   var USDT_DECIMALS = 18;
   var PLATFORM_ADDRESS = '0x4B16c5dE96eB2117bBE5Fd171E4d20361976F324';
   var usdtBalance = 0;
+  var currentDetailMatchId = null;
+
+  // ==================== CONTRACT ADDRESSES (Anvil local -> BSC testnet for prod) ====================
+  var CONTRACT_USDT = '0x0B306BF915C4d645ff596e518fAf3F9669b97016';
+  var CONTRACT_POOL = '0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE';
+  var CONTRACT_ANTI = '0x3Aa5ebB10DC797CAC828524e59A333d0A371443c';
+  var CONTRACT_CHAMP = '0x322813Fd9A801c5507c9de605d63CEA4f2CE6c44';
+  var BSC_USDT_REAL = '0x55d398326f99059fF775485246999027B3197955';
+  var viemLoaded = false;
+
+  // ==================== DYNAMIC VIEM CDN LOADER ====================
+  function loadViemCDN(cb) {
+    if (typeof window.viem !== 'undefined' && window.viem.encodeFunctionData) {
+      viemLoaded = true; if (cb) cb(); return;
+    }
+    var script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/viem@2.21.55/dist/umd/index.js';
+    script.onload = function() {
+      if (typeof window.viem !== 'undefined' && window.viem.encodeFunctionData) viemLoaded = true;
+      if (cb) cb();
+    };
+    script.onerror = function() {
+      console.warn('[19888] viem CDN load failed. On-chain disabled, using localStorage fallback.');
+      if (cb) cb();
+    };
+    document.head.appendChild(script);
+  }
+
+  // ==================== SCORE-TO-CELL INDEX MAPPING ====================
+  function scoreToCellIndex(score) {
+    return scoreGrid18.indexOf(score);
+  }
+
+  // ==================== CONTRACT ABIs (minimal) ====================
+  function getContractABI(name) {
+    switch (name) {
+      case 'USDT': return [
+        { type:'function', name:'transfer', inputs:[{name:'to',type:'address'},{name:'amount',type:'uint256'}], outputs:[{type:'bool'}], stateMutability:'nonpayable' },
+        { type:'function', name:'approve', inputs:[{name:'spender',type:'address'},{name:'amount',type:'uint256'}], outputs:[{type:'bool'}], stateMutability:'nonpayable' },
+        { type:'function', name:'balanceOf', inputs:[{name:'owner',type:'address'}], outputs:[{type:'uint256'}], stateMutability:'view' }
+      ];
+      case 'POOL': return [
+        { type:'function', name:'deposit', inputs:[{name:'amount',type:'uint256'}], outputs:[], stateMutability:'nonpayable' },
+        { type:'function', name:'withdraw', inputs:[{name:'amount',type:'uint256'}], outputs:[], stateMutability:'nonpayable' },
+        { type:'function', name:'balanceOf', inputs:[{name:'user',type:'address'}], outputs:[{type:'uint256'}], stateMutability:'view' }
+      ];
+      case 'ANTI': return [
+        { type:'function', name:'placeBet', inputs:[{name:'matchId',type:'uint256'},{name:'cell',type:'uint8'},{name:'amount',type:'uint256'}], outputs:[], stateMutability:'nonpayable' },
+        { type:'function', name:'createMatch', inputs:[{name:'homeTeam',type:'string'},{name:'awayTeam',type:'string'},{name:'matchTime',type:'uint256'},{name:'odds',type:'uint256[]'}], outputs:[], stateMutability:'nonpayable' }
+      ];
+      case 'CHAMP': return [
+        { type:'function', name:'placeBet', inputs:[{name:'teamId',type:'uint256'},{name:'betType',type:'uint8'},{name:'amount',type:'uint256'}], outputs:[], stateMutability:'nonpayable' },
+        { type:'function', name:'setResult', inputs:[{name:'teamId',type:'uint256'},{name:'resultType',type:'uint8'}], outputs:[], stateMutability:'nonpayable' }
+      ];
+      default: return [];
+    }
+  }
+
+  // ==================== ON-CHAIN HELPERS ====================
+  async function contractApprove(spender, amount) {
+    if (!viemLoaded || !walletProvider) return null;
+    try {
+      var abi = getContractABI('USDT');
+      var parsed = window.viem.parseUnits(String(amount), 18);
+      var data = window.viem.encodeFunctionData({ abi:abi, functionName:'approve', args:[spender, parsed] });
+      var tx = await walletProvider.request({ method:'eth_sendTransaction', params:[{ from:walletAddress, to:CONTRACT_USDT, data:data }] });
+      return tx;
+    } catch(e) { console.error('[19888] approve error:', e); return null; }
+  }
+
+  async function contractDeposit(amount) {
+    if (!viemLoaded || !walletProvider) { showToast('链上交互不可用，请确保已连接钱包'); return null; }
+    try {
+      showToast('请在钱包中确认授权...');
+      var approveTx = await contractApprove(CONTRACT_POOL, amount);
+      if (!approveTx) { showToast('授权失败或已取消'); return null; }
+      showToast('授权成功，请在钱包中确认充值...');
+      var abi = getContractABI('POOL');
+      var parsed = window.viem.parseUnits(String(amount), 18);
+      var data = window.viem.encodeFunctionData({ abi:abi, functionName:'deposit', args:[parsed] });
+      var tx = await walletProvider.request({ method:'eth_sendTransaction', params:[{ from:walletAddress, to:CONTRACT_POOL, data:data }] });
+      showToast('链上充值已提交！TX: ' + tx.substring(0, 14) + '...');
+      refreshBalance();
+      return tx;
+    } catch(e) { console.error('[19888] deposit error:', e); showToast('充值失败: ' + (e.message || '未知错误')); return null; }
+  }
+
+  async function contractWithdraw(amount) {
+    if (!viemLoaded || !walletProvider) { showToast('链上交互不可用'); return null; }
+    try {
+      showToast('请在钱包中确认提现...');
+      var abi = getContractABI('POOL');
+      var parsed = window.viem.parseUnits(String(amount), 18);
+      var data = window.viem.encodeFunctionData({ abi:abi, functionName:'withdraw', args:[parsed] });
+      var tx = await walletProvider.request({ method:'eth_sendTransaction', params:[{ from:walletAddress, to:CONTRACT_POOL, data:data }] });
+      showToast('链上提现已提交！TX: ' + tx.substring(0, 14) + '...');
+      refreshBalance();
+      return tx;
+    } catch(e) { console.error('[19888] withdraw error:', e); showToast('提现失败: ' + (e.message || '未知错误')); return null; }
+  }
+
+  async function contractPlaceAntiBet(matchId, cell, amount) {
+    if (!viemLoaded || !walletProvider) return null;
+    try {
+      var approveTx = await contractApprove(CONTRACT_ANTI, amount);
+      if (!approveTx) return null;
+      var abi = getContractABI('ANTI');
+      var parsed = window.viem.parseUnits(String(amount), 18);
+      var data = window.viem.encodeFunctionData({ abi:abi, functionName:'placeBet', args:[BigInt(matchId), cell, parsed] });
+      var tx = await walletProvider.request({ method:'eth_sendTransaction', params:[{ from:walletAddress, to:CONTRACT_ANTI, data:data }] });
+      return tx;
+    } catch(e) { console.error('[19888] placeAntiBet error:', e); return null; }
+  }
+
+  async function contractPlaceChampionBet(teamId, betType, amount) {
+    if (!viemLoaded || !walletProvider) return null;
+    try {
+      var approveTx = await contractApprove(CONTRACT_CHAMP, amount);
+      if (!approveTx) return null;
+      var abi = getContractABI('CHAMP');
+      var parsed = window.viem.parseUnits(String(amount), 18);
+      var data = window.viem.encodeFunctionData({ abi:abi, functionName:'placeBet', args:[BigInt(teamId), betType, parsed] });
+      var tx = await walletProvider.request({ method:'eth_sendTransaction', params:[{ from:walletAddress, to:CONTRACT_CHAMP, data:data }] });
+      return tx;
+    } catch(e) { console.error('[19888] placeChampionBet error:', e); return null; }
+  }
 
   // ==================== USDT BALANCE ====================
   async function getUSDTBalance(address) {
@@ -933,6 +1059,28 @@
     var data = overlay._betData;
     var odds = data.odds;
 
+    // Try on-chain contract interaction first (when viem + wallet available)
+    if (viemLoaded && walletProvider) {
+      var betType = data.betType === 'champion' ? 1 : 2;
+      var tx = await contractPlaceChampionBet(data.teamId, betType, amount);
+      if (tx) {
+        var onchainRecord = {
+          id: Date.now(), team: data.teamName, type: data.typeName,
+          amount: amount, odds: odds, potentialWin: (amount * odds).toFixed(2),
+          time: new Date().toLocaleString('zh-CN'), status: 'pending', tx: tx
+        };
+        betRecords.unshift(onchainRecord);
+        saveData();
+        closeBetDialog();
+        playSuccessSound();
+        spawnConfetti();
+        showToast('链上投注已提交！TX: ' + tx.substring(0, 10) + '...');
+        renderChampionBet();
+        updateBadges();
+        return;
+      }
+    }
+
     if (apiAvailable) {
       var res = await apiCall('/champion-bet/place', {
         method: 'POST',
@@ -988,6 +1136,7 @@
 
   // ==================== MATCH DETAIL ====================
   async function loadMatchDetail(matchId) {
+    currentDetailMatchId = matchId;
     var match = mockMatches.find(function(m) { return m.id === matchId; }) || mockMatches[0];
     var grid18 = scoreGrid18.map(function(score) { return { score: score, odds: +(1.5 + Math.random() * 8).toFixed(2) }; });
 
@@ -1062,11 +1211,43 @@
     }
   }
 
-  function submitCart() {
+  async function submitCart() {
     if (!walletAddress) { playErrorSound(); showToast('请先连接钱包'); return; }
     if (betCart.length === 0) return;
 
     var total = betCart.reduce(function(s, b) { return s + b.amount; }, 0);
+
+    // Try on-chain contract interaction first (when viem + wallet available)
+    if (viemLoaded && walletProvider && currentDetailMatchId) {
+      var allSuccess = true;
+      for (var ci = 0; ci < betCart.length; ci++) {
+        var b = betCart[ci];
+        var cell = scoreToCellIndex(b.score);
+        if (cell < 0) { allSuccess = false; continue; }
+        var tx = await contractPlaceAntiBet(currentDetailMatchId, cell, b.amount);
+        if (tx) {
+          betRecords.unshift({
+            id: Date.now() + ci, team: b.matchName + ' ' + b.score,
+            type: '比分投注', amount: b.amount, odds: b.odds,
+            potentialWin: (b.amount * b.odds).toFixed(2),
+            time: new Date().toLocaleString('zh-CN'), status: 'pending', tx: tx
+          });
+        } else { allSuccess = false; }
+      }
+      betCart = [];
+      updateCartUI();
+      updateBadges();
+      saveData();
+      playSuccessSound();
+      spawnConfetti();
+      if (allSuccess) {
+        showToast('链上投注已全部提交！共 ' + total + ' USDT');
+      } else {
+        showToast('部分链上投注已提交，请检查记录');
+      }
+      return;
+    }
+
     betCart.forEach(function(b) {
       betRecords.unshift({
         id: Date.now() + Math.random(), team: b.matchName + ' ' + b.score,
@@ -1415,6 +1596,7 @@
   // ==================== INIT ====================
   async function init() {
     loadData();
+    loadViemCDN(); // Load viem for on-chain contract interactions (non-blocking)
     var savedLang = localStorage.getItem('19888_lang');
     if (savedLang) {
       currentLang = savedLang;
@@ -1500,7 +1682,14 @@
     playSuccessSound: playSuccessSound,
     playClickSound: playClickSound,
     playErrorSound: playErrorSound,
-    createRipple: createRipple
+    createRipple: createRipple,
+    // On-chain contract interaction layer
+    contractDeposit: contractDeposit,
+    contractWithdraw: contractWithdraw,
+    contractPlaceAntiBet: contractPlaceAntiBet,
+    contractPlaceChampionBet: contractPlaceChampionBet,
+    getContractABI: getContractABI,
+    loadViemCDN: loadViemCDN
   };
 
   if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }
