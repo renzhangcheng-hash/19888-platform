@@ -1727,20 +1727,46 @@
 
   // ==================== WALLET ====================
   function detectWallet() {
-    if (typeof window.tpWallet !== 'undefined') return window.tpWallet;
-    if (typeof window.trustwallet !== 'undefined') return window.trustwallet;
+    // Modern TP Wallet may only inject as window.ethereum without flags
+    // Check for TP-specific flags on ethereum provider
     if (typeof window.ethereum !== 'undefined') {
-      if (window.ethereum.isTrust || window.ethereum.isTokenPocket) return window.ethereum;
+      if (window.ethereum.isTokenPocket || window.ethereum.isTP) return window.ethereum;
+      if (window.ethereum.isTrust) return window.ethereum;
+      if (window.ethereum.isMetaMask) return window.ethereum;
+      // Unknown wallet - still try to use it
       return window.ethereum;
     }
+    if (typeof window.tpWallet !== 'undefined') return window.tpWallet;
+    if (typeof window.trustwallet !== 'undefined') return window.trustwallet;
     if (typeof window.imToken !== 'undefined') return window.imToken;
+    // EIP-6963: check for multi-injected providers
+    if (typeof window.ethereum !== 'undefined') {
+      const providers = window.ethereum.providers;
+      if (providers && providers.length) {
+        // Prefer TP Wallet if available
+        const tp = providers.find(p => p.isTokenPocket || p.isTP);
+        if (tp) return tp;
+        return providers[0];
+      }
+    }
+    return null;
+  }
+
+  // Retry wallet detection (some wallets inject after page load)
+  async function connectWalletWithRetry(maxRetries) {
+    maxRetries = maxRetries || 3;
+    for (let i = 0; i < maxRetries; i++) {
+      const provider = detectWallet();
+      if (provider) return provider;
+      if (i < maxRetries - 1) await new Promise(r => setTimeout(r, 500));
+    }
     return null;
   }
 
   async function connectWallet() {
     try {
-      var accounts = [];
-      var provider = detectWallet();
+      let accounts = [];
+      const provider = await connectWalletWithRetry(5);
       if (provider) {
         accounts = await provider.request({ method: 'eth_requestAccounts' });
         walletProvider = provider;
