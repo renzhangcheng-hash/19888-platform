@@ -663,9 +663,23 @@
   <div class="pull-indicator" id="pullIndicator">↓ 下拉刷新</div>
 
   <!-- Bet Cart -->
-  <div class="bet-cart" id="betCart" onclick="app.submitCart()">
-    🛒 <span class="cart-count" id="cartCount">0</span>
-    <span>提交投注</span> <span class="cart-total" id="cartTotal">0 USDT</span>
+  <div class="bet-cart" id="betCart">
+    <div class="cart-header" onclick="event.stopPropagation()" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);cursor:default">
+      <span style="font-weight:700;font-size:14px;color:var(--text)">🛒 投注单 (<span class="cart-count" id="cartCount">0</span>)</span>
+      <span style="font-size:11px;color:var(--text3)">点击下方提交</span>
+    </div>
+    <div class="cart-items" id="cartItems" style="max-height:200px;overflow-y:auto;padding:0 14px"></div>
+    <div class="cart-summary" id="cartSummary" style="display:none;padding:10px 14px;border-top:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:12px">
+        <span style="color:var(--text2)">投注总额</span>
+        <span class="cart-total" id="cartTotal" style="font-weight:700;color:var(--text)">0 USDT</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:12px">
+        <span style="color:var(--text2)">预估收益</span>
+        <span id="cartPotential" style="font-weight:700;color:var(--green)">0.00 USDT</span>
+      </div>
+      <button class="btn-submit-cart" onclick="event.stopPropagation();app.submitCart()" style="width:100%;padding:12px;background:var(--purple-grad);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">✓ 一键提交全部投注</button>
+    </div>
   </div>
 </div>
 
@@ -736,32 +750,81 @@
       <div class="grid-18" id="grid-18"></div>
     </div>
 
-    <!-- Tab: Score Prediction -->
+    <!-- Tab: Score Prediction (正波膽) -->
     <div id="tab-score" class="detail-tab-body" style="display:none">
-      <div style="text-align:center;padding:30px 20px;color:var(--text3);font-size:13px">
-        <div style="font-size:40px;margin-bottom:12px">⚽</div>
-        <div style="font-weight:700;color:var(--text);font-size:15px;margin-bottom:6px">正波膽投注</div>
-        <div>预测比赛准确比分 · 赔率更高 · 挑战更大</div>
-        <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-          <div style="background:#fff;border-radius:8px;padding:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06);cursor:pointer" onclick="app.placeBet('score','1:0','3.50')"><b>1:0</b><br><span style="font-size:10px;color:#667eea">3.50</span></div>
-          <div style="background:#fff;border-radius:8px;padding:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06);cursor:pointer" onclick="app.placeBet('score','2:1','4.20')"><b>2:1</b><br><span style="font-size:10px;color:#667eea">4.20</span></div>
-          <div style="background:#fff;border-radius:8px;padding:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06);cursor:pointer" onclick="app.placeBet('score','0:0','6.00')"><b>0:0</b><br><span style="font-size:10px;color:#667eea">6.00</span></div>
-          <div style="background:#fff;border-radius:8px;padding:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06);cursor:pointer" onclick="app.placeBet('score','2:0','5.50')"><b>2:0</b><br><span style="font-size:10px;color:#667eea">5.50</span></div>
-          <div style="background:#fff;border-radius:8px;padding:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06);cursor:pointer" onclick="app.placeBet('score','1:1','3.80')"><b>1:1</b><br><span style="font-size:10px;color:#667eea">3.80</span></div>
-          <div style="background:#fff;border-radius:8px;padding:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06);cursor:pointer" onclick="app.placeBet('score','3:1','8.00')"><b>3:1</b><br><span style="font-size:10px;color:#667eea">8.00</span></div>
+      <div style="margin-bottom:12px;text-align:center">
+        <span style="font-weight:700;color:var(--text);font-size:15px">⚽ 正波膽</span>
+        <span style="font-size:11px;color:var(--text3);margin-left:8px">预测精确比分 · 命中即赢</span>
+      </div>
+      <div style="text-align:center;font-size:11px;color:var(--text3);margin-bottom:10px">点击比分投注 ↓ | <span style="color:var(--green);font-weight:600">赔率更高</span> | <span style="color:var(--red);font-weight:600">挑战更大</span></div>
+      <div id="score-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        <!-- Dynamically populated by loadScoreGrid() -->
+      </div>
+      <div id="score-bet-info" style="display:none;background:#fff;border-radius:12px;padding:14px;margin-top:12px;box-shadow:var(--shadow);text-align:center">
+        <div style="font-weight:700;color:var(--text);margin-bottom:6px">📝 已选投注</div>
+        <div id="score-bet-selection" style="font-size:13px;color:var(--purple-start);font-weight:600;margin-bottom:8px"></div>
+        <div style="display:flex;align-items:center;gap:8px;justify-content:center;flex-wrap:wrap">
+          <input type="number" id="score-bet-amount" placeholder="金额(USDT)" min="1" step="1" style="width:120px;padding:8px 12px;font-size:13px;text-align:center" oninput="app.updateScoreBetProfit()">
+          <button onclick="app.confirmScoreBet()" style="background:var(--accent-grad);color:#fff;border:none;padding:8px 20px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer">确认投注</button>
+          <button onclick="app.clearScoreBet()" style="background:#f0f0f0;border:none;padding:8px 16px;border-radius:20px;font-size:12px;cursor:pointer">清除</button>
+        </div>
+        <div style="margin-top:8px;font-size:12px;color:var(--text2)">
+          赔率: <span id="score-bet-odds" style="color:var(--purple-start);font-weight:700">--</span> | 
+          潜在收益: <span id="score-bet-profit" style="color:var(--green);font-weight:700">0.00</span> USDT
         </div>
       </div>
     </div>
 
-    <!-- Tab: Champion -->
-    <div id="tab-champion-detail" class="detail-tab-body" style="display:none">
-      <div style="text-align:center;padding:20px;color:var(--text3);font-size:13px">
-        <div style="font-size:40px;margin-bottom:8px">👑</div>
-        <div style="font-weight:700;color:var(--text);font-size:15px;margin-bottom:4px">冠亚预测</div>
-        <div>预测本场赛事胜者</div>
-        <div style="margin-top:14px;display:flex;gap:10px;justify-content:center">
-          <div style="flex:1;background:#fff;border-radius:12px;padding:16px;box-shadow:var(--shadow);cursor:pointer" onclick="app.placeBet('champion','home','1.90')"><b style="font-size:16px" id="detail-h-team">主队</b><br><span style="color:#667eea;font-weight:700">1.90</span></div>
-          <div style="flex:1;background:#fff;border-radius:12px;padding:16px;box-shadow:var(--shadow);cursor:pointer" onclick="app.placeBet('champion','away','2.05')"><b style="font-size:16px" id="detail-a-team">客队</b><br><span style="color:#667eea;font-weight:700">2.05</span></div>
+    <!-- Tab: Champion (冠亚预测 - 赛事级) -->
+    <div id="tab-champion" class="detail-tab-body" style="display:none">
+      <div style="margin-bottom:14px;text-align:center">
+        <span style="font-weight:700;color:var(--text);font-size:15px">👑 冠亚预测</span>
+        <span style="font-size:11px;color:var(--text3);margin-left:8px">预测本场赛事胜者</span>
+      </div>
+      
+      <!-- Team vs Team selector -->
+      <div style="display:flex;gap:10px;margin-bottom:12px">
+        <div id="champion-home-card" style="flex:1;background:var(--surface);border-radius:14px;padding:20px 14px;text-align:center;box-shadow:var(--shadow);cursor:pointer;transition:all .2s;border:2px solid transparent" onclick="app.selectChampionSide('home')">
+          <div style="font-size:40px;margin-bottom:6px" id="champion-home-flag">🏠</div>
+          <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px" id="champion-home-name">主队</div>
+          <div style="font-size:11px;color:var(--text3);margin-bottom:10px">冠军赔率</div>
+          <div style="font-size:24px;font-weight:900;color:var(--purple-start)" id="champion-home-odds">1.90</div>
+        </div>
+        <div id="champion-away-card" style="flex:1;background:var(--surface);border-radius:14px;padding:20px 14px;text-align:center;box-shadow:var(--shadow);cursor:pointer;transition:all .2s;border:2px solid transparent" onclick="app.selectChampionSide('away')">
+          <div style="font-size:40px;margin-bottom:6px" id="champion-away-flag">🚩</div>
+          <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px" id="champion-away-name">客队</div>
+          <div style="font-size:11px;color:var(--text3);margin-bottom:10px">冠军赔率</div>
+          <div style="font-size:24px;font-weight:900;color:var(--purple-start)" id="champion-away-odds">2.05</div>
+        </div>
+      </div>
+
+      <!-- 亚军投注区 -->
+      <div style="background:var(--surface);border-radius:14px;padding:16px;box-shadow:var(--shadow);margin-bottom:12px">
+        <div style="font-weight:700;color:var(--text);font-size:14px;margin-bottom:10px;text-align:center">🥈 亚军投注</div>
+        <div style="display:flex;gap:10px">
+          <div id="runnerup-home-card" style="flex:1;background:linear-gradient(135deg,#F7F8FA,#EEF0F6);border-radius:10px;padding:14px;text-align:center;cursor:pointer;border:2px solid transparent;transition:all .2s" onclick="app.selectChampionRunnerup('home')">
+            <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px" id="runnerup-home-name">主队</div>
+            <div style="font-size:20px;font-weight:900;color:var(--text2)" id="runnerup-home-odds">4.20</div>
+          </div>
+          <div id="runnerup-away-card" style="flex:1;background:linear-gradient(135deg,#F7F8FA,#EEF0F6);border-radius:10px;padding:14px;text-align:center;cursor:pointer;border:2px solid transparent;transition:all .2s" onclick="app.selectChampionRunnerup('away')">
+            <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px" id="runnerup-away-name">客队</div>
+            <div style="font-size:20px;font-weight:900;color:var(--text2)" id="runnerup-away-odds">4.50</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Selected bet info -->
+      <div id="champion-bet-panel" style="display:none;background:var(--surface);border-radius:14px;padding:16px;box-shadow:var(--shadow);text-align:center">
+        <div style="font-weight:700;color:var(--text);margin-bottom:6px">📝 已选投注</div>
+        <div id="champion-bet-selection" style="font-size:14px;color:var(--purple-start);font-weight:700;margin-bottom:10px"></div>
+        <div style="display:flex;align-items:center;gap:8px;justify-content:center;flex-wrap:wrap">
+          <input type="number" id="champion-bet-amount" placeholder="金额(USDT)" min="1" step="1" style="width:120px;padding:8px 12px;font-size:13px;text-align:center" oninput="app.updateChampionBetProfit()">
+          <button onclick="app.confirmChampionBet()" style="background:var(--accent-grad);color:#fff;border:none;padding:8px 20px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer">确认投注</button>
+          <button onclick="app.clearChampionBet()" style="background:#f0f0f0;border:none;padding:8px 16px;border-radius:20px;font-size:12px;cursor:pointer">清除</button>
+        </div>
+        <div style="margin-top:8px;font-size:12px;color:var(--text2)">
+          赔率: <span id="champion-bet-odds" style="color:var(--purple-start);font-weight:700">--</span> | 
+          潜在收益: <span id="champion-bet-profit" style="color:var(--green);font-weight:700">0.00</span> USDT
         </div>
       </div>
     </div>
@@ -1236,6 +1299,146 @@
   </div>
 </div>
 
+<!-- ==================== PAGE: RULES ==================== -->
+<div class="page" id="page-rules">
+  <div class="rules-section" style="padding:15px;max-width:600px;margin:0 auto;background:var(--bg);min-height:100vh">
+
+    <!-- Hero -->
+    <div style="background:var(--accent-grad);border-radius:16px;padding:24px 20px;text-align:center;color:#fff;margin-bottom:16px">
+      <div style="font-size:36px;margin-bottom:4px">📖</div>
+      <h2 style="font-size:20px;font-weight:900;margin-bottom:6px">19888 游戏规则</h2>
+      <p style="font-size:12px;opacity:0.85;line-height:1.6">了解三种竞猜玩法，掌握盈利之道<br>最终解释权归 19888 所有</p>
+    </div>
+
+    <!-- Rule: 反波膽 -->
+    <div style="background:var(--surface);border-radius:14px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow);border-left:4px solid var(--accent)">
+      <h3 style="font-size:16px;font-weight:800;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:6px">🎯 反波膽 · 核心玩法</h3>
+      <div style="background:#F7F8FA;border-radius:8px;padding:10px;margin-bottom:10px;font-size:12px;color:var(--text2);line-height:1.7">
+        <b>玩法说明：</b>在 18 格比分盘中，<b style="color:var(--purple-start)">选择一个你预测<u>不会发生</u>的比分</b>。<br>
+        比赛结束后，如果实际比分 ≠ 你所选的比分，即为获胜！<br>
+        18 格中仅 1-2 个比分会真实出现 → <b style="color:var(--green)">理论胜率高达 88.89%</b>
+      </div>
+
+      <div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:8px">📊 18格比分盘</div>
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-bottom:12px;text-align:center">
+        <div style="background:#F0F2F5;border-radius:6px;padding:6px 4px;font-size:11px;font-weight:600">0:0</div>
+        <div style="background:#F0F2F5;border-radius:6px;padding:6px 4px;font-size:11px;font-weight:600">0:1</div>
+        <div style="background:#F0F2F5;border-radius:6px;padding:6px 4px;font-size:11px;font-weight:600">0:2</div>
+        <div style="background:#F0F2F5;border-radius:6px;padding:6px 4px;font-size:11px;font-weight:600">0:3</div>
+        <div style="background:#F0F2F5;border-radius:6px;padding:6px 4px;font-size:11px;font-weight:600">1:0</div>
+        <div style="background:#F0F2F5;border-radius:6px;padding:6px 4px;font-size:11px;font-weight:600">1:1</div>
+        <div style="background:#F0F2F5;border-radius:6px;padding:6px 4px;font-size:11px;font-weight:600">1:2</div>
+        <div style="background:#F0F2F5;border-radius:6px;padding:6px 4px;font-size:11px;font-weight:600">1:3</div>
+        <div style="background:#F0F2F5;border-radius:6px;padding:6px 4px;font-size:11px;font-weight:600">2:0</div>
+        <div style="background:#F0F2F5;border-radius:6px;padding:6px 4px;font-size:11px;font-weight:600">2:1</div>
+        <div style="background:#F0F2F5;border-radius:6px;padding:6px 4px;font-size:11px;font-weight:600">2:2</div>
+        <div style="background:#F0F2F5;border-radius:6px;padding:6px 4px;font-size:11px;font-weight:600">2:3</div>
+        <div style="background:#F0F2F5;border-radius:6px;padding:6px 4px;font-size:11px;font-weight:600">3:0</div>
+        <div style="background:#F0F2F5;border-radius:6px;padding:6px 4px;font-size:11px;font-weight:600">3:1</div>
+        <div style="background:#F0F2F5;border-radius:6px;padding:6px 4px;font-size:11px;font-weight:600">3:2</div>
+        <div style="background:#F0F2F5;border-radius:6px;padding:6px 4px;font-size:11px;font-weight:600">3:3</div>
+        <div style="background:#667eea33;border-radius:6px;padding:6px 4px;font-size:10px;font-weight:700;color:var(--purple-start)">主4+</div>
+        <div style="background:#667eea33;border-radius:6px;padding:6px 4px;font-size:10px;font-weight:700;color:var(--purple-start)">客4+</div>
+      </div>
+
+      <div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:8px">💰 赔率说明</div>
+      <div style="background:#F7F8FA;border-radius:8px;padding:10px;font-size:11px;color:var(--text2);line-height:1.8;margin-bottom:10px">
+        <table style="width:100%;border-collapse:collapse;font-size:11px">
+          <thead><tr style="background:var(--accent-glass)"><th style="padding:6px;text-align:left">比分类型</th><th style="padding:6px;text-align:right">示例</th><th style="padding:6px;text-align:right">赔率范围</th></tr></thead>
+          <tbody>
+            <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px">常见比分 (高概率)</td><td style="padding:6px;text-align:right">1:1, 1:0</td><td style="padding:6px;text-align:right;color:var(--green)">~2x - 3x</td></tr>
+            <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px">中等比分 (中概率)</td><td style="padding:6px;text-align:right">2:1, 2:0</td><td style="padding:6px;text-align:right;color:var(--purple-start)">~4x - 8x</td></tr>
+            <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px">冷门比分 (低概率)</td><td style="padding:6px;text-align:right">3:2, 2:3</td><td style="padding:6px;text-align:right;color:var(--accent-mid)">~10x - 25x</td></tr>
+            <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px">极端比分 (极低概率)</td><td style="padding:6px;text-align:right">3:3, 主4+</td><td style="padding:6px;text-align:right;color:var(--red)">~50x - 425x</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="background:#FFF8E1;border-radius:8px;padding:10px;font-size:11px;color:#B8860B;line-height:1.7;margin-bottom:8px">
+        <b>⚠️ 赔付上限：</b>单格赔付上限为奖池的 10%。多格投注互不影响，每格独立计算。
+      </div>
+      <div style="font-size:11px;color:var(--text3);line-height:1.7">
+        <b>📝 投注示例：</b>若你选择"0:3"不会发生，投注 100 USDT，赔率 15.00。<br>
+        最终比分 2:1 → 你赢！获得 100 × 15.00 = 1,500 USDT<br>
+        最终比分 0:3 → 你输。对手真打了0:3。
+      </div>
+    </div>
+
+    <!-- Rule: 正波膽 -->
+    <div style="background:var(--surface);border-radius:14px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow);border-left:4px solid var(--green)">
+      <h3 style="font-size:16px;font-weight:800;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:6px">⚽ 正波膽 · 精确比分预测</h3>
+      <div style="background:#EDF9F3;border-radius:8px;padding:10px;margin-bottom:10px;font-size:12px;color:var(--text2);line-height:1.7">
+        <b>玩法说明：</b>预测比赛的<b style="color:var(--green)">精确最终比分</b>（含伤停补时，不含加时/点球）。<br>
+        必须完全命中比分才能获胜。难度较高，赔率也更丰厚！
+      </div>
+      <div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:8px">💰 赔率范围</div>
+      <div style="background:#F7F8FA;border-radius:8px;padding:10px;font-size:11px;color:var(--text2);line-height:1.8;margin-bottom:10px">
+        <table style="width:100%;border-collapse:collapse;font-size:11px">
+          <thead><tr style="background:rgba(3,166,109,0.08)"><th style="padding:6px;text-align:left">比分类型</th><th style="padding:6px;text-align:right">示例</th><th style="padding:6px;text-align:right">赔率范围</th></tr></thead>
+          <tbody>
+            <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px">常规比分</td><td style="padding:6px;text-align:right">1:0, 1:1, 2:1</td><td style="padding:6px;text-align:right;color:var(--green)">5x - 8x</td></tr>
+            <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px">中等比分</td><td style="padding:6px;text-align:right">2:0, 3:1, 0:0</td><td style="padding:6px;text-align:right;color:var(--purple-start)">8x - 15x</td></tr>
+            <tr><td style="padding:6px">冷门比分</td><td style="padding:6px;text-align:right">3:2, 3:3, 4:1</td><td style="padding:6px;text-align:right;color:var(--accent-mid)">15x - 50x</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="background:#FFF0F1;border-radius:8px;padding:10px;font-size:11px;color:var(--red-dark);line-height:1.7">
+        <b>⚠️ 注意：</b>正波膽难度较高，但单注赔率远高于反波膽。适合追求高回报的玩家。不可与反波膽混合投注。
+      </div>
+    </div>
+
+    <!-- Rule: 冠亚预测 -->
+    <div style="background:var(--surface);border-radius:14px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow);border-left:4px solid var(--gold)">
+      <h3 style="font-size:16px;font-weight:800;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:6px">👑 冠亚预测 · 赛事冠军/亚军</h3>
+      <div style="background:#FFF8E1;border-radius:8px;padding:10px;margin-bottom:10px;font-size:12px;color:var(--text2);line-height:1.7">
+        <b>玩法说明：</b>预测<b style="color:var(--gold)">冠军</b>或<b style="color:#C0C0C0">亚军</b>归属（适用于世界杯、欧冠等杯赛）。<br>
+        赛事结束后统一结算。可同时投冠军和亚军。
+      </div>
+      <div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:8px">💰 赔率范围</div>
+      <div style="background:#F7F8FA;border-radius:8px;padding:10px;font-size:11px;color:var(--text2);line-height:1.8;margin-bottom:10px">
+        <table style="width:100%;border-collapse:collapse;font-size:11px">
+          <thead><tr style="background:rgba(218,165,32,0.12)"><th style="padding:6px;text-align:left">投注类型</th><th style="padding:6px;text-align:right">赔率范围</th></tr></thead>
+          <tbody>
+            <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px">🏆 冠军</td><td style="padding:6px;text-align:right;color:var(--gold)">6x - 10x</td></tr>
+            <tr><td style="padding:6px">🥈 亚军</td><td style="padding:6px;text-align:right;color:var(--text2)">4x - 7x</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="font-size:11px;color:var(--text3);line-height:1.7;margin-bottom:8px">
+        <b>📝 投注示例：</b>投巴西 冠军 100 USDT @ 赔率 5.50 → 如果巴西夺冠，获得 550 USDT
+      </div>
+      <div style="background:#F0F2F5;border-radius:8px;padding:10px;font-size:11px;color:var(--text2);line-height:1.7">
+        <b>🔒 结算规则：</b>赛事结束后，管理员确认结果并统一结算。赢款自动到账户余额。
+      </div>
+    </div>
+
+    <!-- Rule: 通用规则 -->
+    <div style="background:var(--surface);border-radius:14px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow);border-left:4px solid var(--text3)">
+      <h3 style="font-size:16px;font-weight:800;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:6px">📋 通用规则</h3>
+      <div style="font-size:12px;color:var(--text2);line-height:2">
+        <div>✅ <b>投注流程：</b>连接钱包 → USDT充值 → 选择玩法 → 点击格子/比分 → 确认金额 → 提交投注</div>
+        <div>✅ <b>结算时效：</b>赛事结束后 5-30 分钟内管理员结算，赢款自动到账</div>
+        <div>✅ <b>撤销规则：</b>开赛前可撤销投注（需申请）；开赛后不可撤销</div>
+        <div>✅ <b>赛事延期：</b>延期赛事投注保留，新赛程确定后继续有效</div>
+        <div>✅ <b>赛事取消：</b>已取消赛事全额退款至账户余额</div>
+        <div>✅ <b>异常比分：</b>以官方结果为准（含伤停补时，不含加时/点球大战）</div>
+        <div>✅ <b>多格投注：</b>反波膽支持同时选多个格子，每格独立计算</div>
+        <div>✅ <b>最低投注：</b>单格最低 1 USDT，无上限（受奖池10%赔付上限约束）</div>
+        <div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)">
+          🛡️ <b>合规声明：</b>19888 由 Winsupreme Technology Limitada 持牌运营<br>
+          License ALSI-202510002-FI1 · Anjouan, Comoros<br>
+          严格遵守 The Computer Gaming Licensing Act 007 of 2005
+        </div>
+      </div>
+    </div>
+
+    <!-- Back to home -->
+    <div style="text-align:center;padding:20px 0 40px">
+      <button onclick="app.navigateTo('home')" style="background:var(--accent-grad);color:#fff;border:none;padding:12px 40px;border-radius:24px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(102,126,234,0.3)">🏠 返回首页</button>
+    </div>
+  </div>
+</div>
+
 <!-- ==================== BOTTOM TAB BAR ==================== -->
 <nav class="tabbar">
   <div class="tabbar-item active" onclick="app.navigateTo('home')">
@@ -1250,7 +1453,12 @@
     <span class="tb-icon">🤖</span>
     <span class="tb-label">AI预测</span>
   </div>
-  <div class="tabbar-item" onclick="app.navigateTo('records')">
+  
+    <div class="tabbar-item" onclick="app.navigateTo('rules')">
+      <span class="tb-icon">📖</span>
+      <span class="tb-label">规则</span>
+    </div>
+    <div class="tabbar-item" onclick="app.navigateTo('records')">
     <span class="tb-icon">📋</span>
     <span class="tb-label">投注记录</span>
     <span class="tabbar-badge" id="badge-records">0</span>
@@ -1258,6 +1466,10 @@
   <div class="tabbar-item" onclick="app.navigateTo('profile')">
     <span class="tb-icon">👤</span>
     <span class="tb-label">我的</span>
+  </div>
+  <div class="tabbar-item" onclick="app.navigateTo('rules')">
+    <span class="tb-icon">📖</span>
+    <span class="tb-label">规则</span>
   </div>
 </nav>
 

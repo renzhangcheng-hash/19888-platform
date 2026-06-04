@@ -305,6 +305,209 @@
 
   var scoreGrid18 = ['0:0','0:1','0:2','0:3','1:0','1:1','1:2','1:3','2:0','2:1','2:2','2:3','3:0','3:1','3:2','3:3','主4+','客4+'];
 
+  // ==================== LUCKY944 PROBABILITY ENGINE ====================
+  // Score probability distribution (18格反波膽基础概率)
+  // Sum must be ~100%
+  var SCORE_PROB_DIST = {
+    '1:1': 0.15, '2:1': 0.12, '1:0': 0.10, '2:0': 0.08,
+    '0:0': 0.07, '1:2': 0.06, '2:2': 0.05, '3:1': 0.04,
+    '0:1': 0.04, '3:0': 0.03, '0:2': 0.03, '3:2': 0.03,
+    '1:3': 0.02, '2:3': 0.02, '0:3': 0.015, '3:3': 0.01,
+    '主4+': 0.005, '客4+': 0.003
+  };
+
+  // Normalize probabilities to ensure sum = 1.0
+  function normalizeProbs(dist) {
+    var sum = 0;
+    for (var k in dist) { if (dist.hasOwnProperty(k)) sum += dist[k]; }
+    var norm = {};
+    for (var k in dist) { if (dist.hasOwnProperty(k)) norm[k] = dist[k] / sum; }
+    return norm;
+  }
+
+  var SCORE_PROB_NORM = normalizeProbs(SCORE_PROB_DIST);
+
+  /**
+   * 反波膽赔率计算 (18格)
+   * 反波膽逻辑：你选一个比分，如果最终比分不是这个比分，你就赢
+   * 赔率 = (1 / (1 - 该比分概率)) * 0.85  (House Edge 15%)
+   */
+  function computeAntiOdds(score) {
+    var prob = SCORE_PROB_NORM[score] || 0.01;
+    var loseProb = Math.max(1 - prob, 0.001); // probability you lose (exact match)
+    var rawOdds = 1 / loseProb;
+    var odds = rawOdds * 0.85; // House Edge 15%
+    return Math.max(1.01, +odds.toFixed(2));
+  }
+
+  /**
+   * 正波膽赔率计算 (猜中精确比分)
+   * 赔率 = (1 / 概率) * 0.80  (House Edge 20%)
+   */
+  function computeCorrectScoreOdds(score) {
+    var prob = SCORE_PROB_NORM[score] || 0.01;
+    var rawOdds = 1 / prob;
+    var odds = rawOdds * 0.80; // House Edge 20%
+    return Math.max(1.01, +odds.toFixed(2));
+  }
+
+  /**
+   * 18格反波膽全部赔率
+   */
+  function computeAllAntiOdds() {
+    return scoreGrid18.map(function(score) {
+      return { score: score, odds: computeAntiOdds(score), correctOdds: computeCorrectScoreOdds(score) };
+    });
+  }
+
+  /**
+   * 冠亚赔率引擎 - 基于球队实力动态计算
+   * 强队(巴西/法国): 冠军5-6x, 亚军4-4.5x
+   * 中等队(阿根廷/英格兰): 冠军7-8x, 亚军5-6x
+   * 弱队(荷兰等): 冠军12-15x, 亚军8-10x
+   */
+  var TEAM_TIER = {
+    '巴西': { tier: 'strong', champBase: 5.50, runnerBase: 4.20 },
+    '法国': { tier: 'strong', champBase: 6.00, runnerBase: 4.50 },
+    '阿根廷': { tier: 'medium', champBase: 7.50, runnerBase: 5.50 },
+    '英格兰': { tier: 'medium', champBase: 8.00, runnerBase: 5.80 },
+    '西班牙': { tier: 'medium', champBase: 9.00, runnerBase: 6.50 },
+    '德国': { tier: 'medium', champBase: 10.00, runnerBase: 7.00 },
+    '葡萄牙': { tier: 'weak', champBase: 12.00, runnerBase: 8.00 },
+    '荷兰': { tier: 'weak', champBase: 15.00, runnerBase: 9.50 },
+    '克罗地亚': { tier: 'weak', champBase: 18.00, runnerBase: 10.00 },
+    '比利时': { tier: 'weak', champBase: 13.00, runnerBase: 8.50 },
+    '格鲁吉亚': { tier: 'weak', champBase: 22.00, runnerBase: 12.00 },
+    '罗马尼亚': { tier: 'weak', champBase: 20.00, runnerBase: 11.00 },
+    '摩洛哥': { tier: 'weak', champBase: 25.00, runnerBase: 14.00 },
+    '马达加斯加': { tier: 'weak', champBase: 30.00, runnerBase: 16.00 },
+    '威尔士': { tier: 'weak', champBase: 20.00, runnerBase: 12.00 },
+    '加纳': { tier: 'weak', champBase: 28.00, runnerBase: 15.00 }
+  };
+
+  function computeChampionOdds(teamName, baseOdds) {
+    var tier = TEAM_TIER[teamName];
+    if (tier) {
+      // Add small random fluctuation (+/-5%)
+      var fluctuation = 1 + (Math.random() - 0.5) * 0.10;
+      return +(tier.champBase * fluctuation).toFixed(2);
+    }
+    return baseOdds || 8.00;
+  }
+
+  function computeRunnerUpOdds(teamName, baseOdds) {
+    var tier = TEAM_TIER[teamName];
+    if (tier) {
+      var fluctuation = 1 + (Math.random() - 0.5) * 0.10;
+      return +(tier.runnerBase * fluctuation).toFixed(2);
+    }
+    return baseOdds || 6.00;
+  }
+
+  // ==================== SETTLEMENT ENGINE ====================
+  /**
+   * 结算单场比赛所有投注
+   * @param {string} matchName - 比赛名称 (e.g. "巴黎圣日耳曼 vs 马赛")
+   * @param {string} finalScore - 最终比分 (e.g. "2:1")
+   * @returns {object} 结算结果 { totalBets, wonCount, lostCount, totalPayout }
+   */
+  function settleMatchBets(matchName, finalScore) {
+    var results = { totalBets: 0, wonCount: 0, lostCount: 0, totalPayout: 0, settledRecords: [] };
+
+    betRecords.forEach(function(record, idx) {
+      if (record.status !== 'pending') return;
+      // Match by team name (strip score suffix)
+      var recordMatch = record.team ? record.team.split(' ')[0] : '';
+      var targetMatch = matchName;
+      // Check if the record belongs to this match
+      if (recordMatch.indexOf(targetMatch.split(' vs ')[0]) === -1 &&
+          recordMatch.indexOf(targetMatch.split(' vs ')[1]) === -1) {
+        // Try full match name match
+        if (record.team && record.team.indexOf(targetMatch) === -1) return;
+      }
+
+      results.totalBets++;
+
+      // Extract the score this bet was placed on
+      var betScore = record.score || extractScoreFromTeam(record.team);
+      if (!betScore) { return; } // Can't determine bet score
+
+      // Determine win/loss
+      // 反波膽: user wins if final score != bet score
+      var isWin = (finalScore !== betScore);
+      
+      if (isWin) {
+        record.status = 'won';
+        record.payout = +(record.amount * record.odds).toFixed(2);
+        userBalance += record.payout;
+        results.wonCount++;
+        results.totalPayout += record.payout;
+      } else {
+        record.status = 'lost';
+        record.payout = 0;
+        results.lostCount++;
+      }
+      
+      results.settledRecords.push(record);
+    });
+
+    saveData();
+    updateBadges();
+    return results;
+  }
+
+  /**
+   * 结算冠亚投注
+   * @param {string} championTeam - 冠军球队名
+   * @param {string} runnerUpTeam - 亚军球队名
+   */
+  function settleChampionBets(championTeam, runnerUpTeam) {
+    var results = { totalBets: 0, wonCount: 0, lostCount: 0, totalPayout: 0 };
+
+    betRecords.forEach(function(record) {
+      if (record.status !== 'pending') return;
+      if (record.type !== '冠军' && record.type !== '亚军') return;
+
+      results.totalBets++;
+      var isWin = false;
+
+      if (record.type === '冠军' && record.team === championTeam) {
+        isWin = true;
+      } else if (record.type === '亚军' && record.team === runnerUpTeam) {
+        isWin = true;
+      }
+
+      if (isWin) {
+        record.status = 'won';
+        record.payout = +(record.amount * record.odds).toFixed(2);
+        userBalance += record.payout;
+        results.wonCount++;
+        results.totalPayout += record.payout;
+      } else {
+        record.status = 'lost';
+        record.payout = 0;
+        results.lostCount++;
+      }
+    });
+
+    saveData();
+    updateBadges();
+    return results;
+  }
+
+  function extractScoreFromTeam(teamStr) {
+    if (!teamStr) return null;
+    // teamStr format: "巴黎圣日耳曼 vs 马赛 1:1" or "巴黎圣日耳曼 vs 马赛"
+    var parts = teamStr.split(' ');
+    var lastPart = parts[parts.length - 1];
+    if (/^\d+:\d+$/.test(lastPart)) return lastPart;
+    if (lastPart === '主4+') return '主4+';
+    if (lastPart === '客4+') return '客4+';
+    // Try to find score pattern in the string
+    var match = teamStr.match(/(\d+:\d+|主4\+|客4\+)/);
+    return match ? match[0] : null;
+  }
+
   // Store last known odds for directional flash tracking
   var lastOddsMap = {};
   var oddsElements = [];
@@ -670,7 +873,7 @@
   }
 
   // ==================== ENHANCED PAGE TRANSITIONS + GESTURE BACK ====================
-  var pageOrder = ['home', 'matches', 'detail', 'ai', 'records', 'profile'];
+  var pageOrder = ['home', 'matches', 'detail', 'ai', 'records', 'profile', 'rules'];
 
   function navigateTo(page) {
     if (currentPage === page) return;
@@ -736,7 +939,7 @@
 
     // Update tabbar
     document.querySelectorAll('.tabbar-item').forEach(function(i) { i.classList.remove('active'); });
-    var tabMap = { home:0, matches:1, ai:2, records:3, profile:4, detail:1 };
+    var tabMap = { home:0, matches:1, ai:2, records:3, profile:4, detail:1, rules:5 };
     var idx = tabMap[page];
     if (idx !== undefined) {
       var items = document.querySelectorAll('.tabbar-item');
@@ -1010,7 +1213,9 @@
     await new Promise(function(r) { setTimeout(r, 300); });
 
     grid.innerHTML = teams.map(function(t) {
-      return '\n      <div class="team-card">\n        <div class="t-logo" style="background:none">' + teamLogoImg(t.name, 56) + '<span style="display:none;align-items:center;justify-content:center;width:52px;height:52px;border-radius:50%;background:var(--bg-input);color:var(--text-muted);font-size:26px">\u26BD</span></div>\n        <div class="t-name">' + t.name + '</div>\n        <div class="odds-row">\n          <div><span class="o-label">冠军</span><br><span class="o-val">' + t.championship_odds + '</span></div>\n          <div><span class="o-label">亚军</span><br><span class="o-val">' + t.runner_up_odds + '</span></div>\n        </div>\n        <div class="bet-btns">\n          <button class="btn-champion" onclick="app.openBetDialog(\'' + t.name + '\', ' + t.id + ', \'champion\', ' + t.championship_odds + ')">投冠军</button>\n          <button class="btn-runnerup" onclick="app.openBetDialog(\'' + t.name + '\', ' + t.id + ', \'runnerup\', ' + t.runner_up_odds + ')">投亚军</button>\n        </div>\n      </div>\n    ';
+      var champOdds = computeChampionOdds(t.name, t.championship_odds);
+      var runnerOdds = computeRunnerUpOdds(t.name, t.runner_up_odds);
+      return '\n      <div class="team-card">\n        <div class="t-logo" style="background:none">' + teamLogoImg(t.name, 56) + '<span style="display:none;align-items:center;justify-content:center;width:52px;height:52px;border-radius:50%;background:var(--bg-input);color:var(--text-muted);font-size:26px">\u26BD</span></div>\n        <div class="t-name">' + t.name + '</div>\n        <div class="odds-row">\n          <div><span class="o-label">冠军</span><br><span class="o-val">' + champOdds + '</span></div>\n          <div><span class="o-label">亚军</span><br><span class="o-val">' + runnerOdds + '</span></div>\n        </div>\n        <div class="bet-btns">\n          <button class="btn-champion" onclick="app.openBetDialog(\'' + t.name + '\', ' + t.id + ', \'champion\', ' + champOdds + ')">投冠军</button>\n          <button class="btn-runnerup" onclick="app.openBetDialog(\'' + t.name + '\', ' + t.id + ', \'runnerup\', ' + runnerOdds + ')">投亚军</button>\n        </div>\n      </div>\n    ';
     }).join('');
 
     var totalBetEl = document.getElementById('total-bet');
@@ -1134,18 +1339,75 @@
     trackOddsElements();
   }
 
+  // ==================== REALISTIC 18-GRID ODDS ====================
+  // Odds = 1 / probability_of_NOT_occurring
+  // The less likely a score, the higher the odds (and rarer it is)
+  function calculateGrid18Odds(homeTeam, awayTeam) {
+    // Score probability tiers (based on real football stats)
+    // Tier 1 (most common): 1:0, 1:1, 0:1, 2:1  -> high occurrence probability
+    // Tier 2 (common): 2:0, 0:0, 2:2, 1:2      -> medium occurrence
+    // Tier 3 (uncommon): 0:2, 3:1, 3:0, 1:3    -> low occurrence
+    // Tier 4 (rare): 2:3, 3:2, 3:3, 0:3        -> very low occurrence
+    // Tier 5 (extreme): 主4+, 客4+               -> extremely rare
+    
+    var scoreProbabilities = {
+      '0:0': 0.05, '0:1': 0.12, '0:2': 0.035, '0:3': 0.006,
+      '1:0': 0.14, '1:1': 0.11, '1:2': 0.04, '1:3': 0.008,
+      '2:0': 0.07, '2:1': 0.09, '2:2': 0.03, '2:3': 0.004,
+      '3:0': 0.025, '3:1': 0.02, '3:2': 0.006, '3:3': 0.002,
+      '主4+': 0.004, '客4+': 0.003
+    };
+    
+    // Calculate odds: if probability of score = P, then probability of NOT that score = 1-P
+    // For anti-score betting: odds = 1 / (1-P) * margin_factor
+    // But to make odds more attractive, we use a boost factor for rare scores
+    return scoreGrid18.map(function(score) {
+      var prob = scoreProbabilities[score] || 0.01;
+      var notProb = 1 - prob;
+      var baseOdds = 1 / notProb;
+      // Add slight randomness for live odds feel
+      var jitter = 1 + (Math.random() * 0.04 - 0.02); // +/- 2% jitter
+      // Boost rare score odds (rarer scores = higher odds for anti-bet)
+      var boost = prob < 0.01 ? (1 / prob) * 0.02 : 1; // Big boost for extreme scores
+      var odds = Math.max(1.01, +(baseOdds * jitter * boost).toFixed(2));
+      return { score: score, odds: odds, probability: prob };
+    });
+  }
+
+  // ==================== SCORE PREDICTION ODDS (正波膽) ====================
+  function calculateScoreOdds(homeTeam, awayTeam) {
+    // For score prediction (正波膽), odds = 1/probability * 0.85 (house edge)
+    var scoreProbabilities = {
+      '1:0': 0.15, '2:1': 0.10, '1:1': 0.11, '2:0': 0.08,
+      '3:1': 0.04, '0:0': 0.06, '3:0': 0.03, '2:2': 0.035,
+      '0:1': 0.13, '1:2': 0.05, '3:2': 0.015, '0:2': 0.04,
+      '1:3': 0.012, '4:1': 0.008, '0:3': 0.01, '3:3': 0.005,
+      '4:0': 0.004, '4:2': 0.003, '2:3': 0.008, '4:3': 0.002,
+      '5:0': 0.001, '0:4': 0.003, '5:1': 0.001, '6:0': 0.0005
+    };
+    var scoreOrder = ['1:0','2:1','1:1','2:0','3:1','0:0','3:0','2:2','0:1','1:2','3:2','0:2','1:3','4:1','0:3','3:3','4:0','4:2','2:3','4:3','5:0','0:4','5:1','6:0'];
+    return scoreOrder.map(function(score) {
+      var prob = scoreProbabilities[score] || 0.005;
+      var odds = +(1 / prob * 0.85).toFixed(2);
+      return { score: score, odds: odds };
+    });
+  }
+
   // ==================== MATCH DETAIL ====================
   async function loadMatchDetail(matchId) {
     currentDetailMatchId = matchId;
     var match = mockMatches.find(function(m) { return m.id === matchId; }) || mockMatches[0];
-    var grid18 = scoreGrid18.map(function(score) { return { score: score, odds: +(1.5 + Math.random() * 8).toFixed(2) }; });
+    // Use lucky944 probability engine for 18-grid odds
+    var grid18 = computeAllAntiOdds();
 
     showDetailSkeleton();
 
     var apiData = await apiCall('/matches/' + matchId);
     if (apiData && apiData.code === 0 && apiData.data) {
       match = apiData.data;
-      grid18 = apiData.data.grid_18 || grid18;
+      if (apiData.data.grid_18 && apiData.data.grid_18.length) {
+        grid18 = apiData.data.grid_18;
+      }
     }
 
     var timeParts = (match.time || '').split(' ');
@@ -1159,9 +1421,13 @@
 
     var grid = document.getElementById('grid-18');
     grid.classList.remove('skeleton-loading');
+    var matchName = match.home + ' vs ' + match.away;
     grid.innerHTML = grid18.map(function(cell) {
-      return '\n      <div class="grid-cell" onclick="app.quickBet(\'' + cell.score + '\', ' + cell.odds + ', \'' + match.home + ' vs ' + match.away + '\')">\n        <div class="cell-score">' + cell.score + '</div>\n        <div class="cell-odds">' + cell.odds + '</div>\n      </div>\n    ';
+      return '\n      <div class="grid-cell" onclick="app.quickBet(\'' + cell.score + '\', ' + cell.odds + ', \'' + matchName + '\')">\n        <div class="cell-score">' + cell.score + '</div>\n        <div class="cell-odds" data-odds-key="' + cell.score + '">' + cell.odds + '</div>\n      </div>\n    ';
     }).join('');
+
+    // Store match data for cart use
+    grid._matchData = { matchId: matchId, matchName: matchName, grid18: grid18 };
 
     initRippleEffects();
     trackOddsElements();
@@ -1178,36 +1444,86 @@
     playAddCartSound();
   }
 
-  // ==================== BET CART SYSTEM ====================
+  // ==================== ENHANCED BET CART SYSTEM (lucky944 style) ====================
   function addToCart(score, odds, matchName) {
     var existing = betCart.find(function(b) { return b.score === score && b.matchName === matchName; });
     if (existing) {
       existing.amount += 100;
+      existing.estimatedReturn = +(existing.amount * existing.odds).toFixed(2);
     } else {
-      betCart.push({ score: score, odds: +odds, matchName: matchName, amount: 100 });
+      betCart.push({ 
+        score: score, 
+        odds: +odds, 
+        matchName: matchName, 
+        amount: 100,
+        estimatedReturn: +(100 * odds).toFixed(2)
+      });
     }
     updateCartUI();
-    showToast('已添加 ' + matchName + ' ' + score + ' 到投注单');
+    showToast('已添加 ' + matchName + ' ' + score + ' @' + odds + ' 到投注单');
   }
 
   function removeFromCart(index) {
-    betCart.splice(index, 1);
+    var removed = betCart.splice(index, 1);
     updateCartUI();
+    if (removed.length) showToast('已移除 ' + removed[0].matchName + ' ' + removed[0].score);
+  }
+
+  function updateCartItemAmount(index, newAmount) {
+    if (index >= 0 && index < betCart.length) {
+      betCart[index].amount = +newAmount || 100;
+      betCart[index].estimatedReturn = +(betCart[index].amount * betCart[index].odds).toFixed(2);
+      updateCartUI();
+    }
   }
 
   function updateCartUI() {
     var cart = document.getElementById('betCart');
     var count = document.getElementById('cartCount');
     var total = document.getElementById('cartTotal');
+    var cartItems = document.getElementById('cartItems');
+    var cartSummary = document.getElementById('cartSummary');
     if (!cart) return;
 
     if (betCart.length === 0) {
       cart.classList.remove('show');
+      if (cartItems) cartItems.innerHTML = '';
+      if (cartSummary) cartSummary.style.display = 'none';
     } else {
       cart.classList.add('show');
-      count.textContent = betCart.length;
-      var sum = betCart.reduce(function(s, b) { return s + b.amount; }, 0);
-      total.textContent = sum + ' USDT';
+      if (count) count.textContent = betCart.length;
+
+      // Render individual cart items with odds and estimated returns
+      if (cartItems) {
+        var totalPotential = 0;
+        cartItems.innerHTML = betCart.map(function(b, idx) {
+          var returnAmt = b.estimatedReturn || +(b.amount * b.odds).toFixed(2);
+          totalPotential += returnAmt;
+          return '<div class="cart-item" style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px">' +
+            '<div style="flex:1;min-width:0">' +
+              '<div style="font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + b.matchName + '</div>' +
+              '<div style="color:var(--text2);font-size:11px">' + b.score + ' @ <span style="color:var(--purple-start);font-weight:700">' + b.odds + '</span></div>' +
+            '</div>' +
+            '<div style="text-align:right;flex-shrink:0;margin:0 8px">' +
+              '<input type="number" value="' + b.amount + '" min="1" step="10" ' +
+                'style="width:70px;padding:4px 6px;background:#F7F8FA;border:1px solid var(--border);border-radius:6px;font-size:11px;text-align:center" ' +
+                'onchange="app.updateCartItemAmount(' + idx + ', this.value)" onclick="event.stopPropagation()">' +
+              '<div style="font-size:10px;color:var(--green);margin-top:2px">赢 ' + returnAmt.toFixed(2) + ' USDT</div>' +
+            '</div>' +
+            '<button onclick="app.removeFromCart(' + idx + ')" style="background:none;border:none;color:var(--red);font-size:16px;cursor:pointer;padding:4px;flex-shrink:0">✕</button>' +
+          '</div>';
+        }).join('');
+        if (cartSummary) {
+          cartSummary.style.display = 'block';
+          var totalSum = betCart.reduce(function(s, b) { return s + b.amount; }, 0);
+          total.textContent = totalSum + ' USDT';
+          var potentialEl = document.getElementById('cartPotential');
+          if (potentialEl) potentialEl.textContent = totalPotential.toFixed(2) + ' USDT';
+        }
+      } else {
+        var sum = betCart.reduce(function(s, b) { return s + b.amount; }, 0);
+        if (total) total.textContent = sum + ' USDT';
+      }
     }
   }
 
@@ -1252,6 +1568,7 @@
       betRecords.unshift({
         id: Date.now() + Math.random(), team: b.matchName + ' ' + b.score,
         type: '比分投注', amount: b.amount, odds: b.odds,
+        score: b.score, matchName: b.matchName,
         potentialWin: (b.amount * b.odds).toFixed(2),
         time: new Date().toLocaleString('zh-CN'), status: 'pending'
       });
@@ -1530,10 +1847,10 @@
 
 // ==================== NEW HTML FEATURES ====================
   function toggleNotifications(e) {
-    e.stopPropagation();
-    const panel = document.getElementById('notify-panel');
+    if (e) e.stopPropagation();
+    const panel = document.getElementById('notify-dropdown');
     if (!panel) return;
-    panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+    panel.classList.toggle('show');
     playClickSound();
   }
 
@@ -1549,20 +1866,221 @@
   }
 
   function switchDetailTab(el, tabId) {
-    document.querySelectorAll('#page-detail .detail-tabs button').forEach(b => b.classList.remove('active'));
+    // Deactivate all tabs
+    document.querySelectorAll('#page-detail .detail-tab').forEach(function(b) { b.classList.remove('active'); });
     if (el) el.classList.add('active');
-    document.querySelectorAll('#page-detail .detail-tab-content > div').forEach(d => d.style.display = 'none');
-    const target = document.getElementById('detail-' + tabId);
+    // Hide all tab bodies
+    document.querySelectorAll('#page-detail .detail-tab-body').forEach(function(d) { d.style.display = 'none'; });
+    // Show selected tab
+    var target = document.getElementById(tabId);
     if (target) target.style.display = 'block';
-    if (tabId === 'h2h') renderH2H();
-    if (tabId === 'recent') renderRecentForm();
+    if (tabId === 'tab-h2h') renderH2H();
+    if (tabId === 'tab-recent') renderRecentForm();
+    // Load score grid if switching to score tab
+    if (tabId === 'tab-score' && currentDetailMatchId) {
+      var match = mockMatches.find(function(m) { return m.id === currentDetailMatchId; });
+      if (match) loadScoreGrid(match);
+    }
     playClickSound();
   }
 
-  function placeBet(type, selection, odds) {
-    showToast('投注成功：' + selection + ' @ ' + odds);
+  // ==================== SCORE GRID (正波膽) ====================
+  function loadScoreGrid(match) {
+    var grid = document.getElementById('score-grid');
+    if (!grid) return;
+    
+    var scores = computeCorrectScoreOdds ? 
+      scoreGrid18.map(function(s) { return { score: s, odds: computeCorrectScoreOdds(s) }; }) :
+      [
+        { score: '1:0', odds: 6.50 }, { score: '2:1', odds: 8.50 }, { score: '1:1', odds: 7.20 },
+        { score: '2:0', odds: 9.50 }, { score: '3:1', odds: 15.00 }, { score: '0:0', odds: 11.00 },
+        { score: '3:0', odds: 18.00 }, { score: '2:2', odds: 14.00 }, { score: '0:1', odds: 7.00 },
+        { score: '1:2', odds: 18.00 }, { score: '3:2', odds: 28.00 }, { score: '0:2', odds: 20.00 },
+        { score: '1:3', odds: 38.00 }, { score: '4:1', odds: 45.00 }, { score: '0:3', odds: 50.00 },
+        { score: '3:3', odds: 80.00 }, { score: '4:0', odds: 65.00 }, { score: '4:2', odds: 90.00 }
+      ];
+
+    grid.innerHTML = scores.map(function(s) {
+      var oddsColor = s.odds < 10 ? 'var(--green)' : s.odds < 20 ? 'var(--purple-start)' : s.odds < 50 ? 'var(--accent-mid)' : 'var(--red)';
+      return '<div class="score-cell" style="background:var(--surface);border-radius:10px;padding:12px 8px;text-align:center;box-shadow:var(--shadow);cursor:pointer;transition:all .2s;border:2px solid transparent" onclick="app.selectScoreBet(\'' + s.score + '\', ' + s.odds + ')" onmouseover="this.style.borderColor=\'var(--accent)\';this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.borderColor=\'transparent\';this.style.transform=\'none\'">' +
+        '<b style="font-size:15px;display:block;color:var(--text)">' + s.score + '</b>' +
+        '<span style="font-size:13px;font-weight:700;color:' + oddsColor + '">' + s.odds + '</span>' +
+      '</div>';
+    }).join('');
+
+    initRippleEffects();
+  }
+
+  var scoreBetData = null;
+
+  function selectScoreBet(score, odds) {
+    scoreBetData = { score: score, odds: odds };
+    document.getElementById('score-bet-selection').textContent = score + ' @ ' + odds + 'x';
+    document.getElementById('score-bet-odds').textContent = odds;
+    document.getElementById('score-bet-amount').value = '';
+    document.getElementById('score-bet-profit').textContent = '0.00';
+    document.getElementById('score-bet-info').style.display = 'block';
+    document.getElementById('score-bet-amount').focus();
+    playClickSound();
+  }
+
+  function updateScoreBetProfit() {
+    var amount = parseFloat(document.getElementById('score-bet-amount').value) || 0;
+    if (scoreBetData) {
+      var profit = amount > 0 ? (amount * scoreBetData.odds - amount) : 0;
+      document.getElementById('score-bet-profit').textContent = profit.toFixed(2);
+    }
+  }
+
+  function confirmScoreBet() {
+    if (!scoreBetData) { showToast('请先选择一个比分'); return; }
+    if (!walletAddress) { playErrorSound(); showToast('请先连接钱包'); return; }
+    var amount = parseFloat(document.getElementById('score-bet-amount').value) || 0;
+    if (amount < 1) { playErrorSound(); showToast('请输入有效投注金额(最低1 USDT)'); return; }
+
+    var record = {
+      id: Date.now(),
+      team: scoreBetData.score,
+      type: '正波膽',
+      amount: amount,
+      odds: scoreBetData.odds,
+      potentialWin: (amount * scoreBetData.odds).toFixed(2),
+      time: new Date().toLocaleString('zh-CN'),
+      status: 'pending'
+    };
+    betRecords.unshift(record);
+    userBalance += amount;
+    saveData();
+    clearScoreBet();
     playSuccessSound();
     spawnConfetti();
+    showToast('正波膽投注成功！' + scoreBetData.score + ' @ ' + scoreBetData.odds + 'x · ' + amount + ' USDT');
+    updateBadges();
+  }
+
+  function clearScoreBet() {
+    scoreBetData = null;
+    document.getElementById('score-bet-info').style.display = 'none';
+    document.getElementById('score-bet-selection').textContent = '';
+    document.getElementById('score-bet-amount').value = '';
+    document.getElementById('score-bet-profit').textContent = '0.00';
+    document.getElementById('score-bet-odds').textContent = '--';
+  }
+
+  // ==================== CHAMPION DETAIL BET (冠亚 - 赛事详情页) ====================
+  var championDetailData = null;
+
+  function selectChampionSide(side) {
+    var homeCard = document.getElementById('champion-home-card');
+    var awayCard = document.getElementById('champion-away-card');
+    var homeOdds = parseFloat(document.getElementById('champion-home-odds').textContent) || 1.90;
+    var awayOdds = parseFloat(document.getElementById('champion-away-odds').textContent) || 2.05;
+    var homeName = document.getElementById('champion-home-name').textContent;
+    var awayName = document.getElementById('champion-away-name').textContent;
+
+    // Reset both cards
+    if (homeCard) homeCard.style.borderColor = 'transparent';
+    if (awayCard) awayCard.style.borderColor = 'transparent';
+
+    if (side === 'home') {
+      championDetailData = { side: 'home', team: homeName, odds: homeOdds, type: '冠军' };
+      if (homeCard) homeCard.style.borderColor = 'var(--accent)';
+    } else {
+      championDetailData = { side: 'away', team: awayName, odds: awayOdds, type: '冠军' };
+      if (awayCard) awayCard.style.borderColor = 'var(--accent)';
+    }
+
+    showChampionBetPanel();
+    playClickSound();
+  }
+
+  function selectChampionRunnerup(side) {
+    var homeCard = document.getElementById('runnerup-home-card');
+    var awayCard = document.getElementById('runnerup-away-card');
+    var homeOdds = parseFloat(document.getElementById('runnerup-home-odds').textContent) || 4.20;
+    var awayOdds = parseFloat(document.getElementById('runnerup-away-odds').textContent) || 4.50;
+    var homeName = document.getElementById('runnerup-home-name').textContent;
+    var awayName = document.getElementById('runnerup-away-name').textContent;
+
+    // Reset both cards
+    if (homeCard) homeCard.style.borderColor = 'transparent';
+    if (awayCard) awayCard.style.borderColor = 'transparent';
+
+    if (side === 'home') {
+      championDetailData = { side: 'home', team: homeName, odds: homeOdds, type: '亚军' };
+      if (homeCard) homeCard.style.borderColor = 'var(--accent)';
+    } else {
+      championDetailData = { side: 'away', team: awayName, odds: awayOdds, type: '亚军' };
+      if (awayCard) awayCard.style.borderColor = 'var(--accent)';
+    }
+
+    showChampionBetPanel();
+    playClickSound();
+  }
+
+  function showChampionBetPanel() {
+    if (!championDetailData) return;
+    document.getElementById('champion-bet-selection').textContent = championDetailData.team + ' · ' + championDetailData.type;
+    document.getElementById('champion-bet-odds').textContent = championDetailData.odds;
+    document.getElementById('champion-bet-amount').value = '';
+    document.getElementById('champion-bet-profit').textContent = '0.00';
+    document.getElementById('champion-bet-panel').style.display = 'block';
+    setTimeout(function() {
+      var inp = document.getElementById('champion-bet-amount');
+      if (inp) inp.focus();
+    }, 200);
+  }
+
+  function updateChampionBetProfit() {
+    var amount = parseFloat(document.getElementById('champion-bet-amount').value) || 0;
+    if (championDetailData) {
+      var profit = amount > 0 ? (amount * championDetailData.odds - amount) : 0;
+      document.getElementById('champion-bet-profit').textContent = profit.toFixed(2);
+    }
+  }
+
+  function confirmChampionBet() {
+    if (!championDetailData) { showToast('请先选择投注方'); return; }
+    if (!walletAddress) { playErrorSound(); showToast('请先连接钱包'); return; }
+    var amount = parseFloat(document.getElementById('champion-bet-amount').value) || 0;
+    if (amount < 1) { playErrorSound(); showToast('请输入有效投注金额(最低1 USDT)'); return; }
+
+    var record = {
+      id: Date.now(),
+      team: championDetailData.team,
+      type: championDetailData.type,
+      amount: amount,
+      odds: championDetailData.odds,
+      potentialWin: (amount * championDetailData.odds).toFixed(2),
+      time: new Date().toLocaleString('zh-CN'),
+      status: 'pending'
+    };
+    betRecords.unshift(record);
+    userBalance += amount;
+    saveData();
+    clearChampionBet();
+    playSuccessSound();
+    spawnConfetti();
+    showToast('冠亚投注成功！' + championDetailData.team + ' ' + championDetailData.type + ' @ ' + championDetailData.odds + 'x · ' + amount + ' USDT');
+    updateBadges();
+  }
+
+  function clearChampionBet() {
+    championDetailData = null;
+    document.getElementById('champion-bet-panel').style.display = 'none';
+    document.getElementById('champion-bet-selection').textContent = '';
+    document.getElementById('champion-bet-amount').value = '';
+    document.getElementById('champion-bet-profit').textContent = '0.00';
+    document.getElementById('champion-bet-odds').textContent = '--';
+    // Reset card borders
+    var homeCard = document.getElementById('champion-home-card');
+    var awayCard = document.getElementById('champion-away-card');
+    var rHomeCard = document.getElementById('runnerup-home-card');
+    var rAwayCard = document.getElementById('runnerup-away-card');
+    if (homeCard) homeCard.style.borderColor = 'transparent';
+    if (awayCard) awayCard.style.borderColor = 'transparent';
+    if (rHomeCard) rHomeCard.style.borderColor = 'transparent';
+    if (rAwayCard) rAwayCard.style.borderColor = 'transparent';
   }
 
   function copyInviteCode() {
@@ -1664,6 +2182,8 @@
     loadMatchDetail: loadMatchDetail,
     quickBet: quickBet,
     addToCart: addToCart,
+    removeFromCart: removeFromCart,
+    updateCartItemAmount: updateCartItemAmount,
     submitCart: submitCart,
     updateCartUI: updateCartUI,
     filterRecords: filterRecords,
@@ -1689,7 +2209,37 @@
     contractPlaceAntiBet: contractPlaceAntiBet,
     contractPlaceChampionBet: contractPlaceChampionBet,
     getContractABI: getContractABI,
-    loadViemCDN: loadViemCDN
+    loadViemCDN: loadViemCDN,
+    // Lucky944 betting engine
+    computeAntiOdds: computeAntiOdds,
+    computeCorrectScoreOdds: computeCorrectScoreOdds,
+    computeAllAntiOdds: computeAllAntiOdds,
+    computeChampionOdds: computeChampionOdds,
+    computeRunnerUpOdds: computeRunnerUpOdds,
+    // Settlement engine
+    settleMatchBets: settleMatchBets,
+    settleChampionBets: settleChampionBets,
+    getScoreProbabilities: function() { return SCORE_PROB_NORM; },
+    // NEW: Score bet (正波膽)
+    loadScoreGrid: loadScoreGrid,
+    selectScoreBet: selectScoreBet,
+    updateScoreBetProfit: updateScoreBetProfit,
+    confirmScoreBet: confirmScoreBet,
+    clearScoreBet: clearScoreBet,
+    // NEW: Champion detail bet (冠亚)
+    selectChampionSide: selectChampionSide,
+    selectChampionRunnerup: selectChampionRunnerup,
+    updateChampionBetProfit: updateChampionBetProfit,
+    confirmChampionBet: confirmChampionBet,
+    clearChampionBet: clearChampionBet,
+    // NEW: Notification & promo
+    toggleNotifications: toggleNotifications,
+    openPromoModal: openPromoModal,
+    closePromoModal: closePromoModal,
+    switchDetailTab: switchDetailTab,
+    copyInviteCode: copyInviteCode,
+    shareInviteLink: shareInviteLink,
+    markAllRead: markAllRead
   };
 
   if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }

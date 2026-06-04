@@ -1346,3 +1346,22 @@ input:focus{
 /* === DARK MODE === */
 [data-theme="dark"] .notify-panel{background:var(--surface)}[data-theme="dark"] .notify-item.unread{background:#1a1a3e}
 [data-theme="dark"] .promo-panel{background:var(--surface)}
+
+/* === RULES PAGE === */
+.rules-container{padding:15px;max-width:600px;margin:0 auto}
+.rule-section{background:var(--white);border-radius:14px;padding:18px;margin-bottom:12px;box-shadow:var(--shadow-sm)}
+.rule-title{font-size:16px;font-weight:700;color:var(--purple-start);margin-bottom:8px}
+.rule-desc{font-size:13px;color:var(--text2);margin-bottom:10px;line-height:1.6}
+.rule-desc strong{color:var(--text)}
+.rule-list{list-style:none;padding:0}
+.rule-list li{position:relative;padding:6px 0 6px 20px;font-size:12px;color:var(--text);line-height:1.7}
+.rule-list li:before{content:"•";position:absolute;left:4px;color:var(--purple-start);font-weight:700}
+.rule-win{color:var(--green);font-weight:700}.rule-lose{color:var(--red);font-weight:700}
+.rule-grid-mini{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin:10px 0;max-width:360px}
+.rule-grid-mini span{background:var(--bg);border-radius:6px;padding:6px 4px;text-align:center;font-size:11px;font-weight:600;color:var(--text2)}
+.rule-grid-intro{font-size:11px;color:var(--text3);margin-top:8px}
+.rule-odds-title{font-size:13px;font-weight:600;color:var(--text);margin-top:12px;margin-bottom:6px}
+.rule-table{width:100%;border-collapse:collapse;margin:8px 0;font-size:11px}
+.rule-table td{padding:6px 8px;border:1px solid var(--border);text-align:center;color:var(--text2)}
+.rule-table tr:first-child td{background:var(--bg);font-weight:600;color:var(--text)}
+[data-theme="dark"] .rule-section{background:var(--surface)}[data-theme="dark"] .rule-grid-mini span{background:rgba(102,126,234,0.15)}

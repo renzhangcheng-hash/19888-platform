@@ -66,6 +66,7 @@ td{padding:10px 12px;font-size:13px;border-top:1px solid var(--border)}
   <div class="tab-nav">
     <button class="active" onclick="switchTab('matches')">赛事管理</button>
     <button onclick="switchTab('teams')">冠亚赔率</button>
+    <button onclick="switchTab('settle')">🏁 比赛结算</button>
     <button onclick="switchTab('bets')">投注记录</button>
     <button onclick="switchTab('export')">数据导出</button>
   </div>
@@ -83,6 +84,63 @@ td{padding:10px 12px;font-size:13px;border-top:1px solid var(--border)}
     <h2>冠亚预测赔率</h2>
     <table><thead><tr><th>ID</th><th>球队</th><th>冠军赔率</th><th>亚军赔率</th><th>操作</th></tr></thead>
     <tbody id="teamsTbody"></tbody></table>
+  </div>
+
+  <div id="tab-settle" style="display:none">
+    <h2>🏁 比赛结算</h2>
+    <div style="background:var(--white);border-radius:10px;padding:20px;box-shadow:var(--shadow);margin-bottom:15px">
+      <h3 style="margin-bottom:12px">📋 结算比赛 (反波膽)</h3>
+      <p style="font-size:12px;color:var(--text3);margin-bottom:12px">设置最终比分，系统自动结算所有投注。选错比分=赢，选对比分=输。</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+        <div>
+          <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">比赛</label>
+          <select id="settleMatch" style="padding:8px 12px;background:#F7F8FA;border:1px solid var(--border);border-radius:8px;font-size:13px;min-width:200px">
+            <option value="">-- 选择比赛 --</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">最终比分</label>
+          <select id="settleScore" style="padding:8px 12px;background:#F7F8FA;border:1px solid var(--border);border-radius:8px;font-size:13px">
+            <option value="">-- 选择比分 --</option>
+            <option value="0:0">0:0</option><option value="0:1">0:1</option><option value="0:2">0:2</option><option value="0:3">0:3</option>
+            <option value="1:0">1:0</option><option value="1:1">1:1</option><option value="1:2">1:2</option><option value="1:3">1:3</option>
+            <option value="2:0">2:0</option><option value="2:1">2:1</option><option value="2:2">2:2</option><option value="2:3">2:3</option>
+            <option value="3:0">3:0</option><option value="3:1">3:1</option><option value="3:2">3:2</option><option value="3:3">3:3</option>
+            <option value="主4+">主4+</option><option value="客4+">客4+</option>
+          </select>
+        </div>
+        <button class="btn btn-settle" onclick="doSettleMatch()" style="padding:8px 20px">⚡ 结算比赛</button>
+      </div>
+      <div id="settleMatchResult" style="margin-top:12px;font-size:12px"></div>
+    </div>
+
+    <div style="background:var(--white);border-radius:10px;padding:20px;box-shadow:var(--shadow);margin-bottom:15px">
+      <h3 style="margin-bottom:12px">👑 结算冠亚 (冠军/亚军)</h3>
+      <p style="font-size:12px;color:var(--text3);margin-bottom:12px">设置冠军和亚军球队，自动结算所有冠亚投注。</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+        <div>
+          <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">冠军球队</label>
+          <select id="settleChampion" style="padding:8px 12px;background:#F7F8FA;border:1px solid var(--border);border-radius:8px;font-size:13px;min-width:160px">
+            <option value="">-- 选择冠军 --</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">亚军球队</label>
+          <select id="settleRunnerUp" style="padding:8px 12px;background:#F7F8FA;border:1px solid var(--border);border-radius:8px;font-size:13px;min-width:160px">
+            <option value="">-- 选择亚军 --</option>
+          </select>
+        </div>
+        <button class="btn btn-settle" onclick="doSettleChampion()" style="padding:8px 20px">👑 结算冠亚</button>
+      </div>
+      <div id="settleChampionResult" style="margin-top:12px;font-size:12px"></div>
+    </div>
+
+    <div style="background:var(--white);border-radius:10px;padding:20px;box-shadow:var(--shadow)">
+      <h3 style="margin-bottom:12px">📊 批量操作</h3>
+      <button class="btn btn-settle" onclick="doBatchSettle()" style="margin-right:10px">⚡ 自动结算所有比赛</button>
+      <span style="font-size:11px;color:var(--text3)">(自动为每场比赛随机分配比分，仅用于测试)</span>
+      <div id="batchSettleResult" style="margin-top:12px;font-size:12px"></div>
+    </div>
   </div>
 
   <div id="tab-bets" style="display:none">
@@ -164,7 +222,7 @@ function defaultTeams() { return [
 ];}
 
 // ===== LOAD =====
-function loadAll() { loadStats(); loadMatches(); loadTeams(); loadBets(); }
+function loadAll() { loadStats(); loadMatches(); loadTeams(); loadBets(); loadSettleData(); }
 function loadStats() {
   const m = getMatches(), b = getBets();
   document.getElementById('statsGrid').innerHTML = `
@@ -295,12 +353,203 @@ function editTeam(id) {
   toast('赔率已更新'); loadTeams();
 }
 function settleBet(id) {
-  const win = confirm('此投注赢了吗？\\n确定=赢 / 取消=输');
-  const bets = getBets();
-  const b = bets.find(x => x.id === id);
+  var win = confirm('此投注赢了吗？\\n确定=赢 / 取消=输');
+  var bets = getBets();
+  var b = bets.find(x => x.id === id);
   if (b) b.status = win ? 'won' : 'lost';
   setStore('bets', bets);
+  // Also sync user balance if won
+  if (win && b) {
+    var bal = +(localStorage.getItem('19888_balance') || 0);
+    bal += +(b.amount * (b.odds || 1)).toFixed(2);
+    localStorage.setItem('19888_balance', bal);
+  }
   toast(win ? '已结算(赢)' : '已结算(输)'); loadAll();
+}
+
+// ===== SETTLEMENT ENGINE =====
+function loadSettleData() {
+  // Load matches for settlement dropdown
+  var matches = getMatches();
+  var sel = document.getElementById('settleMatch');
+  sel.innerHTML = '<option value="">-- 选择比赛 --</option>' +
+    matches.map(m => '<option value="' + m.home + ' vs ' + m.away + '">' + m.league + ': ' + m.home + ' vs ' + m.away + '</option>').join('');
+
+  // Load teams for champion/runner-up dropdown
+  var teams = getTeams();
+  var champSel = document.getElementById('settleChampion');
+  var runnerSel = document.getElementById('settleRunnerUp');
+  var teamOptions = teams.map(t => '<option value="' + t.name + '">' + t.name + '</option>').join('');
+  champSel.innerHTML = '<option value="">-- 选择冠军 --</option>' + teamOptions;
+  runnerSel.innerHTML = '<option value="">-- 选择亚军 --</option>' + teamOptions;
+}
+
+function doSettleMatch() {
+  var matchName = document.getElementById('settleMatch').value;
+  var finalScore = document.getElementById('settleScore').value;
+  if (!matchName || !finalScore) { toast('请选择比赛和比分', 'error'); return; }
+  if (!confirm('确定结算「' + matchName + '」最终比分 ' + finalScore + '？\\n\\n反波膽规则：选错比分=赢，选对=输')) return;
+
+  // Run settlement logic locally
+  var bets = getBets();
+  var totalBets = 0, wonCount = 0, lostCount = 0, totalPayout = 0;
+  var userBal = +(localStorage.getItem('19888_balance') || 0);
+
+  bets.forEach(function(b) {
+    if (b.status !== 'pending') return;
+    // Check if this bet belongs to the match
+    var teamName = b.team_name || b.team || '';
+    if (!teamName) return;
+    var parts = matchName.split(' vs ');
+    if (teamName.indexOf(parts[0]) === -1 && teamName.indexOf(parts[1]) === -1) {
+      // Try checking detailed team name
+      if (teamName.indexOf(matchName) === -1) return;
+    }
+
+    totalBets++;
+    // Extract score from bet
+    var betScore = b.score || extractBetScore(teamName);
+    if (!betScore) return;
+
+    var isWin = (finalScore !== betScore);
+    if (isWin) {
+      b.status = 'won';
+      b.payout = +(b.amount * (b.odds || 1)).toFixed(2);
+      userBal += b.payout;
+      wonCount++;
+      totalPayout += b.payout;
+    } else {
+      b.status = 'lost';
+      b.payout = 0;
+      lostCount++;
+    }
+  });
+
+  setStore('bets', bets);
+  localStorage.setItem('19888_balance', userBal.toFixed(2));
+
+  document.getElementById('settleMatchResult').innerHTML =
+    '<div style="background:#f0fff0;padding:12px;border-radius:8px;border:1px solid var(--green)">' +
+    '✅ 结算完成！<br>' +
+    '比赛：' + matchName + ' → 最终比分 <b>' + finalScore + '</b><br>' +
+    '投注数：' + totalBets + ' | 赢：' + wonCount + ' | 输：' + lostCount + '<br>' +
+    '总派彩：<b style="color:var(--green)">' + totalPayout.toFixed(2) + ' USDT</b>' +
+    '</div>';
+  toast('结算完成！赢' + wonCount + '笔，输' + lostCount + '笔');
+  loadAll();
+}
+
+function doSettleChampion() {
+  var champion = document.getElementById('settleChampion').value;
+  var runnerUp = document.getElementById('settleRunnerUp').value;
+  if (!champion || !runnerUp) { toast('请选择冠军和亚军', 'error'); return; }
+  if (champion === runnerUp) { toast('冠军和亚军不能相同', 'error'); return; }
+  if (!confirm('确定结算冠亚？\\n冠军：' + champion + '\\n亚军：' + runnerUp)) return;
+
+  var bets = getBets();
+  var totalBets = 0, wonCount = 0, lostCount = 0, totalPayout = 0;
+  var userBal = +(localStorage.getItem('19888_balance') || 0);
+
+  bets.forEach(function(b) {
+    if (b.status !== 'pending') return;
+    var type = b.bet_type_name || b.type || '';
+    var team = b.team_name || b.team || '';
+    if (type !== '冠军' && type !== '亚军') return;
+
+    totalBets++;
+    var isWin = false;
+    if (type === '冠军' && team === champion) isWin = true;
+    if (type === '亚军' && team === runnerUp) isWin = true;
+
+    if (isWin) {
+      b.status = 'won';
+      b.payout = +(b.amount * (b.odds || 1)).toFixed(2);
+      userBal += b.payout;
+      wonCount++;
+      totalPayout += b.payout;
+    } else {
+      b.status = 'lost';
+      b.payout = 0;
+      lostCount++;
+    }
+  });
+
+  setStore('bets', bets);
+  localStorage.setItem('19888_balance', userBal.toFixed(2));
+
+  document.getElementById('settleChampionResult').innerHTML =
+    '<div style="background:#f0fff0;padding:12px;border-radius:8px;border:1px solid var(--green)">' +
+    '👑 冠亚结算完成！<br>' +
+    '冠军：<b>' + champion + '</b> | 亚军：<b>' + runnerUp + '</b><br>' +
+    '投注数：' + totalBets + ' | 赢：' + wonCount + ' | 输：' + lostCount + '<br>' +
+    '总派彩：<b style="color:var(--green)">' + totalPayout.toFixed(2) + ' USDT</b>' +
+    '</div>';
+  toast('冠亚结算完成！赢' + wonCount + '笔');
+  loadAll();
+}
+
+function doBatchSettle() {
+  if (!confirm('批量结算将自动为每场比赛随机分配比分。确定继续？')) return;
+
+  var matches = getMatches();
+  var scores = ['0:0','0:1','0:2','0:3','1:0','1:1','1:2','1:3','2:0','2:1','2:2','2:3','3:0','3:1','3:2','3:3','主4+','客4+'];
+  var bets = getBets();
+  var userBal = +(localStorage.getItem('19888_balance') || 0);
+  var totalResults = { total: 0, won: 0, lost: 0, payout: 0 };
+
+  matches.forEach(function(match) {
+    var finalScore = scores[Math.floor(Math.random() * scores.length)];
+    var matchName = match.home + ' vs ' + match.away;
+
+    bets.forEach(function(b) {
+      if (b.status !== 'pending') return;
+      var teamName = b.team_name || b.team || '';
+      if (!teamName) return;
+      var parts = matchName.split(' vs ');
+      if (teamName.indexOf(parts[0]) === -1 && teamName.indexOf(parts[1]) === -1) {
+        if (teamName.indexOf(matchName) === -1) return;
+      }
+
+      totalResults.total++;
+      var betScore = b.score || extractBetScore(teamName);
+      if (!betScore) return;
+
+      if (finalScore !== betScore) {
+        b.status = 'won';
+        b.payout = +(b.amount * (b.odds || 1)).toFixed(2);
+        userBal += b.payout;
+        totalResults.won++;
+        totalResults.payout += b.payout;
+      } else {
+        b.status = 'lost';
+        b.payout = 0;
+        totalResults.lost++;
+      }
+    });
+  });
+
+  setStore('bets', bets);
+  localStorage.setItem('19888_balance', userBal.toFixed(2));
+
+  document.getElementById('batchSettleResult').innerHTML =
+    '<div style="background:#f0fff0;padding:12px;border-radius:8px;border:1px solid var(--green)">' +
+    '⚡ 批量结算完成！<br>' +
+    '总投注：' + totalResults.total + ' | 赢：' + totalResults.won + ' | 输：' + totalResults.lost + '<br>' +
+    '总派彩：<b style="color:var(--green)">' + totalResults.payout.toFixed(2) + ' USDT</b>' +
+    '</div>';
+  toast('批量结算完成！');
+  loadAll();
+}
+
+function extractBetScore(teamStr) {
+  if (!teamStr) return null;
+  var parts = teamStr.split(' ');
+  var lastPart = parts[parts.length - 1];
+  if (/^\d+:\d+$/.test(lastPart)) return lastPart;
+  if (lastPart === '主4+') return '主4+';
+  if (lastPart === '客4+') return '客4+';
+  var match = teamStr.match(/(\d+:\d+|主4\+|客4\+)/);
+  return match ? match[0] : null;
 }
 
 // ===== SYNC =====
@@ -355,8 +604,9 @@ function resetData() {
 }
 
 function switchTab(tab) {
-  ['matches','teams','bets','export'].forEach(t => document.getElementById('tab-'+t).style.display = t===tab?'block':'none');
-  document.querySelectorAll('.tab-nav button').forEach((btn,i) => btn.classList.toggle('active', i===['matches','teams','bets','export'].indexOf(tab)));
+  ['matches','teams','settle','bets','export'].forEach(t => document.getElementById('tab-'+t).style.display = t===tab?'block':'none');
+  document.querySelectorAll('.tab-nav button').forEach((btn,i) => btn.classList.toggle('active', i===['matches','teams','settle','bets','export'].indexOf(tab)));
+  if (tab === 'settle') loadSettleData();
 }
 function toast(msg, type) {
   const t = document.getElementById('toast');
