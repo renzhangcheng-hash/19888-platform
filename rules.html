@@ -1,73 +1,346 @@
-<!-- RULES PAGE -->
-<div class="page" id="page-rules">
-  <div class="rules-container">
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>19888 - 游戏规则</title>
+  <style>
+    :root {
+      --accent: #667eea; --accent-deep: #764ba2;
+      --accent-grad: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --red: #FA2933; --red-soft: #FFF0F1;
+      --green: #03A66D; --green-soft: #EDF9F3;
+      --gold: #DAA520; --gold-light: #F5E6B8;
+      --bg: #F0F2F5; --surface: #FFFFFF;
+      --text: #1A1A2E; --text2: #555770; --text3: #8E90A6;
+      --border: #E4E6EF; --border-light: #F0F1F6;
+      --radius-sm: 10px; --radius: 14px; --radius-lg: 20px;
+      --shadow-card: 0 2px 8px rgba(0,0,0,0.04), 0 4px 16px rgba(102,126,234,0.06);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --accent: #8B9CF7; --accent-deep: #A78BFA;
+        --accent-grad: linear-gradient(135deg, #8B9CF7 0%, #A78BFA 100%);
+        --bg: #0F0F1A; --surface: #1A1A2E;
+        --text: #E8E8F0; --text2: #9A9AB0; --text3: #6A6A80;
+        --border: #2A2A42; --border-light: #222238;
+      }
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg); color: var(--text); line-height: 1.5;
+      max-width: 480px; margin: 0 auto; padding: 16px 0 80px;
+      -webkit-font-smoothing: antialiased;
+    }
+    .header {
+      text-align: center; padding: 20px 16px 10px;
+    }
+    .header h1 { font-size: 24px; font-weight: 900; background: var(--accent-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .header p { font-size: 13px; color: var(--text2); margin-top: 4px; }
     
-    <div class="rule-section">
-      <div class="rule-title">🎯 反波膽（核心玩法）</div>
-      <div class="rule-desc">不猜结果，反猜意外——选择<strong>不会发生</strong>的比分。</div>
-      <div class="rule-grid-intro">18格比分面板：</div>
-      <div class="rule-grid-mini">
-        <span>0:0</span><span>0:1</span><span>0:2</span><span>0:3</span>
-        <span>1:0</span><span>1:1</span><span>1:2</span><span>1:3</span>
-        <span>2:0</span><span>2:1</span><span>2:2</span><span>2:3</span>
-        <span>3:0</span><span>3:1</span><span>3:2</span><span>3:3</span>
-        <span>主4+</span><span>客4+</span>
-      </div>
-      <ul class="rule-list">
-        <li>选择你认为<strong>不会</strong>出现的最终比分（可多选）</li>
-        <li>比赛结束，最终比分<strong>不等于</strong>你选的格子 → <span class="rule-win">赢</span></li>
-        <li>最终比分<strong>等于</strong>你选的任一格子 → <span class="rule-lose">输</span></li>
-      </ul>
-      <div class="rule-odds-title">赔率表：</div>
-      <table class="rule-table">
-        <tr><td>比分概率</td><td>常见比分(1:1,2:1,1:0)</td><td>普通比分(2:0,2:2,3:1)</td><td>冷门比分(3:3,0:3)</td><td>极端比分(主4+,客4+)</td></tr>
-        <tr><td>对应赔率(约)</td><td>2~8x</td><td>10~25x</td><td>35~80x</td><td>150~425x</td></tr>
-        <tr><td>底线</td><td>高概率=低赔率</td><td colspan="3">低概率=高赔率，单格赔付≤奖池10%</td></tr>
-      </table>
-    </div>
+    /* Section cards */
+    .section {
+      margin: 12px 16px; background: var(--surface);
+      border-radius: var(--radius); padding: 16px;
+      box-shadow: var(--shadow-card);
+      border-left: 4px solid var(--accent);
+    }
+    .section.green { border-left-color: var(--green); }
+    .section.gold { border-left-color: var(--gold); }
+    .section.ai { border-left-color: #8B5CF6; }
+    .section.vip { border-left-color: var(--gold); }
+    .section.revenue { border-left-color: var(--green); }
+    .section.risk { border-left-color: var(--red); }
+    .section.muted { border-left-color: var(--border); }
+    
+    h2 { font-size: 17px; font-weight: 800; margin-bottom: 10px; }
+    h3 { font-size: 15px; font-weight: 700; margin: 12px 0 8px; }
+    
+    .note {
+      background: rgba(102,126,234,0.06); border-radius: var(--radius-sm);
+      padding: 10px 12px; margin-bottom: 10px;
+      font-size: 12px; line-height: 1.6; color: var(--text2);
+    }
+    .note b { color: var(--text); }
+    .note.green { background: var(--green-soft); }
+    .note.gold { background: var(--gold-light); }
+    .note.red { background: var(--red-soft); }
+    .note.ai { background: rgba(139,92,246,0.06); }
+    .note.vip { background: rgba(218,165,32,0.08); }
+    .note.revenue { background: rgba(3,166,109,0.06); }
+    
+    .text-purple { color: var(--accent); font-weight: 700; }
+    .text-green { color: var(--green); font-weight: 700; }
+    .text-gold { color: var(--gold); font-weight: 700; }
+    .text-red { color: var(--red); font-weight: 700; }
+    
+    /* Grid */
+    .grid-mini {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 5px; margin: 0 0 14px;
+    }
+    .grid-cell {
+      background: var(--bg); border-radius: var(--radius-sm);
+      padding: 8px 4px; text-align: center;
+      font-size: 13px; font-weight: 700;
+      border: 1.5px solid var(--border-light);
+    }
+    .grid-cell.hl {
+      background: linear-gradient(135deg, rgba(218,165,32,0.12), rgba(218,165,32,0.06));
+      color: var(--gold); border-color: rgba(218,165,32,0.2);
+    }
+    
+    /* Tables */
+    .table-wrap { overflow-x: auto; margin-bottom: 10px; }
+    table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    th { padding: 8px 10px; font-weight: 700; color: var(--text); text-align: left; }
+    th.right { text-align: right; }
+    th.center { text-align: center; }
+    th.purple { background: rgba(102,126,234,0.08); }
+    th.gold { background: rgba(218,165,32,0.08); }
+    th.green { background: rgba(3,166,109,0.08); }
+    th.ai { background: rgba(139,92,246,0.08); }
+    th.vip { background: linear-gradient(90deg, rgba(218,165,32,0.12), rgba(218,165,32,0.04)); }
+    td { padding: 8px 10px; color: var(--text); font-weight: 500; }
+    td.right { text-align: right; }
+    td.center { text-align: center; }
+    td.green { text-align: right; color: var(--green); font-weight: 700; }
+    td.purple { text-align: right; color: var(--accent); font-weight: 700; }
+    td.accent { text-align: right; color: #6E3FCA; font-weight: 700; }
+    td.red { text-align: right; color: var(--red); font-weight: 700; }
+    td.gold { text-align: right; color: var(--gold); font-weight: 700; }
+    tr.border td { border-bottom: 1px solid var(--border-light); }
+    tr.vip1 td { background: rgba(102,126,234,0.03); }
+    tr.vip2 td { background: rgba(102,126,234,0.06); }
+    tr.vip3 td { background: rgba(218,165,32,0.05); }
+    tr.vip4 td { background: rgba(218,165,32,0.08); }
+    
+    /* Stats */
+    .stats-row {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 6px; margin-bottom: 14px;
+    }
+    .stat {
+      text-align: center; background: rgba(139,92,246,0.06);
+      border-radius: var(--radius-sm); padding: 8px 4px;
+    }
+    .stat .val { font-size: 15px; font-weight: 800; color: #8B5CF6; }
+    .stat .lbl { font-size: 9px; color: var(--text3); margin-top: 2px; }
+    
+    .risk-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 6px; margin-bottom: 8px;
+    }
+    .risk-item {
+      background: var(--bg); border-radius: var(--radius-sm);
+      padding: 10px; text-align: center;
+    }
+    .risk-item .i { font-size: 22px; margin-bottom: 4px; }
+    .risk-item .t { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .risk-item .d { font-size: 10px; color: var(--text3); line-height: 1.5; }
+    
+    .dense { font-size: 11px; color: var(--text2); line-height: 1.8; }
+    .dense div { margin-bottom: 3px; }
+    
+    .footer {
+      text-align: center; padding: 16px;
+      font-size: 11px; color: var(--text3);
+      border-top: 1px solid var(--border-light);
+      margin: 20px 16px 0;
+    }
+  </style>
+</head>
+<body>
 
-    <div class="rule-section">
-      <div class="rule-title">⚽ 正波膽</div>
-      <div class="rule-desc">预测比赛的<strong>精确比分</strong>，高风险高回报。</div>
-      <ul class="rule-list">
-        <li>选择你预测的最终比分（单选）</li>
-        <li>猜中 → <span class="rule-win">赢</span>，获得赔率×投注额</li>
-        <li>未猜中 → <span class="rule-lose">输</span></li>
-        <li>赔率范围：常见比分5~8x，冷门比分15~50x</li>
-      </ul>
-    </div>
+<div class="header">
+  <h1>📖 19888 游戏规则</h1>
+  <p>了解所有竞猜玩法与平台机制，掌握盈利之道<br>最终解释权归 19888 所有</p>
+</div>
 
-    <div class="rule-section">
-      <div class="rule-title">👑 冠亚预测</div>
-      <div class="rule-desc">预测整个赛事的<strong>冠军</strong>和<strong>亚军</strong>。</div>
-      <ul class="rule-list">
-        <li>选择球队 → 选择冠军或亚军</li>
-        <li>冠军赔率 6~15x，亚军赔率 4~10x</li>
-        <li>赛事结束后统一结算</li>
-        <li>猜中冠军且选了冠军 → 按冠军赔率赢</li>
-        <li>猜中亚军且选了亚军 → 按亚军赔率赢</li>
-      </ul>
-    </div>
+<!-- 1. 反波膽 -->
+<div class="section">
+  <h2>🎯 1. 反波膽 · 核心玩法</h2>
+  <div class="note">
+    <b>玩法说明：</b>在 18 格比分盘中，<span class="text-purple">选择你预测<u>不会发生</u>的比分</span>（可多选）。<br>
+    比赛结束后，如果实际比分 ≠ 你所选的比分，即为获胜！<br>
+    18 格中仅 1-2 个比分会真实出现 → <span class="text-green">理论胜率高达 88.89%</span>
+  </div>
 
-    <div class="rule-section">
-      <div class="rule-title">💰 结算规则</div>
-      <ul class="rule-list">
-        <li>盈利 = 投注金额 × 赔率</li>
-        <li>结算后盈利自动加入账户余额</li>
-        <li>平台抽水 15%（反波膽）/ 20%（正波膽）</li>
-        <li>单场比赛总赔付不超过奖池 50%</li>
-      </ul>
-    </div>
+  <h3>📊 18格比分盘 (4×4 + 2 极端格)</h3>
+  <div class="grid-mini">
+    <div class="grid-cell">0:0</div><div class="grid-cell">0:1</div><div class="grid-cell">0:2</div><div class="grid-cell">0:3</div>
+    <div class="grid-cell">1:0</div><div class="grid-cell">1:1</div><div class="grid-cell">1:2</div><div class="grid-cell">1:3</div>
+    <div class="grid-cell">2:0</div><div class="grid-cell">2:1</div><div class="grid-cell">2:2</div><div class="grid-cell">2:3</div>
+    <div class="grid-cell">3:0</div><div class="grid-cell">3:1</div><div class="grid-cell">3:2</div><div class="grid-cell">3:3</div>
+    <div class="grid-cell hl">主4+</div><div class="grid-cell hl">客4+</div>
+  </div>
 
-    <div class="rule-section">
-      <div class="rule-title">🛡️ 风控说明</div>
-      <ul class="rule-list">
-        <li>单格赔付上限为奖池 10%，防止极端比分击穿</li>
-        <li>日回撤超 3% 自动触发熔断暂停</li>
-        <li>所有投注记录链上可查（BSC）</li>
-        <li>平台不参与对赌，仅收取服务费</li>
-      </ul>
-    </div>
+  <h3>💰 反波膽赔率说明</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th class="purple">比分类型</th><th class="right purple">示例</th><th class="right purple">赔率范围</th><th class="right purple">出现概率</th></tr></thead>
+      <tbody>
+        <tr class="border"><td>常见比分</td><td class="right">1:1, 2:1, 1:0</td><td class="green">~2x - 8x</td><td class="right">高</td></tr>
+        <tr class="border"><td>普通比分</td><td class="right">2:0, 2:2, 3:1</td><td class="purple">~10x - 25x</td><td class="right">中</td></tr>
+        <tr class="border"><td>冷门比分</td><td class="right">3:3, 0:3</td><td class="accent">~35x - 80x</td><td class="right">低</td></tr>
+        <tr><td>极端比分</td><td class="right">主4+, 客4+</td><td class="red">~150x - 425x</td><td class="right">极低</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note gold"><b>⚠️ 赔付上限：</b>单格赔付上限为奖池的 10%。多格投注互不影响。</div>
+</div>
 
+<!-- 2. 正波膽 -->
+<div class="section green">
+  <h2>⚽ 2. 正波膽 · 精确比分预测</h2>
+  <div class="note green">
+    <b>玩法说明：</b>预测比赛的<span class="text-green">精确最终比分</span>（含伤停补时，不含加时/点球）。<br>
+    必须完全命中比分才能获胜。难度较高，赔率也更丰厚！
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th class="green">比分类型</th><th class="right green">示例</th><th class="right green">赔率范围</th></tr></thead>
+      <tbody>
+        <tr class="border"><td>常规比分</td><td class="right">1:0, 1:1, 2:1</td><td class="green">5x - 8x</td></tr>
+        <tr class="border"><td>中等比分</td><td class="right">2:0, 3:1, 0:0</td><td class="purple">8x - 15x</td></tr>
+        <tr><td>冷门比分</td><td class="right">3:2, 3:3, 4:1</td><td class="accent">15x - 50x</td></tr>
+      </tbody>
+    </table>
   </div>
 </div>
+
+<!-- 3. 冠亚预测 -->
+<div class="section gold">
+  <h2>👑 3. 冠亚预测 · 赛事冠军/亚军</h2>
+  <div class="note gold">
+    <b>玩法说明：</b>预测<span class="text-gold">冠军</span>或亚军归属（适用于世界杯、欧冠等杯赛）。<br>
+    赛事结束后统一结算。可同时投冠军和亚军。
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th class="gold">投注类型</th><th class="right gold">强队赔率</th><th class="right gold">中等赔率</th><th class="right gold">弱队赔率</th></tr></thead>
+      <tbody>
+        <tr class="border"><td>🏆 冠军</td><td class="green">5x - 6x</td><td class="purple">7x - 10x</td><td class="accent">12x - 30x</td></tr>
+        <tr><td>🥈 亚军</td><td class="green">4x - 4.5x</td><td class="purple">5x - 7x</td><td class="accent">8x - 16x</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 4. AI 智投 -->
+<div class="section ai">
+  <h2>🤖 4. AI 智投 · 智能托管</h2>
+  <div class="note ai">
+    <b>玩法说明：</b>将 USDT 存入 AI 托管金库，由深度学习模型自动执行反波膽投注策略。<br>
+    基于 5000 万场历史数据训练，凯利公式仓位管理，7×24 小时自动运行。
+  </div>
+  <div class="stats-row">
+    <div class="stat"><div class="val">67.3%</div><div class="lbl">AI实战胜率</div></div>
+    <div class="stat"><div class="val">≈15%</div><div class="lbl">月化收益</div></div>
+    <div class="stat"><div class="val">1.87</div><div class="lbl">夏普比率</div></div>
+    <div class="stat"><div class="val">-2.1%</div><div class="lbl">最大回撤</div></div>
+  </div>
+  <h3>📋 操作流程</h3>
+  <div class="dense">
+    <div>1️⃣ <b>存入 USDT</b> → 将资金转入 AI 托管金库</div>
+    <div>2️⃣ <b>AI 自动投注</b> → 系统 7×24 自动分析比赛，执行反波膽策略</div>
+    <div>3️⃣ <b>收益累积</b> → 每日结算，收益自动复投（可设置）</div>
+    <div>4️⃣ <b>提取收益</b> → 随时提取本金和收益（需在结算窗口）</div>
+  </div>
+  <div class="table-wrap" style="margin-top:12px">
+    <table>
+      <thead><tr><th class="ai">项目</th><th class="right ai">说明</th></tr></thead>
+      <tbody>
+        <tr class="border"><td>最低存入</td><td class="right">100 USDT</td></tr>
+        <tr class="border"><td>锁定期</td><td class="right">7 天（提前赎回扣 5%）</td></tr>
+        <tr class="border"><td>管理费</td><td class="right">收益的 20%（仅盈利时）</td></tr>
+        <tr class="border"><td>结算周期</td><td class="right">每日 00:00 UTC+8</td></tr>
+        <tr><td>风控机制</td><td class="right">凯利公式仓位 · 最大回撤 -5% 熔断</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 5. VIP 系统 -->
+<div class="section vip">
+  <h2>👑 5. VIP 系统 · 5级会员体系</h2>
+  <div class="note vip">
+    <b>规则说明：</b>VIP 等级基于<b>累计流水（Turnover）</b>自动升级。<br>
+    等级越高，返佣比例越高。代理押金在升级时自动返还。
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th class="center vip">VIP 等级</th><th class="right vip">累计流水</th>
+        <th class="right vip">反波膽返佣</th><th class="right vip">正波膽返佣</th><th class="right vip">AI 返佣</th>
+      </tr></thead>
+      <tbody>
+        <tr class="border vip1"><td class="center">👑 VIP 1</td><td class="right">$20,000</td><td class="green">0.2%</td><td class="green">1.0%</td><td class="green">0.1%</td></tr>
+        <tr class="border vip2"><td class="center">👑 VIP 2</td><td class="right">$100,000</td><td class="purple">0.4%</td><td class="purple">2.0%</td><td class="purple">0.2%</td></tr>
+        <tr class="border vip3"><td class="center">💎 VIP 3</td><td class="right">$1,000,000</td><td class="accent">0.6%</td><td class="accent">2.5%</td><td class="accent">0.3%</td></tr>
+        <tr class="border vip4"><td class="center">💎 VIP 4</td><td class="right">$10,000,000</td><td class="red">0.7%</td><td class="red">3.0%</td><td class="red">0.4%</td></tr>
+        <tr><td class="center">👑💎 VIP 5</td><td class="right">$50,000,000</td><td class="gold">0.8%</td><td class="gold">3.5%</td><td class="gold">0.5%</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note gold"><b>💡 代理押金返还：</b>升级到 VIP 1 时需缴纳押金，此后每升一级自动返还。</div>
+</div>
+
+<!-- 6. 财富再分配 -->
+<div class="section revenue">
+  <h2>💰 6. 财富再分配 · 收益共享机制</h2>
+  <div class="note revenue">
+    <b>机制说明：</b>平台所有手续费收入的 70% 将回馈社区。<br>
+    通过流水分红 + VIP返佣 + 团队代理等多层机制实现财富再分配。
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>分配对象</th><th class="right">比例</th><th class="right">说明</th></tr></thead>
+      <tbody>
+        <tr class="border"><td>👥 团队代理</td><td class="purple">30%</td><td class="right">代理佣金 + 流水分红</td></tr>
+        <tr class="border"><td>💰 国库基金</td><td class="green">30%</td><td class="right">平台运营 + 风险储备</td></tr>
+        <tr class="border"><td>🎁 质押者分红</td><td class="accent">30%</td><td class="right">VIP 用户额外分红</td></tr>
+        <tr><td>🏢 团队运营</td><td class="red">10%</td><td class="right">技术研发 + 合规</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 7. 风控 -->
+<div class="section risk">
+  <h2>🛡️ 7. 风控体系 · 资金安全保障</h2>
+  <div class="note red"><b>多层防护：</b>19888 采用多层风控机制确保奖池安全和用户资金保障。</div>
+  <div class="risk-grid">
+    <div class="risk-item"><div class="i">🛡️</div><div class="t">奖池保护</div><div class="d">单格赔付 ≤ 奖池10%<br>单场总赔付 ≤ 奖池50%</div></div>
+    <div class="risk-item"><div class="i">⚡</div><div class="t">自动熔断</div><div class="d">日回撤超3%暂停<br>最大回撤 -5% 硬熔断</div></div>
+    <div class="risk-item"><div class="i">🔗</div><div class="t">链上透明</div><div class="d">所有投注 BSC 链上可查<br>USDT 结算，无需信任</div></div>
+    <div class="risk-item"><div class="i">📊</div><div class="t">凯利仓位</div><div class="d">AI 模型动态仓位管理<br>单笔 ≤ 总仓位 8.3%</div></div>
+  </div>
+</div>
+
+<!-- 8. 通用规则 -->
+<div class="section muted">
+  <h2>📋 8. 通用规则与合规声明</h2>
+  <div class="dense">
+    <div>✅ <b>投注流程：</b>连接钱包 → USDT充值 → 选择玩法 → 点击格子/比分 → 确认金额 → 提交投注</div>
+    <div>✅ <b>结算时效：</b>赛事结束后 5-30 分钟内管理员结算，赢款自动到账</div>
+    <div>✅ <b>撤销规则：</b>开赛前可撤销投注（需申请）；开赛后不可撤销</div>
+    <div>✅ <b>赛事延期：</b>延期赛事投注保留，新赛程确定后继续有效</div>
+    <div>✅ <b>最低投注：</b>单格最低 1 USDT，无上限（受奖池10%赔付上限约束）</div>
+    <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border-light);font-size:11px;color:var(--text3)">
+      🛡️ <b>合规声明：</b>19888 由 Winsupreme Technology Limitada 持牌运营<br>
+      License ALSI-202510002-FI1 · Anjouan, Comoros<br>
+      严格遵守 The Computer Gaming Licensing Act 007 of 2005
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  19888 v1.0 · Winsupreme Technology Limitada<br>
+  License ALSI-202510002-FI1 · Anjouan, Comoros<br>
+  © 2026 19888.com All Rights Reserved
+</div>
+
+</body>
+</html>

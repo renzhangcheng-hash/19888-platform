@@ -72,6 +72,12 @@ contract ScoreBetTest is Test {
             abi.encodeCall(ScoreBet.initialize, address(pool))
         );
         scoreBet = ScoreBet(address(scoreBetProxy));
+
+        // Authorize ScoreBet to call pool.recordBet / recordPayout
+        pool.setAuthorizedContract(address(scoreBet), true);
+
+        // Create a match for betting
+        scoreBet.createMatch(1, "Home", "Away", block.timestamp + 1 days);
         vm.stopPrank();
 
         usdt.mint(alice, 10000 ether);
@@ -85,15 +91,15 @@ contract ScoreBetTest is Test {
         pool.deposit(1000 ether);
         vm.stopPrank();
 
-        // Alice places a bet
+        // Alice places a bet on cell index 9 (score "2:1")
         vm.startPrank(alice);
-        bytes32 score = keccak256(abi.encodePacked("2-1"));
-        scoreBet.placeBet(1, score, 100 ether);
+        uint8 cellIndex = 9; // 2:1
+        scoreBet.placeBet(1, cellIndex, 100 ether);
 
-        (address user, uint256 matchId, bytes32 storedScore, uint256 amount, uint256 odds, uint256 win, bool settled, bool won) = scoreBet.bets(1);
+        (address user, uint256 matchId, uint8 storedCell, uint256 amount, uint256 odds, uint256 potentialWin, bool settled, bool won, uint256 payout, uint256 placedAt) = scoreBet.bets(1);
         assertEq(user, alice);
         assertEq(matchId, 1);
-        assertEq(storedScore, score);
+        assertEq(storedCell, cellIndex);
         assertEq(amount, 100 ether);
         assertEq(scoreBet.betCount(), 1);
         assertFalse(settled);
@@ -102,9 +108,9 @@ contract ScoreBetTest is Test {
     function testPlaceBet_Failure_NoBalance() public {
         // Bob has no pool balance — placeBet should revert
         vm.startPrank(bob);
-        bytes32 score = keccak256(abi.encodePacked("1-0"));
-        vm.expectRevert("Invalid");
-        scoreBet.placeBet(1, score, 100 ether);
+        uint8 cellIndex = 4; // 1:0
+        vm.expectRevert("ScoreBet: insufficient balance");
+        scoreBet.placeBet(1, cellIndex, 100 ether);
         vm.stopPrank();
     }
 
@@ -113,15 +119,19 @@ contract ScoreBetTest is Test {
         vm.startPrank(alice);
         usdt.approve(address(pool), 1000 ether);
         pool.deposit(1000 ether);
-        bytes32 score = keccak256(abi.encodePacked("2-1"));
-        scoreBet.placeBet(1, score, 100 ether);
+        uint8 cellIndex = 9; // 2:1
+        scoreBet.placeBet(1, cellIndex, 100 ether);
         vm.stopPrank();
 
-        // ScoreBet does not call __Ownable_init(), so owner is address(0)
-        vm.prank(address(0));
-        scoreBet.settleBet(1, score);
+        // Owner settles the match with final score = cellIndex 9 (2:1)
+        vm.prank(owner);
+        scoreBet.settleMatch(1, cellIndex);
 
-        (,,,,,,bool settled, bool won) = scoreBet.bets(1);
+        // Owner settles the bet
+        vm.prank(owner);
+        scoreBet.settleBet(1);
+
+        (,,,,,,bool settled, bool won,,) = scoreBet.bets(1);
         assertTrue(settled);
         assertTrue(won);
     }
@@ -131,18 +141,22 @@ contract ScoreBetTest is Test {
         vm.startPrank(alice);
         usdt.approve(address(pool), 1000 ether);
         pool.deposit(1000 ether);
-        bytes32 score = keccak256(abi.encodePacked("2-1"));
-        scoreBet.placeBet(1, score, 100 ether);
+        uint8 cellIndex = 9; // 2:1
+        scoreBet.placeBet(1, cellIndex, 100 ether);
         vm.stopPrank();
 
-        // ScoreBet does not call __Ownable_init(), so owner is address(0)
-        vm.prank(address(0));
-        scoreBet.settleBet(1, score);
+        // Owner settles the match
+        vm.prank(owner);
+        scoreBet.settleMatch(1, cellIndex);
+
+        // Settle bet once
+        vm.prank(owner);
+        scoreBet.settleBet(1);
 
         // Settle again — should revert
-        vm.prank(address(0));
-        vm.expectRevert("Already");
-        scoreBet.settleBet(1, score);
+        vm.prank(owner);
+        vm.expectRevert("ScoreBet: bet already settled");
+        scoreBet.settleBet(1);
     }
 }
 
@@ -185,13 +199,12 @@ contract AIVaultTest is Test {
         vm.prank(owner);
         aiVault.addRevenue(500 ether);
 
-        assertEq(aiVault.totalRevenue(), 500 ether);
         assertEq(pool.poolBalance(), 500 ether);
     }
 
-    function testGetAPR_InitiallyZero() public {
-        uint256 apr = aiVault.getAPR();
-        assertEq(apr, 0);
+    function testGetDailyReturn_InitiallyDefault() public {
+        uint256 dailyReturn = aiVault.dailyReturnBps();
+        assertEq(dailyReturn, 60); // 0.6%
     }
 
     function testAddRevenue_Failure_NotOwner() public {
@@ -285,41 +298,44 @@ contract VIPStakingTest is Test {
         vm.stopPrank();
     }
 
-    function testStake_Success() public {
+    function testDeposit_Success() public {
         vm.startPrank(alice);
-        vipStaking.stake(1000 ether);
+        vipStaking.deposit(1000 ether);
 
-        (uint256 staked, uint256 since, uint256 level) = vipStaking.getVIP(alice);
-        assertEq(staked, 1000 ether);
-        assertEq(level, 3); // 1000 >= baseStakeForVIP3 (1000 ether)
-        assertEq(vipStaking.totalStaked(), 1000 ether);
+        (uint256 turnover, uint256 depositAmt, uint256 depositReturned, uint256 level, uint256 rewards) = vipStaking.getUserInfo(alice);
+        assertEq(depositAmt, 1000 ether);
+        assertEq(level, 0); // no turnover yet, so not VIP
+        assertEq(vipStaking.totalDeposits(), 1000 ether);
     }
 
-    function testUnstake_Success() public {
+    function testRecordTurnover_Success() public {
         vm.startPrank(alice);
-        vipStaking.stake(1000 ether);
-        vipStaking.unstake(400 ether);
+        vipStaking.deposit(1000 ether);
+        vm.stopPrank();
 
-        (uint256 staked,, uint256 level) = vipStaking.getVIP(alice);
-        assertEq(staked, 600 ether);
-        assertEq(level, 2); // 600 >= baseStakeForVIP2 (500 ether)
-        assertEq(vipStaking.totalStaked(), 600 ether);
+        // Owner records turnover to trigger VIP level
+        vm.prank(owner);
+        vipStaking.recordTurnover(alice, 1_000_000 * 1e18); // $1M → VIP 3
+
+        (uint256 turnover, uint256 depositAmt,, uint256 level,) = vipStaking.getUserInfo(alice);
+        assertEq(turnover, 1_000_000 * 1e18);
+        assertEq(depositAmt, 1000 ether);
+        assertEq(level, 3); // $1M turnover → VIP 3
     }
 
-    function testUnstake_Failure_Insufficient() public {
+    function testWithdrawDeposit_Failure_NotVIP() public {
         vm.startPrank(alice);
-        vipStaking.stake(100 ether);
+        vipStaking.deposit(100 ether);
 
-        vm.expectRevert("Insufficient");
-        vipStaking.unstake(200 ether);
+        vm.expectRevert("Not a VIP");
+        vipStaking.withdrawDeposit();
         vm.stopPrank();
     }
 
-    function testSetVIPThresholds_Failure_NotOwner() public {
+    function testSetVIPTier_Failure_NotOwner() public {
         vm.startPrank(stranger);
-        uint256[5] memory newThresholds = [uint256(100 ether), 200 ether, 300 ether, 400 ether, 500 ether];
         vm.expectRevert();
-        vipStaking.setVIPThresholds(newThresholds);
+        vipStaking.setVIPTier(1, 100 ether, 10, 100, 10);
         vm.stopPrank();
     }
 }

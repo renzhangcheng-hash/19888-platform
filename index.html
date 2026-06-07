@@ -13,201 +13,29 @@
   <meta property="og:description" content="不猜结果，反猜意外。让每一脚射门都有价值。">
   <meta property="og:image" content="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 630'><rect width='1200' height='630' fill='%23667eea'/><text x='600' y='350' text-anchor='middle' font-size='120' font-weight='900' fill='white' font-family='Arial'>19888</text></svg>">
   <link rel="manifest" href="/manifest.json">
+
+  <!-- Resource Hints: preconnect to RPC endpoint -->
+  <link rel="preconnect" href="https://ethereum-sepolia-rpc.publicnode.com" crossorigin>
+
+  <!-- Preload critical CSS for faster first paint -->
+  <link rel="preload" href="css/style.css" as="style">
+  <link rel="preload" href="js/app.js" as="script">
+
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23F0F2F5'/><text x='50' y='65' text-anchor='middle' font-size='44' font-weight='900' fill='%23764ba2' font-family='Arial'>19888</text></svg>">
-  <style>
-    /* ===== 追加丰富样式 (不覆盖 style.css) ===== */
-    .banner-slide-b { background: linear-gradient(135deg, #764ba2 0%, #f093fb 100%); }
-    .banner-slide-c { background: linear-gradient(135deg, #f5576c 0%, #ffd166 100%); }
-    .banner-tagline { font-size: 11px; opacity: 0.75; letter-spacing: 2px; margin-top: 2px; }
-    .banner-cta { margin-top: 10px; background: rgba(255,255,255,0.2); color: #fff; padding: 6px 18px; border-radius: 20px; font-size: 12px; font-weight: 600; letter-spacing: 1px; border: 1px solid rgba(255,255,255,0.3); }
-    .stats-row { display: flex; justify-content: space-around; margin: 16px 15px; gap: 8px; }
-    .stats-card { flex: 1; background: #fff; border-radius: 12px; padding: 14px 10px; text-align: center; box-shadow: var(--shadow); }
-    .stats-card .s-val { font-size: 22px; font-weight: 900; background: var(--purple-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-    .stats-card .s-label { font-size: 10px; color: var(--text3); margin-top: 4px; }
-    .quick-bet-strip { display: flex; gap: 6px; margin: 0 15px 12px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
-    .quick-bet-strip::-webkit-scrollbar { display: none; }
-    .quick-bet-chip { flex-shrink: 0; background: #fff; border-radius: 20px; padding: 8px 16px; font-size: 12px; font-weight: 600; white-space: nowrap; box-shadow: var(--shadow); cursor: pointer; transition: .2s; }
-    .quick-bet-chip:active { transform: scale(.95); }
-    .quick-bet-chip .qb-flag { margin-right: 4px; }
-    .quick-bet-chip .qb-odds { color: var(--purple-start); margin-left: 6px; font-size: 11px; }
-    .champion-stats-bar { display: flex; gap: 10px; margin-bottom: 14px; }
-    .champion-stats-bar .cs-item { flex: 1; background: #F7F8FA; border-radius: 10px; padding: 10px; text-align: center; }
-    .champion-stats-bar .cs-val { font-size: 20px; font-weight: 900; color: var(--purple-start); }
-    .champion-stats-bar .cs-lbl { font-size: 10px; color: var(--text3); margin-top: 3px; }
-    .about-hero { background: var(--purple-grad); border-radius: 16px; padding: 28px 20px; text-align: center; color: #fff; margin-bottom: 16px; }
-    .about-hero h2 { font-size: 22px; font-weight: 900; margin-bottom: 6px; }
-    .about-hero p { font-size: 13px; opacity: 0.85; line-height: 1.7; }
-    .about-features { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
-    .about-feat { background: #fff; border-radius: 12px; padding: 16px 14px; text-align: center; box-shadow: var(--shadow); }
-    .about-feat .af-icon { font-size: 32px; margin-bottom: 8px; }
-    .about-feat .af-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
-    .about-feat .af-desc { font-size: 11px; color: var(--text3); line-height: 1.5; }
-    .about-stats { display: flex; justify-content: space-around; background: #fff; border-radius: 12px; padding: 18px 10px; margin-bottom: 16px; box-shadow: var(--shadow); }
-    .about-stat { text-align: center; }
-    .about-stat .as-num { font-size: 24px; font-weight: 900; color: var(--purple-start); }
-    .about-stat .as-label { font-size: 10px; color: var(--text3); margin-top: 4px; }
-    .vip-card { background: linear-gradient(135deg, #1a1a2e, #16213e); border-radius: 14px; padding: 20px; color: #fff; margin-bottom: 14px; position: relative; overflow: hidden; }
-    .vip-card::before { content: '👑'; position: absolute; right: -10px; top: -10px; font-size: 80px; opacity: .08; }
-    .vip-card .vc-lvl { font-size: 28px; font-weight: 900; }
-    .vip-card .vc-name { font-size: 14px; opacity: .8; margin-bottom: 10px; }
-    .vip-card .vc-benefits { display: flex; gap: 14px; font-size: 11px; opacity: .7; margin-top: 8px; }
-    .vip-card .vc-benefits span { background: rgba(255,255,255,0.1); padding: 3px 10px; border-radius: 10px; }
-    .promo-banner { margin: 15px; background: linear-gradient(135deg, #fff5f5, #fff); border: 1px solid rgba(250,41,51,0.15); border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow); }
-    .promo-banner .pb-icon { font-size: 36px; flex-shrink: 0; }
-    .promo-banner .pb-text { font-size: 13px; color: var(--text); font-weight: 600; }
-    .promo-banner .pb-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
-    .promo-banner .pb-cta { margin-left: auto; background: var(--red); color: #fff; padding: 6px 14px; border-radius: 16px; font-size: 11px; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
-    .wallet-balance-bar { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
-    .ai-summary-strip { display: flex; gap: 8px; margin-bottom: 12px; overflow-x: auto; padding: 0 5px; -webkit-overflow-scrolling: touch; }
-    .ai-summary-strip::-webkit-scrollbar { display: none; }
-    .ai-summary-chip { flex-shrink: 0; background: rgba(102,126,234,0.08); border-radius: 20px; padding: 7px 14px; font-size: 11px; color: var(--purple-start); font-weight: 600; }
-    .hot-badge { display: inline-block; background: var(--red); color: #fff; font-size: 9px; padding: 1px 6px; border-radius: 8px; margin-left: 4px; vertical-align: middle; animation: pulse 1.5s infinite; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
-    .detail-tabs { display: flex; gap: 0; margin-bottom: 14px; background: #F7F8FA; border-radius: 10px; padding: 3px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .detail-tabs::-webkit-scrollbar { display: none; }
-    .detail-tab { flex: 1 0 auto; text-align: center; padding: 10px 12px; font-size: 11px; font-weight: 600; color: var(--text3); border-radius: 8px; cursor: pointer; transition: .2s; white-space: nowrap; }
-    .detail-tab.active { background: #fff; color: var(--purple-start); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-    .grid-18-label { font-size: 11px; color: var(--text3); text-align: center; margin-bottom: 8px; }
-    .notice-marquee { overflow: hidden; white-space: nowrap; }
-    .notice-marquee span { display: inline-block; padding-left: 100%; animation: marquee 15s linear infinite; }
-    @keyframes marquee { 0%{transform:translateX(0)} 100%{transform:translateX(-100%)} }
-    .league-filter { display: flex; gap: 6px; overflow-x: auto; padding: 0 15px 12px; -webkit-overflow-scrolling: touch; }
-    .league-filter::-webkit-scrollbar { display: none; }
-    .league-filter .lf-chip { flex-shrink: 0; padding: 7px 14px; border-radius: 20px; font-size: 11px; font-weight: 600; background: #fff; color: var(--text2); border: 1px solid var(--border); cursor: pointer; transition: .2s; }
-    .league-filter .lf-chip.active { background: var(--purple-start); color: #fff; border-color: var(--purple-start); }
-
-    /* ===== NEW: Leaderboard ===== */
-    .leaderboard-section { margin: 0 15px 16px; }
-    .leaderboard-section .section-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
-    .leaderboard-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
-    .leaderboard-tabs .lb-tab { flex: 1; text-align: center; padding: 8px; font-size: 12px; font-weight: 600; background: #fff; border-radius: 8px; color: var(--text3); cursor: pointer; box-shadow: var(--shadow); transition: .2s; }
-    .leaderboard-tabs .lb-tab.active { background: var(--purple-grad); color: #fff; }
-    .lb-list { background: #fff; border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; }
-    .lb-item { display: flex; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--border); }
-    .lb-item:last-child { border-bottom: none; }
-    .lb-rank { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900; flex-shrink: 0; }
-    .lb-rank.gold { background: linear-gradient(135deg,#FFD700,#FFA500); color: #fff; }
-    .lb-rank.silver { background: linear-gradient(135deg,#C0C0C0,#A0A0A0); color: #fff; }
-    .lb-rank.bronze { background: linear-gradient(135deg,#CD7F32,#B87333); color: #fff; }
-    .lb-rank.normal { background: #F0F2F5; color: var(--text2); }
-    .lb-info { flex: 1; margin-left: 10px; }
-    .lb-name { font-size: 13px; font-weight: 600; color: var(--text); }
-    .lb-sub { font-size: 10px; color: var(--text3); margin-top: 2px; }
-    .lb-value { font-size: 14px; font-weight: 700; color: var(--purple-start); flex-shrink: 0; }
-    .lb-trend { font-size: 10px; margin-left: 4px; }
-    .lb-trend.up { color: var(--green); }
-    .lb-trend.down { color: var(--red); }
-
-    /* ===== NEW: Notification Bell ===== */
-    .notify-btn { position: relative; background: none; border: none; font-size: 20px; cursor: pointer; padding: 0 4px; }
-    .notify-badge { position: absolute; top: -4px; right: -4px; background: var(--red); color: #fff; font-size: 9px; min-width: 14px; height: 14px; border-radius: 7px; display: flex; align-items: center; justify-content: center; padding: 0 3px; font-weight: 700; }
-    .notify-dropdown { position: fixed; top: 56px; right: 8px; width: 300px; max-height: 420px; background: #fff; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,0,0,0.18); z-index: 100; overflow: hidden; display: none; }
-    .notify-dropdown.show { display: block; animation: slideDown .25s ease; }
-    @keyframes slideDown { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
-    .notify-header { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-    .notify-header h3 { font-size: 15px; font-weight: 700; color: var(--text); }
-    .notify-header .mark-all { font-size: 11px; color: var(--purple-start); cursor: pointer; }
-    .notify-list { max-height: 320px; overflow-y: auto; }
-    .notify-item { display: flex; gap: 10px; padding: 12px 16px; border-bottom: 1px solid #f0f0f0; cursor: pointer; transition: .15s; }
-    .notify-item:active { background: #F7F8FA; }
-    .notify-item.unread { background: #faf5ff; }
-    .notify-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--purple-start); flex-shrink: 0; margin-top: 6px; }
-    .notify-emoji { font-size: 20px; flex-shrink: 0; }
-    .notify-content { flex: 1; min-width: 0; }
-    .notify-title { font-size: 13px; font-weight: 600; color: var(--text); }
-    .notify-desc { font-size: 11px; color: var(--text3); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .notify-time { font-size: 10px; color: #ccc; margin-top: 3px; }
-    .notify-empty { text-align: center; padding: 40px 20px; color: var(--text3); font-size: 13px; }
-
-    /* ===== NEW: Promotions Modal ===== */
-    .promo-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 110; display: none; align-items: flex-end; justify-content: center; }
-    .promo-overlay.show { display: flex; }
-    .promo-sheet { width: 100%; max-width: 480px; max-height: 80vh; background: #fff; border-radius: 20px 20px 0 0; overflow: hidden; animation: slideUp .3s ease; }
-    @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
-    .promo-sheet-handle { width: 36px; height: 4px; background: #ddd; border-radius: 2px; margin: 10px auto 4px; }
-    .promo-sheet-header { padding: 8px 20px 14px; display: flex; justify-content: space-between; align-items: center; }
-    .promo-sheet-header h2 { font-size: 18px; font-weight: 700; color: var(--text); }
-    .promo-sheet-close { background: #f0f0f0; border: none; width: 30px; height: 30px; border-radius: 50%; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-    .promo-sheet-body { padding: 0 16px 30px; overflow-y: auto; }
-    .promo-card { background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 14px; padding: 20px; color: #fff; margin-bottom: 12px; position: relative; overflow: hidden; }
-    .promo-card.promo-gold { background: linear-gradient(135deg, #f7971e, #ffd166); color: #333; }
-    .promo-card.promo-red { background: linear-gradient(135deg, #f5576c, #ff8a65); }
-    .promo-card.promo-teal { background: linear-gradient(135deg, #11998e, #38ef7d); }
-    .promo-card .pc-tag { position: absolute; top: 12px; right: 12px; background: rgba(255,255,255,.25); padding: 3px 10px; border-radius: 10px; font-size: 10px; font-weight: 700; }
-    .promo-card.promo-gold .pc-tag { background: rgba(0,0,0,.1); }
-    .promo-card .pc-title { font-size: 17px; font-weight: 900; margin-bottom: 4px; padding-right: 60px; }
-    .promo-card .pc-desc { font-size: 12px; opacity: .85; line-height: 1.6; }
-    .promo-card .pc-reward { font-size: 22px; font-weight: 900; margin-top: 8px; }
-    .promo-card .pc-btn { margin-top: 10px; background: rgba(255,255,255,.25); border: 1px solid rgba(255,255,255,.4); color: #fff; padding: 8px 20px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-block; }
-    .promo-card.promo-gold .pc-btn { color: #333; border-color: rgba(0,0,0,.2); }
-
-    /* ===== NEW: H2H & Recent Tabs in Detail ===== */
-    .h2h-block { background: #fff; border-radius: 12px; padding: 14px; margin-top: 12px; box-shadow: var(--shadow); display: none; }
-    .h2h-block.active { display: block; }
-    .h2h-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 10px; }
-    .h2h-match { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); gap: 8px; }
-    .h2h-match:last-child { border-bottom: none; }
-    .h2h-date { font-size: 10px; color: var(--text3); width: 50px; flex-shrink: 0; text-align: center; }
-    .h2h-teams { flex: 1; text-align: center; font-size: 12px; }
-    .h2h-teams b { color: var(--text); }
-    .h2h-score { font-size: 16px; font-weight: 900; color: var(--text); width: 48px; text-align: center; flex-shrink: 0; background: #F7F8FA; border-radius: 6px; padding: 3px 8px; }
-    .h2h-league { font-size: 9px; color: var(--text3); text-align: center; margin-top: 2px; }
-    .recent-form-row { display: flex; gap: 12px; }
-    .recent-form-col { flex: 1; }
-    .recent-form-col .rf-team { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
-    .rf-dots { display: flex; gap: 4px; margin-bottom: 10px; }
-    .rf-dot { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #fff; }
-    .rf-dot.w { background: #03A66D; }
-    .rf-dot.l { background: #FA2931; }
-    .rf-dot.d { background: #999; }
-    .rf-stat { font-size: 10px; color: var(--text3); line-height: 1.6; }
-
-    /* ===== NEW: AI Visualizations ===== */
-    .viz-row { display: flex; gap: 12px; margin-bottom: 12px; }
-    .viz-card { flex: 1; background: #fff; border-radius: 12px; padding: 14px; box-shadow: var(--shadow); text-align: center; }
-    .viz-title { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 10px; }
-    .pie-chart { width: 90px; height: 90px; border-radius: 50%; margin: 0 auto; position: relative; }
-    .pie-chart::after { content: ''; position: absolute; width: 50px; height: 50px; background: #fff; border-radius: 50%; top: 20px; left: 20px; }
-    .pie-legend { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 8px; }
-    .pie-legend-item { font-size: 9px; display: flex; align-items: center; gap: 3px; }
-    .pie-legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
-    .heatmap-grid { display: grid; grid-template-columns: repeat(6,1fr); gap: 3px; }
-    .heatmap-cell { aspect-ratio: 1; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 8px; color: #fff; font-weight: 600; }
-    .heat-scale { display: flex; justify-content: space-between; font-size: 9px; color: var(--text3); margin-top: 6px; }
-    .prediction-bars { margin-top: 10px; }
-    .pred-bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-    .pred-bar-label { font-size: 10px; color: var(--text2); width: 55px; text-align: right; flex-shrink: 0; font-weight: 600; }
-    .pred-bar-track { flex: 1; height: 14px; background: #F0F2F5; border-radius: 7px; overflow: hidden; }
-    .pred-bar-fill { height: 100%; border-radius: 7px; transition: width .5s; }
-    .pred-bar-pct { font-size: 10px; color: var(--text3); width: 32px; flex-shrink: 0; }
-
-    /* ===== NEW: Team & Invite in Profile ===== */
-    .team-section { background: #fff; border-radius: 12px; padding: 16px; margin-top: 14px; box-shadow: var(--shadow); }
-    .team-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    .team-header h3 { font-size: 15px; font-weight: 700; color: var(--text); }
-    .team-level { font-size: 11px; background: var(--purple-grad); color: #fff; padding: 3px 10px; border-radius: 10px; font-weight: 600; }
-    .team-stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
-    .team-stat-box { background: #F7F8FA; border-radius: 8px; padding: 10px; text-align: center; }
-    .team-stat-box .ts-val { font-size: 18px; font-weight: 900; color: var(--purple-start); }
-    .team-stat-box .ts-lbl { font-size: 10px; color: var(--text3); margin-top: 2px; }
-    .team-members { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
-    .team-members::-webkit-scrollbar { display: none; }
-    .team-member-avatar { width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 20px; background: #F0F2F5; }
-    .invite-section { background: linear-gradient(135deg, #667eea11, #764ba211); border: 1px dashed var(--purple-start); border-radius: 12px; padding: 16px; margin-top: 12px; text-align: center; }
-    .invite-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
-    .invite-desc { font-size: 11px; color: var(--text3); margin-bottom: 10px; line-height: 1.5; }
-    .invite-code-box { background: #fff; border-radius: 8px; padding: 10px 20px; margin: 8px 0; display: inline-block; }
-    .invite-code { font-size: 20px; font-weight: 900; color: var(--purple-start); letter-spacing: 3px; }
-    .invite-btn-row { display: flex; gap: 8px; justify-content: center; margin-top: 10px; }
-    .invite-btn { background: var(--purple-grad); color: #fff; border: none; padding: 8px 20px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; }
-    .invite-btn-outline { background: #fff; color: var(--purple-start); border: 1px solid var(--purple-start); padding: 8px 20px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; }
-    .invite-rewards { display: flex; gap: 8px; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
-    .invite-reward-chip { background: #fff; border-radius: 16px; padding: 5px 12px; font-size: 10px; color: var(--text2); box-shadow: 0 1px 3px rgba(0,0,0,.05); }
-    .invite-reward-chip b { color: var(--purple-start); }
-  </style>
 </head>
 <body>
+
+<!-- Skip to content -- accessibility -->
+<a class="skip-to-content" href="#main-content">跳转到主内容</a>
+
+<!-- Noscript warning -->
+<noscript>
+  <div class="noscript-warning">
+    ⚠️ 请启用 JavaScript 以正常使用本平台。JavaScript is required for this platform.
+  </div>
+</noscript>
+
 <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js');}</script>
 
 <!-- LANGUAGE MODAL -->
@@ -298,7 +126,7 @@
         <div class="pc-reward">🚀 最高 10x 奖励</div>
         <div class="pc-btn" onclick="app.navigateTo('ai')">AI 智投冲连胜</div>
       </div>
-      <div style="text-align:center;font-size:11px;color:var(--text3);padding-top:8px">更多活动持续更新中 · 最终解释权归 19888 所有</div>
+      <div class="text-xs-muted-pt8">更多活动持续更新中 · 最终解释权归 19888 所有</div>
     </div>
   </div>
 </div>
@@ -383,14 +211,14 @@
       <div class="banner-tagline">反波膽竞猜 · 88.89% 理论胜率</div>
       <div class="banner-cta">🔥 即刻投注</div>
     </div>
-    <div class="banner-slide banner-slide-b" style="display:none">
-      <div class="main-text" style="font-size:28px">AI 智投托管</div>
+    <div class="banner-slide banner-slide-b d-none" >
+      <div class="main-text text-5xl" >AI 智投托管</div>
       <div class="sub-text">5000万场历史训练 · 月化收益 ≈ 15%</div>
       <div class="banner-tagline">凯利公式仓位管理 · 智能风控</div>
       <div class="banner-cta">🤖 开启AI托管</div>
     </div>
-    <div class="banner-slide banner-slide-c" style="display:none">
-      <div class="main-text" style="font-size:28px">冠亚争霸赛</div>
+    <div class="banner-slide banner-slide-c d-none" >
+      <div class="main-text text-5xl" >冠亚争霸赛</div>
       <div class="sub-text">2026世界杯预演 · 谁是王者？</div>
       <div class="banner-tagline">巴西 · 法国 · 阿根廷 · 英格兰</div>
       <div class="banner-cta">👑 预测冠军</div>
@@ -466,7 +294,7 @@
         <div class="lb-value">5.8K<span class="lb-trend up">↑22%</span></div>
       </div>
     </div>
-    <div id="lb-streak" class="lb-list" style="display:none">
+    <div id="lb-streak" class="lb-list d-none" >
       <div class="lb-item">
         <div class="lb-rank gold">1</div>
         <div class="lb-info"><div class="lb-name">👤 用户 0x3A**cF91</div><div class="lb-sub">当前连胜 · 累计盈利 +8,420 USDT</div></div>
@@ -479,7 +307,7 @@
       </div>
       <div class="lb-item">
         <div class="lb-rank bronze">3</div>
-        <div class="lb-info"><div class="lb-name"><span style="font-weight:400;color:var(--text3)">你</span> 当前用户</div><div class="lb-sub">当前连胜 · 累计盈利 +2,340 USDT</div></div>
+        <div class="lb-info"><div class="lb-name"><span class="text-normal text-muted">你</span> 当前用户</div><div class="lb-sub">当前连胜 · 累计盈利 +2,340 USDT</div></div>
         <div class="lb-value">8 连胜</div>
       </div>
       <div class="lb-item">
@@ -531,8 +359,8 @@
       <div class="lf-chip">🌍 国际赛</div>
     </div>
     <div id="match-list"></div>
-    <div style="text-align:center;padding:15px">
-      <a href="javascript:app.navigateTo('matches')" style="color:#667eea;font-size:14px;font-weight:600">查看全部赛事 »</a>
+    <div class="text-center-p15">
+      <a href="javascript:app.navigateTo('matches')" class="link-purple">查看全部赛事 »</a>
     </div>
   </div>
 
@@ -576,7 +404,7 @@
       <div class="about-hero">
         <h2>🏆 19888 反波膽竞猜平台</h2>
         <p>不猜结果，反猜意外 — 让每一脚射门都有价值</p>
-        <p style="font-size:11px;margin-top:6px;opacity:0.7">SABA 27年盘口数据库 · 5,000万场历史赛事 · AI深度学习</p>
+        <p class="text-xs-mt6-dim">SABA 27年盘口数据库 · 5,000万场历史赛事 · AI深度学习</p>
       </div>
 
       <!-- Platform Stats -->
@@ -634,12 +462,12 @@
       </div>
 
       <!-- Platform Description -->
-      <p style="font-size:13px;color:var(--text2);line-height:1.8;margin-bottom:12px">19888.com 为 Winsupreme Technology Limitada 旗下旗舰体育预测平台，是 1688 SABA Sports Web3 产品矩阵的核心成员。平台基于 SABA 27 年盘口数据库（5,000 万场历史赛事）与 AI 深度学习模型，提供反波膽（Anti-Score Prediction）、正波膽（Score Prediction）及 AI 智投三大核心品类。首创 18 格比分盘，覆盖日均 35-60 场比赛。</p>
-      <p style="font-size:13px;color:var(--text2);line-height:1.8;margin-bottom:12px">我们的核心创新在于"反波膽"玩法——不猜测比赛结果，而是预测一个<em style="color:var(--purple-start);font-style:normal;font-weight:700">不会发生</em>的比分。在 18 格比分盘中，仅有 1-2 个比分会真实出现，理论胜率高达 88.89%，为竞猜者提供前所未有的获胜概率。</p>
+      <p class="about-desc">19888.com 为 Winsupreme Technology Limitada 旗下旗舰体育预测平台，是 1688 SABA Sports Web3 产品矩阵的核心成员。平台基于 SABA 27 年盘口数据库（5,000 万场历史赛事）与 AI 深度学习模型，提供反波膽（Anti-Score Prediction）、正波膽（Score Prediction）及 AI 智投三大核心品类。首创 18 格比分盘，覆盖日均 35-60 场比赛。</p>
+      <p class="about-desc">我们的核心创新在于"反波膽"玩法——不猜测比赛结果，而是预测一个<em class="inline-em-purple">不会发生</em>的比分。在 18 格比分盘中，仅有 1-2 个比分会真实出现，理论胜率高达 88.89%，为竞猜者提供前所未有的获胜概率。</p>
 
       <!-- License -->
-      <div class="license" style="margin-bottom:14px">
-        <div style="font-weight:700;font-size:14px;margin-bottom:6px">🛡️ 合法持牌运营</div>
+      <div class="license license-mb" >
+        <div class="fw7-text-base-mb6">🛡️ 合法持牌运营</div>
         The Autonomous Island of Anjouan, Union of the Comoros<br>
         License No. ALSI-202510002-FI1<br>
         完全遵守 The Computer Gaming Licensing Act 007 of 2005
@@ -651,44 +479,47 @@
   <div class="partners">
     <div class="section-title">官方合作伙伴</div>
     <div class="partners-grid">
-      <div class="partner-item"><span style="font-weight:900;color:#667eea;font-size:13px">SABA</span></div>
-      <div class="partner-item" style="font-size:24px">🏟️</div>
-      <div class="partner-item" style="font-size:24px">⚽</div>
-      <div class="partner-item" style="font-size:24px">🏆</div>
-      <div class="partner-item"><span style="font-weight:900;color:#667eea;font-size:10px">1688</span></div>
+      <div class="partner-item"><span class="partner-label">SABA</span></div>
+      <div class="partner-item text-3xl" >🏟️</div>
+      <div class="partner-item text-3xl" >⚽</div>
+      <div class="partner-item text-3xl" >🏆</div>
+      <div class="partner-item"><span class="partner-label-sm">1688</span></div>
     </div>
   </div>
 
   <!-- Pull Refresh Indicator -->
-  <div class="pull-indicator" id="pullIndicator">↓ 下拉刷新</div>
+  <div class="pull-indicator" id="pullIndicator">
+    <div class="pull-spinner"></div>
+    <span class="pull-icon">↓</span> <span class="pull-text">下拉刷新</span>
+  </div>
 
   <!-- Bet Cart -->
   <div class="bet-cart" id="betCart">
-    <div class="cart-header" onclick="event.stopPropagation()" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);cursor:default">
-      <span style="font-weight:700;font-size:14px;color:var(--text)">🛒 投注单 (<span class="cart-count" id="cartCount">0</span>)</span>
-      <span style="font-size:11px;color:var(--text3)">点击下方提交</span>
+    <div class="cart-header cart-header-inner" onclick="event.stopPropagation()" >
+      <span class="fw7-text-base">🛒 投注单 (<span class="cart-count" id="cartCount">0</span>)</span>
+      <span class="text-xs-muted">点击下方提交</span>
     </div>
-    <div class="cart-items" id="cartItems" style="max-height:200px;overflow-y:auto;padding:0 14px"></div>
-    <div class="cart-summary" id="cartSummary" style="display:none;padding:10px 14px;border-top:1px solid var(--border)">
-      <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:12px">
-        <span style="color:var(--text2)">投注总额</span>
-        <span class="cart-total" id="cartTotal" style="font-weight:700;color:var(--text)">0 USDT</span>
+    <div class="cart-items cart-items-scroll" id="cartItems" ></div>
+    <div class="cart-summary cart-summary-hidden" id="cartSummary" >
+      <div class="cart-row">
+        <span class="color-text2">投注总额</span>
+        <span class="cart-total text-bold color-text" id="cartTotal" >0 USDT</span>
       </div>
-      <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:12px">
-        <span style="color:var(--text2)">预估收益</span>
-        <span id="cartPotential" style="font-weight:700;color:var(--green)">0.00 USDT</span>
+      <div class="cart-row-wide">
+        <span class="color-text2">预估收益</span>
+        <span id="cartPotential" class="text-bold color-green">0.00 USDT</span>
       </div>
-      <button class="btn-submit-cart" onclick="event.stopPropagation();app.submitCart()" style="width:100%;padding:12px;background:var(--purple-grad);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">✓ 一键提交全部投注</button>
+      <button class="btn-submit-cart btn-submit-cart-full" onclick="event.stopPropagation();app.submitCart()" >✓ 一键提交全部投注</button>
     </div>
   </div>
 </div>
 
 <!-- ==================== PAGE: MATCHES ==================== -->
 <div class="page" id="page-matches">
-  <div style="padding:15px 15px 8px">
-    <div style="display:flex;align-items:center;justify-content:space-between">
-      <h2 style="font-size:18px;color:#333;font-weight:700">全部赛事</h2>
-      <span style="font-size:12px;color:var(--text3)" id="matches-count">10 场比赛</span>
+  <div class="page-section">
+    <div class="flex-between-center">
+      <h2 class="page-section-header-h2">全部赛事</h2>
+      <span class="text-sm-muted" id="matches-count">10 场比赛</span>
     </div>
   </div>
   <!-- League Filter for Matches page -->
@@ -717,15 +548,15 @@
           <div class="vt-name" id="md-home">--</div>
         </div>
         <div class="vs-score">
-          <div style="font-size:26px;font-weight:700" id="md-time">--</div>
-          <div style="font-size:12px;color:#999" id="md-date">--</div>
+          <div class="text-4xl-bold" id="md-time">--</div>
+          <div class="text-sm-muted" id="md-date">--</div>
         </div>
         <div class="vs-team">
           <div class="vt-logo" id="md-away-logo"></div>
           <div class="vt-name" id="md-away">--</div>
         </div>
       </div>
-      <div style="display:flex;justify-content:center;gap:20px;margin-top:12px;font-size:12px;color:#666">
+      <div class="match-info-row">
         <span id="md-venue">📍 --</span>
         <span id="md-referee">👨‍⚖️ --</span>
       </div>
@@ -742,95 +573,95 @@
 
     <!-- Tab: 18-Grid -->
     <div id="tab-grid-18" class="detail-tab-body active">
-      <div style="margin-bottom:12px;text-align:center">
-        <span style="font-weight:700;color:#333;font-size:15px">18格反波膽</span>
-        <span style="font-size:11px;color:#999;margin-left:8px">选择一个不会发生的比分 — 88.89% 胜率</span>
+      <div class="grid-18-section-header">
+        <span class="fw7-text-md">18格反波膽</span>
+        <span class="win-rate-badge gold-pulse">🎯 88.89% 理论胜率</span>
       </div>
-      <div class="grid-18-label">点击格子投注 ↓</div>
+      <div class="grid-18-label">点击格子选择你预测<b>不会发生</b>的比分 ↓</div>
       <div class="grid-18" id="grid-18"></div>
     </div>
 
     <!-- Tab: Score Prediction (正波膽) -->
-    <div id="tab-score" class="detail-tab-body" style="display:none">
-      <div style="margin-bottom:12px;text-align:center">
-        <span style="font-weight:700;color:var(--text);font-size:15px">⚽ 正波膽</span>
-        <span style="font-size:11px;color:var(--text3);margin-left:8px">预测精确比分 · 命中即赢</span>
+    <div id="tab-score" class="detail-tab-body d-none" >
+      <div class="mb-lg-center">
+        <span class="fw7-text-md">⚽ 正波膽</span>
+        <span class="text-xs-muted-ml8">预测精确比分 · 命中即赢</span>
       </div>
-      <div style="text-align:center;font-size:11px;color:var(--text3);margin-bottom:10px">点击比分投注 ↓ | <span style="color:var(--green);font-weight:600">赔率更高</span> | <span style="color:var(--red);font-weight:600">挑战更大</span></div>
-      <div id="score-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+      <div class="text-xs-muted-center-mb10">点击比分投注 ↓ | <span class="fw6-green">赔率更高</span> | <span class="fw6-red">挑战更大</span></div>
+      <div id="score-grid" class="score-grid">
         <!-- Dynamically populated by loadScoreGrid() -->
       </div>
-      <div id="score-bet-info" style="display:none;background:#fff;border-radius:12px;padding:14px;margin-top:12px;box-shadow:var(--shadow);text-align:center">
-        <div style="font-weight:700;color:var(--text);margin-bottom:6px">📝 已选投注</div>
-        <div id="score-bet-selection" style="font-size:13px;color:var(--purple-start);font-weight:600;margin-bottom:8px"></div>
-        <div style="display:flex;align-items:center;gap:8px;justify-content:center;flex-wrap:wrap">
-          <input type="number" id="score-bet-amount" placeholder="金额(USDT)" min="1" step="1" style="width:120px;padding:8px 12px;font-size:13px;text-align:center" oninput="app.updateScoreBetProfit()">
-          <button onclick="app.confirmScoreBet()" style="background:var(--accent-grad);color:#fff;border:none;padding:8px 20px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer">确认投注</button>
-          <button onclick="app.clearScoreBet()" style="background:#f0f0f0;border:none;padding:8px 16px;border-radius:20px;font-size:12px;cursor:pointer">清除</button>
+      <div id="score-bet-info" class="score-bet-panel">
+        <div class="fw7-text-mb6">📝 已选投注</div>
+        <div id="score-bet-selection" class="text-sm-purple-fw6-mb8"></div>
+        <div class="flex-wrap-center">
+          <input type="number" id="score-bet-amount" placeholder="金额(USDT)" min="1" step="1" class="bet-amount-input" oninput="app.updateScoreBetProfit()">
+          <button onclick="app.confirmScoreBet()" class="btn-gradient-sm">确认投注</button>
+          <button onclick="app.clearScoreBet()" class="btn-clear">清除</button>
         </div>
-        <div style="margin-top:8px;font-size:12px;color:var(--text2)">
-          赔率: <span id="score-bet-odds" style="color:var(--purple-start);font-weight:700">--</span> | 
-          潜在收益: <span id="score-bet-profit" style="color:var(--green);font-weight:700">0.00</span> USDT
+        <div class="text-sm-muted2-mt8">
+          赔率: <span id="score-bet-odds" class="fw7-purple">--</span> | 
+          潜在收益: <span id="score-bet-profit" class="fw7-green">0.00</span> USDT
         </div>
       </div>
     </div>
 
     <!-- Tab: Champion (冠亚预测 - 赛事级) -->
-    <div id="tab-champion" class="detail-tab-body" style="display:none">
-      <div style="margin-bottom:14px;text-align:center">
-        <span style="font-weight:700;color:var(--text);font-size:15px">👑 冠亚预测</span>
-        <span style="font-size:11px;color:var(--text3);margin-left:8px">预测本场赛事胜者</span>
+    <div id="tab-champion" class="detail-tab-body d-none" >
+      <div class="mb-xl-center">
+        <span class="fw7-text-md">👑 冠亚预测</span>
+        <span class="text-xs-muted-ml8">预测本场赛事胜者</span>
       </div>
       
       <!-- Team vs Team selector -->
-      <div style="display:flex;gap:10px;margin-bottom:12px">
-        <div id="champion-home-card" style="flex:1;background:var(--surface);border-radius:14px;padding:20px 14px;text-align:center;box-shadow:var(--shadow);cursor:pointer;transition:all .2s;border:2px solid transparent" onclick="app.selectChampionSide('home')">
-          <div style="font-size:40px;margin-bottom:6px" id="champion-home-flag">🏠</div>
-          <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px" id="champion-home-name">主队</div>
-          <div style="font-size:11px;color:var(--text3);margin-bottom:10px">冠军赔率</div>
-          <div style="font-size:24px;font-weight:900;color:var(--purple-start)" id="champion-home-odds">1.90</div>
+      <div class="flex-gap10-mb12">
+        <div id="champion-home-card" class="champion-team-card" onclick="app.selectChampionSide('home')">
+          <div class="text-flag" id="champion-home-flag">🏠</div>
+          <div class="text-md-fw7-mb4" id="champion-home-name">主队</div>
+          <div class="text-xs-muted-mb10">冠军赔率</div>
+          <div class="text-odds-lg" id="champion-home-odds">1.90</div>
         </div>
-        <div id="champion-away-card" style="flex:1;background:var(--surface);border-radius:14px;padding:20px 14px;text-align:center;box-shadow:var(--shadow);cursor:pointer;transition:all .2s;border:2px solid transparent" onclick="app.selectChampionSide('away')">
-          <div style="font-size:40px;margin-bottom:6px" id="champion-away-flag">🚩</div>
-          <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px" id="champion-away-name">客队</div>
-          <div style="font-size:11px;color:var(--text3);margin-bottom:10px">冠军赔率</div>
-          <div style="font-size:24px;font-weight:900;color:var(--purple-start)" id="champion-away-odds">2.05</div>
+        <div id="champion-away-card" class="champion-team-card" onclick="app.selectChampionSide('away')">
+          <div class="text-flag" id="champion-away-flag">🚩</div>
+          <div class="text-md-fw7-mb4" id="champion-away-name">客队</div>
+          <div class="text-xs-muted-mb10">冠军赔率</div>
+          <div class="text-odds-lg" id="champion-away-odds">2.05</div>
         </div>
       </div>
 
       <!-- 亚军投注区 -->
-      <div style="background:var(--surface);border-radius:14px;padding:16px;box-shadow:var(--shadow);margin-bottom:12px">
-        <div style="font-weight:700;color:var(--text);font-size:14px;margin-bottom:10px;text-align:center">🥈 亚军投注</div>
-        <div style="display:flex;gap:10px">
-          <div id="runnerup-home-card" style="flex:1;background:linear-gradient(135deg,#F7F8FA,#EEF0F6);border-radius:10px;padding:14px;text-align:center;cursor:pointer;border:2px solid transparent;transition:all .2s" onclick="app.selectChampionRunnerup('home')">
-            <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px" id="runnerup-home-name">主队</div>
-            <div style="font-size:20px;font-weight:900;color:var(--text2)" id="runnerup-home-odds">4.20</div>
+      <div class="champion-panel">
+        <div class="fw7-text-base-center-mb10">🥈 亚军投注</div>
+        <div class="flex-gap10">
+          <div id="runnerup-home-card" class="runnerup-team-card" onclick="app.selectChampionRunnerup('home')">
+            <div class="text-sm-fw7-mb4" id="runnerup-home-name">主队</div>
+            <div class="text-odds-md" id="runnerup-home-odds">4.20</div>
           </div>
-          <div id="runnerup-away-card" style="flex:1;background:linear-gradient(135deg,#F7F8FA,#EEF0F6);border-radius:10px;padding:14px;text-align:center;cursor:pointer;border:2px solid transparent;transition:all .2s" onclick="app.selectChampionRunnerup('away')">
-            <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px" id="runnerup-away-name">客队</div>
-            <div style="font-size:20px;font-weight:900;color:var(--text2)" id="runnerup-away-odds">4.50</div>
+          <div id="runnerup-away-card" class="runnerup-team-card" onclick="app.selectChampionRunnerup('away')">
+            <div class="text-sm-fw7-mb4" id="runnerup-away-name">客队</div>
+            <div class="text-odds-md" id="runnerup-away-odds">4.50</div>
           </div>
         </div>
       </div>
 
       <!-- Selected bet info -->
-      <div id="champion-bet-panel" style="display:none;background:var(--surface);border-radius:14px;padding:16px;box-shadow:var(--shadow);text-align:center">
-        <div style="font-weight:700;color:var(--text);margin-bottom:6px">📝 已选投注</div>
-        <div id="champion-bet-selection" style="font-size:14px;color:var(--purple-start);font-weight:700;margin-bottom:10px"></div>
-        <div style="display:flex;align-items:center;gap:8px;justify-content:center;flex-wrap:wrap">
-          <input type="number" id="champion-bet-amount" placeholder="金额(USDT)" min="1" step="1" style="width:120px;padding:8px 12px;font-size:13px;text-align:center" oninput="app.updateChampionBetProfit()">
-          <button onclick="app.confirmChampionBet()" style="background:var(--accent-grad);color:#fff;border:none;padding:8px 20px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer">确认投注</button>
-          <button onclick="app.clearChampionBet()" style="background:#f0f0f0;border:none;padding:8px 16px;border-radius:20px;font-size:12px;cursor:pointer">清除</button>
+      <div id="champion-bet-panel" class="champion-bet-panel-hidden">
+        <div class="fw7-text-mb6">📝 已选投注</div>
+        <div id="champion-bet-selection" class="text-base-purple-fw7-mb10"></div>
+        <div class="flex-wrap-center">
+          <input type="number" id="champion-bet-amount" placeholder="金额(USDT)" min="1" step="1" class="bet-amount-input" oninput="app.updateChampionBetProfit()">
+          <button onclick="app.confirmChampionBet()" class="btn-gradient-sm">确认投注</button>
+          <button onclick="app.clearChampionBet()" class="btn-clear">清除</button>
         </div>
-        <div style="margin-top:8px;font-size:12px;color:var(--text2)">
-          赔率: <span id="champion-bet-odds" style="color:var(--purple-start);font-weight:700">--</span> | 
-          潜在收益: <span id="champion-bet-profit" style="color:var(--green);font-weight:700">0.00</span> USDT
+        <div class="text-sm-muted2-mt8">
+          赔率: <span id="champion-bet-odds" class="fw7-purple">--</span> | 
+          潜在收益: <span id="champion-bet-profit" class="fw7-green">0.00</span> USDT
         </div>
       </div>
     </div>
 
     <!-- Tab: H2H History -->
-    <div id="tab-h2h" class="detail-tab-body" style="display:none">
+    <div id="tab-h2h" class="detail-tab-body d-none" >
       <div class="h2h-block active">
         <div class="h2h-title">📊 两队历史交锋记录</div>
         <div class="h2h-match">
@@ -858,7 +689,7 @@
           <div class="h2h-teams"><b class="ht-away-5">客队</b> vs <b class="ht-home-5">主队</b></div>
           <div class="h2h-score">1 : 3</div>
         </div>
-        <div style="margin-top:10px;padding:10px;background:#F7F8FA;border-radius:8px;font-size:11px;color:var(--text2)">
+        <div class="h2h-summary">
           <b>📋 历史交锋总结：</b><br>
           • 近 5 次交手：<span id="h2h-summary-line">主队 3胜 1平 1负</span><br>
           • 平均进球数：<span id="h2h-avg-goals">2.8 球/场</span><br>
@@ -868,7 +699,7 @@
     </div>
 
     <!-- Tab: Recent Form -->
-    <div id="tab-recent" class="detail-tab-body" style="display:none">
+    <div id="tab-recent" class="detail-tab-body d-none" >
       <div class="h2h-block active">
         <div class="h2h-title">📈 双方近期战绩 (近5场)</div>
         <div class="recent-form-row">
@@ -903,22 +734,22 @@
             </div>
           </div>
         </div>
-        <div style="margin-top:12px;padding:10px;background:#F7F8FA;border-radius:8px;font-size:11px;color:var(--text2)">
+        <div class="recent-ai-summary">
           <b>🤖 AI 评分对比：</b><br>
           <div class="pred-bars" id="detail-pred-bars">
             <div class="pred-bar-row">
               <div class="pred-bar-label">进攻能力</div>
-              <div class="pred-bar-track"><div class="pred-bar-fill" style="width:75%;background:linear-gradient(90deg,#667eea,#764ba2)"></div></div>
+              <div class="pred-bar-track"><div class="pred-bar-fill pred-fill-purple" ></div></div>
               <div class="pred-bar-pct">7.5</div>
             </div>
             <div class="pred-bar-row">
               <div class="pred-bar-label">防守能力</div>
-              <div class="pred-bar-track"><div class="pred-bar-fill" style="width:68%;background:linear-gradient(90deg,#11998e,#38ef7d)"></div></div>
+              <div class="pred-bar-track"><div class="pred-bar-fill pred-fill-green" ></div></div>
               <div class="pred-bar-pct">6.8</div>
             </div>
             <div class="pred-bar-row">
               <div class="pred-bar-label">近期状态</div>
-              <div class="pred-bar-track"><div class="pred-bar-fill" style="width:82%;background:linear-gradient(90deg,#f7971e,#ffd166)"></div></div>
+              <div class="pred-bar-track"><div class="pred-bar-fill pred-fill-orange" ></div></div>
               <div class="pred-bar-pct">8.2</div>
             </div>
           </div>
@@ -927,13 +758,13 @@
     </div>
 
     <!-- Match Info Card -->
-    <div style="background:#fff;border-radius:12px;padding:14px;margin-top:14px;box-shadow:var(--shadow);font-size:12px;color:var(--text2)">
-      <div style="font-weight:700;color:var(--text);margin-bottom:8px">📋 赛事信息</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <span>联赛: <b id="detail-league-name" style="color:var(--text)">--</b></span>
-        <span>场地: <b id="detail-venue-name" style="color:var(--text)">--</b></span>
-        <span>裁判: <b id="detail-ref-name" style="color:var(--text)">--</b></span>
-        <span>天气: <b style="color:var(--text)">☀️ 晴 22°C</b></span>
+    <div class="match-info-card">
+      <div class="fw7-text-mb8">📋 赛事信息</div>
+      <div class="grid-2col-gap8">
+        <span>联赛: <b id="detail-league-name" class="color-text">--</b></span>
+        <span>场地: <b id="detail-venue-name" class="color-text">--</b></span>
+        <span>裁判: <b id="detail-ref-name" class="color-text">--</b></span>
+        <span>天气: <b class="color-text">☀️ 晴 22°C</b></span>
       </div>
     </div>
   </div>
@@ -957,51 +788,130 @@
       <h3>AI 智投托管</h3>
       <p>5000 万场历史数据训练 · 凯利公式仓位管理<br>日均收益 3‰ ~ 1.2%，月化 ≈ 15%</p>
       <div class="sparkline" id="sparkline-ai"></div>
-      <div style="display:flex;justify-content:center;gap:24px;margin:8px 0;font-size:12px;color:#666">
-        <div>胜率: <b style="color:#03A66D">67.3%</b></div>
-        <div>连赢: <b style="color:#667eea">8 场</b></div>
-        <div>ROI: <b style="color:#03A66D">18.5%</b></div>
+      <div class="ai-stats-row">
+        <div>胜率: <b class="color-green">67.3%</b></div>
+        <div>连赢: <b class="color-purple">8 场</b></div>
+        <div>ROI: <b class="color-green">18.5%</b></div>
       </div>
-      <div style="margin-top:8px;font-size:13px;color:#666">
-        本月累计收益 <b style="color:#03A66D;font-size:20px">+12.8%</b>
+      <div class="text-sm-muted-mt8">
+        本月累计收益 <b class="text-green-2xl">+12.8%</b>
       </div>
-      <div style="margin-top:6px;font-size:10px;color:#999">
+      <div class="text-xs-muted-mt6">
         已运行 127 天 · 累计投注 2,483 笔 · 资金利用率 82.5%
       </div>
       <button class="ai-btn" onclick="app.connectWallet()">开启 AI 智投</button>
     </div>
 
-    <!-- Card 2: Today's Picks -->
+    <!-- ===== NEW: AI Investment Panel (deposit/withdraw/settlement) ===== -->
+    <div class="ai-card ai-invest-card glass-card">
+      <div class="ai-icon">💼</div>
+      <h3>AI 智投金库</h3>
+      <p class="text-xs-muted">托管资金 · 自动投注 · 每日结算</p>
+      
+      <!-- Historical Performance Sparkline -->
+      <div class="ai-sparkline-container" id="ai-sparkline"></div>
+
+      <!-- Daily Return Rates -->
+      <div class="ai-daily-return">
+        <div class="ai-return-item">
+          <div class="ai-return-val" id="ai-daily-rate">0.00%</div>
+          <div class="ai-return-lbl">日收益率</div>
+        </div>
+        <div class="ai-return-item">
+          <div class="ai-return-val" id="ai-monthly-ret">0.00</div>
+          <div class="ai-return-lbl">月化收益 (USDT)</div>
+        </div>
+        <div class="ai-return-item">
+          <div class="ai-return-val" id="ai-annual-ret">0.00</div>
+          <div class="ai-return-lbl">年化收益 (USDT)</div>
+        </div>
+      </div>
+      
+      <div class="ai-invest-stats">
+        <div class="ai-invest-stat">
+          <div class="ais-val" id="ai-invest-balance">0.00</div>
+          <div class="ais-label">托管余额 (USDT)</div>
+        </div>
+        <div class="ai-invest-stat">
+          <div class="ais-val green" id="ai-invest-profit">+0.00</div>
+          <div class="ais-label">累计收益</div>
+        </div>
+        <div class="ai-invest-stat">
+          <div class="ais-val" id="ai-invest-apr">≈15%</div>
+          <div class="ais-label">月化收益率</div>
+        </div>
+      </div>
+
+      <div class="ai-invest-actions">
+        <div class="ai-invest-row">
+          <input type="number" id="ai-deposit-amount" placeholder="存入金额 (USDT)" min="100" step="10" class="ai-invest-input">
+          <button class="ai-invest-btn deposit" onclick="app.aiDeposit()">📥 存入</button>
+        </div>
+        <div class="ai-invest-row">
+          <input type="number" id="ai-withdraw-amount" placeholder="提取金额 (USDT)" min="10" step="10" class="ai-invest-input">
+          <button class="ai-invest-btn withdraw" onclick="app.aiWithdraw()">📤 提取</button>
+        </div>
+      </div>
+
+      <!-- Lock Status -->
+      <div class="ai-lock-status unlocked" id="ai-lock-status">
+        ✅ <span>无锁定 · 可自由存取</span>
+      </div>
+
+      <button class="ai-withdraw-btn" id="ai-withdraw-main-btn" onclick="app.aiWithdraw()">
+        💰 提取全部收益
+      </button>
+
+      <div class="ai-settlement-info">
+        <div class="fw7-text-mb4">⏱️ 结算信息</div>
+        <div class="ai-settle-row">
+          <span>下一结算时间</span>
+          <b id="ai-next-settle">2026-06-08 00:00 UTC+8</b>
+        </div>
+        <div class="ai-settle-row">
+          <span>锁定期剩余</span>
+          <b id="ai-lock-remaining">7 天</b>
+        </div>
+        <div class="ai-settle-row">
+          <span>管理费</span>
+          <b>收益的 20%（仅盈利时）</b>
+        </div>
+      </div>
+
+      <div class="ai-risk-note">
+        ⚠️ 风险提示：AI 智投基于历史数据训练，过往业绩不代表未来表现。最大回撤控制在 -5%，极端行情可能触发熔断保护。
+      </div>
+    </div>
     <div class="ai-card">
       <div class="ai-icon">🎯</div>
       <h3>今日精选推荐</h3>
-      <p style="font-size:11px;color:#999">AI 模型实时分析 · 高置信度推荐</p>
+      <p class="text-xs-muted">AI 模型实时分析 · 高置信度推荐</p>
       <div class="ai-picks" id="ai-picks">
         <div class="ai-pick">
-          <div style="text-align:left">
+          <div class="text-left">
             <div><b>巴黎 vs 马赛</b> <span class="hot-badge">LIVE</span></div>
-            <div style="font-size:10px;color:#999">法甲 第38轮 · 王子公园球场</div>
+            <div class="text-2xs-muted">法甲 第38轮 · 王子公园球场</div>
           </div>
           <span class="pick-badge">反波膽 0:3 ⭐5</span>
         </div>
         <div class="ai-pick">
-          <div style="text-align:left">
+          <div class="text-left">
             <div><b>曼城 vs 利物浦</b></div>
-            <div style="font-size:10px;color:#999">英超 第38轮 · 伊蒂哈德球场</div>
+            <div class="text-2xs-muted">英超 第38轮 · 伊蒂哈德球场</div>
           </div>
           <span class="pick-badge">正波膽 1:1 ⭐4</span>
         </div>
         <div class="ai-pick">
-          <div style="text-align:left">
+          <div class="text-left">
             <div><b>皇马 vs 巴萨</b></div>
-            <div style="font-size:10px;color:#999">西甲 第38轮 · 伯纳乌球场</div>
+            <div class="text-2xs-muted">西甲 第38轮 · 伯纳乌球场</div>
           </div>
           <span class="pick-badge">冠亚 皇马 ⭐4</span>
         </div>
         <div class="ai-pick">
-          <div style="text-align:left">
+          <div class="text-left">
             <div><b>巴西 vs 阿根廷</b></div>
-            <div style="font-size:10px;color:#999">国际友谊赛 · 马拉卡纳球场</div>
+            <div class="text-2xs-muted">国际友谊赛 · 马拉卡纳球场</div>
           </div>
           <span class="pick-badge">反波膽 2:1 ⭐3</span>
         </div>
@@ -1012,32 +922,32 @@
     <div class="viz-row">
       <div class="viz-card">
         <div class="viz-title">📊 投注类型分布</div>
-        <div class="pie-chart" style="background: conic-gradient(#667eea 0% 52%, #03A66D 52% 78%, #f7971e 78% 92%, #fa293140 92% 100%);"></div>
+        <div class="pie-chart pie-chart-conic" ></div>
         <div class="pie-legend">
-          <div class="pie-legend-item"><span class="pie-legend-dot" style="background:#667eea"></span>反波膽 52%</div>
-          <div class="pie-legend-item"><span class="pie-legend-dot" style="background:#03A66D"></span>正波膽 26%</div>
-          <div class="pie-legend-item"><span class="pie-legend-dot" style="background:#f7971e"></span>冠亚 14%</div>
-          <div class="pie-legend-item"><span class="pie-legend-dot" style="background:#fa293140"></span>其他 8%</div>
+          <div class="pie-legend-item"><span class="pie-legend-dot heat-dot-purple" ></span>反波膽 52%</div>
+          <div class="pie-legend-item"><span class="pie-legend-dot heat-dot-green" ></span>正波膽 26%</div>
+          <div class="pie-legend-item"><span class="pie-legend-dot heat-dot-orange" ></span>冠亚 14%</div>
+          <div class="pie-legend-item"><span class="pie-legend-dot heat-dot-reddish" ></span>其他 8%</div>
         </div>
       </div>
       <div class="viz-card">
         <div class="viz-title">🔥 比分热度分布</div>
         <div class="heatmap-grid">
-          <div class="heatmap-cell" style="background:#e8e8e8;color:#999">0:0</div>
-          <div class="heatmap-cell" style="background:#667eea33;color:#667eea">1:0</div>
-          <div class="heatmap-cell" style="background:#667eea66;color:#fff">2:0</div>
-          <div class="heatmap-cell" style="background:#667eea99;color:#fff">2:1</div>
-          <div class="heatmap-cell" style="background:#667eea;color:#fff">1:1</div>
-          <div class="heatmap-cell" style="background:#667eea33;color:#667eea">0:1</div>
-          <div class="heatmap-cell" style="background:#667eea11;color:#999">3:0</div>
-          <div class="heatmap-cell" style="background:#667eea55;color:#fff">3:1</div>
-          <div class="heatmap-cell" style="background:#667eea88;color:#fff">3:2</div>
-          <div class="heatmap-cell" style="background:#667eea44;color:#fff">0:2</div>
-          <div class="heatmap-cell" style="background:#667eea22;color:#999">0:3</div>
-          <div class="heatmap-cell" style="background:#764ba2;color:#fff">2:2</div>
+          <div class="heatmap-cell heat-cell-empty" >0:0</div>
+          <div class="heatmap-cell heat-cell-warm" >1:0</div>
+          <div class="heatmap-cell heat-cell-medium" >2:0</div>
+          <div class="heatmap-cell heat-cell-high" >2:1</div>
+          <div class="heatmap-cell heat-cell-hot" >1:1</div>
+          <div class="heatmap-cell heat-cell-warm" >0:1</div>
+          <div class="heatmap-cell heat-cell-cool" >3:0</div>
+          <div class="heatmap-cell heat-cell-mid" >3:1</div>
+          <div class="heatmap-cell heat-cell-hot2" >3:2</div>
+          <div class="heatmap-cell heat-cell-warm2" >0:2</div>
+          <div class="heatmap-cell heat-cell-lukewarm" >0:3</div>
+          <div class="heatmap-cell heat-cell-max" >2:2</div>
         </div>
         <div class="heat-scale">
-          <span>冷门</span><span style="background:linear-gradient(90deg,#e8e8e8,#667eea,#764ba2);flex:1;height:6px;border-radius:3px;margin:0 8px"></span><span>热门</span>
+          <span>冷门</span><span class="heat-scale-bar"></span><span>热门</span>
         </div>
       </div>
     </div>
@@ -1046,52 +956,52 @@
     <div class="ai-card">
       <div class="ai-icon">🧠</div>
       <h3>AI 模型信心指数</h3>
-      <p style="font-size:11px;color:#999">深度学习模型对各品类的预测信心评分</p>
+      <p class="text-xs-muted">深度学习模型对各品类的预测信心评分</p>
       <div class="prediction-bars">
         <div class="pred-bar-row">
           <div class="pred-bar-label">反波膽</div>
-          <div class="pred-bar-track"><div class="pred-bar-fill" style="width:89%;background:linear-gradient(90deg,#667eea,#764ba2)"></div></div>
+          <div class="pred-bar-track"><div class="pred-bar-fill pred-fill-purple-89" ></div></div>
           <div class="pred-bar-pct">89%</div>
         </div>
         <div class="pred-bar-row">
           <div class="pred-bar-label">正波膽</div>
-          <div class="pred-bar-track"><div class="pred-bar-fill" style="width:62%;background:linear-gradient(90deg,#03A66D,#00c853)"></div></div>
+          <div class="pred-bar-track"><div class="pred-bar-fill pred-fill-green-62" ></div></div>
           <div class="pred-bar-pct">62%</div>
         </div>
         <div class="pred-bar-row">
           <div class="pred-bar-label">冠亚</div>
-          <div class="pred-bar-track"><div class="pred-bar-fill" style="width:71%;background:linear-gradient(90deg,#f7971e,#ffd166)"></div></div>
+          <div class="pred-bar-track"><div class="pred-bar-fill pred-fill-orange-71" ></div></div>
           <div class="pred-bar-pct">71%</div>
         </div>
         <div class="pred-bar-row">
           <div class="pred-bar-label">总进球</div>
-          <div class="pred-bar-track"><div class="pred-bar-fill" style="width:55%;background:linear-gradient(90deg,#fa2931,#ff8a65)"></div></div>
+          <div class="pred-bar-track"><div class="pred-bar-fill pred-fill-red-55" ></div></div>
           <div class="pred-bar-pct">55%</div>
         </div>
         <div class="pred-bar-row">
           <div class="pred-bar-label">角球数</div>
-          <div class="pred-bar-track"><div class="pred-bar-fill" style="width:48%;background:linear-gradient(90deg,#9b59b6,#c39bd3)"></div></div>
+          <div class="pred-bar-track"><div class="pred-bar-fill pred-fill-violet-48" ></div></div>
           <div class="pred-bar-pct">48%</div>
         </div>
       </div>
-      <div style="margin-top:8px;font-size:10px;color:#999;text-align:center">基于 5,000 万场历史数据训练 · 置信度 > 70% 为高置信推荐</div>
+      <div class="text-xs-muted-center-mt8">基于 5,000 万场历史数据训练 · 置信度 > 70% 为高置信推荐</div>
     </div>
 
     <!-- Card 3: Risk Dashboard -->
     <div class="ai-card">
       <div class="ai-icon">🛡️</div>
       <h3>风控仪表盘</h3>
-      <p style="font-size:11px;color:#999">实时风险监控 · 自动熔断保护</p>
+      <p class="text-xs-muted">实时风险监控 · 自动熔断保护</p>
       <div class="risk-grid">
-        <div class="risk-item"><span>最大回撤</span><b style="color:#03A66D">-2.1%</b></div>
-        <div class="risk-item"><span>凯利仓位</span><b style="color:#667eea">8.3%</b></div>
-        <div class="risk-item"><span>夏普比率</span><b style="color:#03A66D">1.87</b></div>
-        <div class="risk-item"><span>熔断状态</span><b style="color:#03A66D">✅ 正常</b></div>
-        <div class="risk-item"><span>波动率</span><b style="color:#667eea">12.4%</b></div>
-        <div class="risk-item"><span>胜率趋势</span><b style="color:#03A66D">↑ 3.2%</b></div>
+        <div class="risk-item"><span>最大回撤</span><b class="color-green">-2.1%</b></div>
+        <div class="risk-item"><span>凯利仓位</span><b class="color-purple">8.3%</b></div>
+        <div class="risk-item"><span>夏普比率</span><b class="color-green">1.87</b></div>
+        <div class="risk-item"><span>熔断状态</span><b class="color-green">✅ 正常</b></div>
+        <div class="risk-item"><span>波动率</span><b class="color-purple">12.4%</b></div>
+        <div class="risk-item"><span>胜率趋势</span><b class="color-green">↑ 3.2%</b></div>
       </div>
-      <div style="margin-top:10px;background:#F7F8FA;border-radius:8px;padding:10px;font-size:11px;color:var(--text2);text-align:left">
-        <div style="font-weight:700;color:var(--text);margin-bottom:4px">📋 风险提示</div>
+      <div class="risk-tips">
+        <div class="fw7-text-mb4">📋 风险提示</div>
         <div>• 当前市场波动率处于正常区间</div>
         <div>• 凯利系数建议单笔不超过总仓位 8.3%</div>
         <div>• 如触发 -5% 最大回撤线，系统将自动熔断</div>
@@ -1103,15 +1013,15 @@
 <!-- ==================== PAGE: RECORDS ==================== -->
 <div class="page" id="page-records">
   <div class="records-section">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+    <div class="flex-between-mb8">
       <h2>投注记录</h2>
-      <div style="font-size:12px;color:var(--text3)">
+      <div class="text-sm-muted">
         <span id="records-summary">共 0 条</span>
       </div>
     </div>
 
     <!-- Quick Stats -->
-    <div class="record-filter" style="margin-bottom:6px">
+    <div class="record-filter mb-xs" >
       <button class="active" onclick="app.filterRecords('all')">全部</button>
       <button onclick="app.filterRecords('pending')">进行中</button>
       <button onclick="app.filterRecords('won')">已赢</button>
@@ -1119,18 +1029,18 @@
     </div>
 
     <!-- Records Summary Bar -->
-    <div style="display:flex;gap:10px;margin-bottom:14px">
-      <div style="flex:1;background:#fff;border-radius:8px;padding:10px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.04)">
-        <div style="font-size:10px;color:var(--text3)">总投注</div>
-        <div style="font-size:16px;font-weight:700;color:var(--text)" id="records-total-bet">0</div>
+    <div class="flex-gap10-mb14">
+      <div class="records-stat-card">
+        <div class="text-2xs-muted">总投注</div>
+        <div class="text-lg-fw7-text" id="records-total-bet">0</div>
       </div>
-      <div style="flex:1;background:#fff;border-radius:8px;padding:10px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.04)">
-        <div style="font-size:10px;color:var(--text3)">总收益</div>
-        <div style="font-size:16px;font-weight:700;color:var(--green)" id="records-total-profit">+0</div>
+      <div class="records-stat-card">
+        <div class="text-2xs-muted">总收益</div>
+        <div class="text-lg-fw7-green" id="records-total-profit">+0</div>
       </div>
-      <div style="flex:1;background:#fff;border-radius:8px;padding:10px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.04)">
-        <div style="font-size:10px;color:var(--text3)">胜率</div>
-        <div style="font-size:16px;font-weight:700;color:var(--purple-start)" id="records-winrate">0%</div>
+      <div class="records-stat-card">
+        <div class="text-2xs-muted">胜率</div>
+        <div class="text-lg-fw7-purple" id="records-winrate">0%</div>
       </div>
     </div>
 
@@ -1142,37 +1052,53 @@
 <div class="page" id="page-profile">
   <div class="profile-section">
 
-    <!-- VIP Card -->
-    <div class="vip-card">
-      <div class="vc-lvl">👑 VIP 1</div>
-      <div class="vc-name">新晋会员</div>
-      <div class="vc-benefits">
-        <span>基础赔率</span>
-        <span>日提现 $500</span>
-        <span>标准客服</span>
+    <!-- VIP Status Card -->
+    <div class="vip-status-card gradient-border" id="vip-status-card">
+      <div class="vsc-header">
+        <div class="vsc-level-icon" id="vip-level-icon">👑</div>
+        <div class="vsc-level-info">
+          <div class="vsc-level-name" id="vip-level-name">VIP 1</div>
+          <div class="vsc-level-title" id="vip-level-title">新晋会员</div>
+        </div>
+        <span class="vip-tier-badge vip-tier-1 gold-pulse" id="vip-tier-badge">VIP 1</span>
+      </div>
+      <div class="vsc-rebates" id="vip-rebates">
+        <div class="vsc-rebate">
+          <div class="vsc-r-val" id="vip-anti-rebate">0.2%</div>
+          <div class="vsc-r-label">反波膽返佣</div>
+        </div>
+        <div class="vsc-rebate">
+          <div class="vsc-r-val" id="vip-score-rebate">1.0%</div>
+          <div class="vsc-r-label">正波膽返佣</div>
+        </div>
+        <div class="vsc-rebate">
+          <div class="vsc-r-val" id="vip-ai-rebate">0.1%</div>
+          <div class="vsc-r-label">AI 返佣</div>
+        </div>
       </div>
     </div>
 
     <!-- Profile Card -->
-    <div class="profile-card">
-      <div class="profile-avatar" style="background:var(--purple-grad);font-size:32px">👤</div>
+    <div class="profile-card glass-card glass-card-hover">
+      <div class="profile-avatar profile-avatar-alt" >👤</div>
       <div class="profile-name" id="profile-name">请连接钱包</div>
       <div class="profile-addr" id="profile-addr">未连接</div>
-      <div class="profile-balance">💰 <strong id="profile-balance">0.00</strong> USDT</div>
-      <div style="display:flex;gap:8px;margin-top:10px;justify-content:center">
-        <button onclick="app.showDepositModal()" style="background:var(--purple-grad);color:#fff;border:none;padding:8px 20px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer">💳 充值</button>
-        <button onclick="app.showWithdrawModal()" style="background:#fff;color:var(--purple-start);border:1px solid var(--purple-start);padding:8px 20px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer">📤 提现</button>
+      <div class="profile-balance count-up">💰 <strong id="profile-balance">0.00</strong> USDT</div>
+      <div class="flex-center-gap8-mt10">
+        <button class="profile-btn-primary gold-glow" onclick="app.showDepositModal()">💳 充值</button>
+        <button class="profile-btn-outline" onclick="app.showWithdrawModal()">📤 提现</button>
       </div>
     </div>
 
-    <!-- VIP Progress -->
-    <div class="vip-progress">
-      <div class="vip-header"><span>距 VIP2 还需</span><b>$19,800</b></div>
-      <div class="vip-bar"><div class="vip-fill" style="width:1%"></div></div>
-      <div class="vip-labels">
-        <span>$0</span><span>VIP1</span><span>$20K</span><span>VIP2</span>
-        <span>$100K</span><span>VIP3</span><span>$1M</span><span>VIP4</span>
-        <span>$10M</span><span>VIP5</span>
+    <!-- VIP Progress Bar -->
+    <div class="vip-progress vip-progress-enhanced" id="vip-progress-section">
+      <div class="vip-header"><span>累计流水</span><b id="vip-turnover">$0</b></div>
+      <div class="vip-header"><span>距下一级还需</span><b id="vip-next-needed">$20,000</b></div>
+      <div class="vip-bar"><div class="vip-fill" id="vip-progress-fill" style="width:0%"></div></div>
+      <div class="vip-labels" id="vip-labels">
+        <span>VIP 1<br>$20K</span><span>VIP 2<br>$100K</span>
+        <span>VIP 3<br>$1M</span><span>VIP 4<br>$10M</span>
+        <span>VIP 5<br>$50M</span>
       </div>
     </div>
 
@@ -1196,7 +1122,7 @@
           <div class="ts-lbl">分成比例</div>
         </div>
       </div>
-      <div style="font-size:11px;color:var(--text3);margin-bottom:8px">团队成员</div>
+      <div class="text-xs-muted-mb8">团队成员</div>
       <div class="team-members">
         <div class="team-member-avatar">👤</div>
         <div class="team-member-avatar">👩</div>
@@ -1204,16 +1130,16 @@
         <div class="team-member-avatar">👩‍🦰</div>
         <div class="team-member-avatar">👨‍🦱</div>
         <div class="team-member-avatar">👩‍🦳</div>
-        <div class="team-member-avatar" style="background:var(--purple-grad);color:#fff;font-size:11px;font-weight:700">+6</div>
+        <div class="team-member-avatar team-avatar-more" >+6</div>
       </div>
     </div>
 
     <!-- ===== NEW: Invite Friends Section ===== -->
     <div class="invite-section">
       <div class="invite-title">🤝 邀请好友 · 双向返佣</div>
-      <div class="invite-desc">分享你的专属邀请码，好友注册即享 10 USDT 奖励<br>你可获得好友投注流水的 <b style="color:var(--purple-start)">20% 永久分红</b></div>
+      <div class="invite-desc">分享你的专属邀请码，好友注册即享 10 USDT 奖励<br>你可获得好友投注流水的 <b class="color-purple">20% 永久分红</b></div>
       <div class="invite-code-box">
-        <span style="font-size:10px;color:var(--text3)">你的邀请码</span><br>
+        <span class="text-2xs-muted">你的邀请码</span><br>
         <span class="invite-code">19888X7K2</span>
       </div>
       <div class="invite-btn-row">
@@ -1228,7 +1154,7 @@
     </div>
 
     <!-- Menu List -->
-    <div class="menu-list" style="margin-top:14px">
+    <div class="menu-list mt-xxl" >
       <div class="menu-item" id="wallet-status" onclick="app.toggleWallet()">
         <div class="m-left"><span class="m-icon">👛</span>钱包连接</div>
         <div class="m-arrow">›</div>
@@ -1243,12 +1169,12 @@
       </div>
       <div class="menu-item">
         <div class="m-left"><span class="m-icon">👑</span>VIP 等级</div>
-        <span style="font-size:11px;color:#667eea;font-weight:700">VIP 1</span>
+        <span class="menu-badge">VIP 1</span>
         <div class="m-arrow">›</div>
       </div>
       <div class="menu-item">
         <div class="m-left"><span class="m-icon">💰</span>流水分红</div>
-        <span style="font-size:11px;color:#03A66D;font-weight:700">$0.00</span>
+        <span class="menu-badge-green">$0.00</span>
         <div class="m-arrow">›</div>
       </div>
       <div class="menu-item">
@@ -1257,22 +1183,22 @@
       </div>
       <div class="menu-item" onclick="document.querySelector('#page-profile .team-section').scrollIntoView({behavior:'smooth'})">
         <div class="m-left"><span class="m-icon">👥</span>团队代理</div>
-        <span style="font-size:10px;color:#999">成员 12 · Lv.1</span>
+        <span class="text-2xs-muted">成员 12 · Lv.1</span>
         <div class="m-arrow">›</div>
       </div>
       <div class="menu-item" onclick="app.openPromoModal()">
         <div class="m-left"><span class="m-icon">🎁</span>活动中心</div>
-        <span style="font-size:10px;color:var(--red)">4个进行中</span>
+        <span class="menu-badge-red">4个进行中</span>
         <div class="m-arrow">›</div>
       </div>
       <div class="menu-item" onclick="app.toggleNotifications()">
         <div class="m-left"><span class="m-icon">🔔</span>消息通知</div>
-        <span style="background:var(--red);color:#fff;border-radius:10px;padding:1px 8px;font-size:10px">5</span>
+        <span class="notify-badge-inline">5</span>
         <div class="m-arrow">›</div>
       </div>
       <div class="menu-item" onclick="app.openLangModal()">
         <div class="m-left"><span class="m-icon">🌐</span>语言切换</div>
-        <span style="font-size:10px;color:#999">简体中文</span>
+        <span class="text-2xs-muted">简体中文</span>
         <div class="m-arrow">›</div>
       </div>
       <div class="menu-item">
@@ -1281,7 +1207,7 @@
       </div>
       <div class="menu-item">
         <div class="m-left"><span class="m-icon">🛡️</span>牌照信息</div>
-        <span style="font-size:10px;color:#999">ALSI-202510002-FI1</span>
+        <span class="text-2xs-muted">ALSI-202510002-FI1</span>
         <div class="m-arrow">›</div>
       </div>
       <div class="menu-item">
@@ -1291,131 +1217,299 @@
     </div>
 
     <!-- Footer -->
-    <div style="text-align:center;margin-top:20px;font-size:11px;color:#999;line-height:1.8">
+    <div class="profile-footer">
       19888 v1.0 · Winsupreme Technology Limitada<br>
       License ALSI-202510002-FI1 · Anjouan, Comoros<br>
-      <span style="font-size:10px">© 2026 19888.com All Rights Reserved</span>
+      <span class="text-xs">© 2026 19888.com All Rights Reserved</span>
     </div>
   </div>
 </div>
 
 <!-- ==================== PAGE: RULES ==================== -->
 <div class="page" id="page-rules">
-  <div class="rules-section" style="padding:15px;max-width:600px;margin:0 auto;background:var(--bg);min-height:100vh">
-
+  <div class="rules-section">
     <!-- Hero -->
-    <div style="background:var(--accent-grad);border-radius:16px;padding:24px 20px;text-align:center;color:#fff;margin-bottom:16px">
-      <div style="font-size:36px;margin-bottom:4px">📖</div>
-      <h2 style="font-size:20px;font-weight:900;margin-bottom:6px">19888 游戏规则</h2>
-      <p style="font-size:12px;opacity:0.85;line-height:1.6">了解三种竞猜玩法，掌握盈利之道<br>最终解释权归 19888 所有</p>
+    <div class="about-hero">
+      <div class="text-center rules-hero-icon" >📖</div>
+      <h2 class="rules-hero-title">19888 游戏规则</h2>
+      <p class="text-sm rule-intro" >了解所有竞猜玩法与平台机制，掌握盈利之道<br>最终解释权归 19888 所有</p>
     </div>
 
-    <!-- Rule: 反波膽 -->
-    <div style="background:var(--surface);border-radius:14px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow);border-left:4px solid var(--accent)">
-      <h3 style="font-size:16px;font-weight:800;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:6px">🎯 反波膽 · 核心玩法</h3>
-      <div style="background:#F7F8FA;border-radius:8px;padding:10px;margin-bottom:10px;font-size:12px;color:var(--text2);line-height:1.7">
-        <b>玩法说明：</b>在 18 格比分盘中，<b style="color:var(--purple-start)">选择一个你预测<u>不会发生</u>的比分</b>。<br>
+    <!-- Rule: 反波膽 (Anti-Score) -->
+    <div class="rule-card">
+      <h3 class="rule-heading">🎯 1. 反波膽 · 核心玩法</h3>
+      <div class="rule-note">
+        <b>玩法说明：</b>在 18 格比分盘中，<b class="text-purple">选择你预测<u>不会发生</u>的比分</b>（可多选）。<br>
         比赛结束后，如果实际比分 ≠ 你所选的比分，即为获胜！<br>
-        18 格中仅 1-2 个比分会真实出现 → <b style="color:var(--green)">理论胜率高达 88.89%</b>
+        18 格中仅 1-2 个比分会真实出现 → <b class="text-green">理论胜率高达 88.89%</b>
       </div>
 
-      <div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:8px">📊 18格比分盘</div>
-      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-bottom:12px;text-align:center">
-        <div style="background:#F0F2F5;border-radius:6px;padding:6px 4px;font-size:11px;font-weight:600">0:0</div>
-        <div style="background:#F0F2F5;border-radius:6px;padding:6px 4px;font-size:11px;font-weight:600">0:1</div>
-        <div style="background:#F0F2F5;border-radius:6px;padding:6px 4px;font-size:11px;font-weight:600">0:2</div>
-        <div style="background:#F0F2F5;border-radius:6px;padding:6px 4px;font-size:11px;font-weight:600">0:3</div>
-        <div style="background:#F0F2F5;border-radius:6px;padding:6px 4px;font-size:11px;font-weight:600">1:0</div>
-        <div style="background:#F0F2F5;border-radius:6px;padding:6px 4px;font-size:11px;font-weight:600">1:1</div>
-        <div style="background:#F0F2F5;border-radius:6px;padding:6px 4px;font-size:11px;font-weight:600">1:2</div>
-        <div style="background:#F0F2F5;border-radius:6px;padding:6px 4px;font-size:11px;font-weight:600">1:3</div>
-        <div style="background:#F0F2F5;border-radius:6px;padding:6px 4px;font-size:11px;font-weight:600">2:0</div>
-        <div style="background:#F0F2F5;border-radius:6px;padding:6px 4px;font-size:11px;font-weight:600">2:1</div>
-        <div style="background:#F0F2F5;border-radius:6px;padding:6px 4px;font-size:11px;font-weight:600">2:2</div>
-        <div style="background:#F0F2F5;border-radius:6px;padding:6px 4px;font-size:11px;font-weight:600">2:3</div>
-        <div style="background:#F0F2F5;border-radius:6px;padding:6px 4px;font-size:11px;font-weight:600">3:0</div>
-        <div style="background:#F0F2F5;border-radius:6px;padding:6px 4px;font-size:11px;font-weight:600">3:1</div>
-        <div style="background:#F0F2F5;border-radius:6px;padding:6px 4px;font-size:11px;font-weight:600">3:2</div>
-        <div style="background:#F0F2F5;border-radius:6px;padding:6px 4px;font-size:11px;font-weight:600">3:3</div>
-        <div style="background:#667eea33;border-radius:6px;padding:6px 4px;font-size:10px;font-weight:700;color:var(--purple-start)">主4+</div>
-        <div style="background:#667eea33;border-radius:6px;padding:6px 4px;font-size:10px;font-weight:700;color:var(--purple-start)">客4+</div>
+      <div class="fw7-text-base-mb8">📊 18格比分盘 (4×4 + 2 极端格)</div>
+      <div class="rule-grid-mini">
+        <div class="rule-grid-cell">0:0</div><div class="rule-grid-cell">0:1</div><div class="rule-grid-cell">0:2</div><div class="rule-grid-cell">0:3</div>
+        <div class="rule-grid-cell">1:0</div><div class="rule-grid-cell">1:1</div><div class="rule-grid-cell">1:2</div><div class="rule-grid-cell">1:3</div>
+        <div class="rule-grid-cell">2:0</div><div class="rule-grid-cell">2:1</div><div class="rule-grid-cell">2:2</div><div class="rule-grid-cell">2:3</div>
+        <div class="rule-grid-cell">3:0</div><div class="rule-grid-cell">3:1</div><div class="rule-grid-cell">3:2</div><div class="rule-grid-cell">3:3</div>
+        <div class="rule-grid-cell-highlight">主4+</div><div class="rule-grid-cell-highlight">客4+</div>
       </div>
 
-      <div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:8px">💰 赔率说明</div>
-      <div style="background:#F7F8FA;border-radius:8px;padding:10px;font-size:11px;color:var(--text2);line-height:1.8;margin-bottom:10px">
-        <table style="width:100%;border-collapse:collapse;font-size:11px">
-          <thead><tr style="background:var(--accent-glass)"><th style="padding:6px;text-align:left">比分类型</th><th style="padding:6px;text-align:right">示例</th><th style="padding:6px;text-align:right">赔率范围</th></tr></thead>
+      <div class="fw7-text-base-mb8">💰 反波膽赔率说明</div>
+      <div class="rule-table-wrap">
+        <table class="table-collapse">
+          <thead><tr class="table-head-purple"><th class="table-th-left">比分类型</th><th class="table-th-right">示例</th><th class="table-th-right">赔率范围</th><th class="table-th-right">出现概率</th></tr></thead>
           <tbody>
-            <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px">常见比分 (高概率)</td><td style="padding:6px;text-align:right">1:1, 1:0</td><td style="padding:6px;text-align:right;color:var(--green)">~2x - 3x</td></tr>
-            <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px">中等比分 (中概率)</td><td style="padding:6px;text-align:right">2:1, 2:0</td><td style="padding:6px;text-align:right;color:var(--purple-start)">~4x - 8x</td></tr>
-            <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px">冷门比分 (低概率)</td><td style="padding:6px;text-align:right">3:2, 2:3</td><td style="padding:6px;text-align:right;color:var(--accent-mid)">~10x - 25x</td></tr>
-            <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px">极端比分 (极低概率)</td><td style="padding:6px;text-align:right">3:3, 主4+</td><td style="padding:6px;text-align:right;color:var(--red)">~50x - 425x</td></tr>
+            <tr class="border-b"><td class="table-td">常见比分</td><td class="table-th-right">1:1, 2:1, 1:0</td><td class="table-td-green">~2x - 8x</td><td class="table-th-right">高</td></tr>
+            <tr class="border-b"><td class="table-td">普通比分</td><td class="table-th-right">2:0, 2:2, 3:1</td><td class="table-td-purple">~10x - 25x</td><td class="table-th-right">中</td></tr>
+            <tr class="border-b"><td class="table-td">冷门比分</td><td class="table-th-right">3:3, 0:3</td><td class="table-td-accent">~35x - 80x</td><td class="table-th-right">低</td></tr>
+            <tr><td class="table-td">极端比分</td><td class="table-th-right">主4+, 客4+</td><td class="table-td-red">~150x - 425x</td><td class="table-th-right">极低</td></tr>
           </tbody>
         </table>
       </div>
 
-      <div style="background:#FFF8E1;border-radius:8px;padding:10px;font-size:11px;color:#B8860B;line-height:1.7;margin-bottom:8px">
+      <div class="rule-note rule-note-gold">
         <b>⚠️ 赔付上限：</b>单格赔付上限为奖池的 10%。多格投注互不影响，每格独立计算。
       </div>
-      <div style="font-size:11px;color:var(--text3);line-height:1.7">
+      <div class="text-sm text-muted rule-text" >
         <b>📝 投注示例：</b>若你选择"0:3"不会发生，投注 100 USDT，赔率 15.00。<br>
         最终比分 2:1 → 你赢！获得 100 × 15.00 = 1,500 USDT<br>
-        最终比分 0:3 → 你输。对手真打了0:3。
+        最终比分 0:3 → 你输。对手真打了 0:3。
       </div>
     </div>
 
-    <!-- Rule: 正波膽 -->
-    <div style="background:var(--surface);border-radius:14px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow);border-left:4px solid var(--green)">
-      <h3 style="font-size:16px;font-weight:800;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:6px">⚽ 正波膽 · 精确比分预测</h3>
-      <div style="background:#EDF9F3;border-radius:8px;padding:10px;margin-bottom:10px;font-size:12px;color:var(--text2);line-height:1.7">
-        <b>玩法说明：</b>预测比赛的<b style="color:var(--green)">精确最终比分</b>（含伤停补时，不含加时/点球）。<br>
+    <!-- Rule: 正波膽 (Score) -->
+    <div class="rule-card rule-card-border-green">
+      <h3 class="rule-heading">⚽ 2. 正波膽 · 精确比分预测</h3>
+      <div class="rule-note rule-note-green">
+        <b>玩法说明：</b>预测比赛的<b class="text-green">精确最终比分</b>（含伤停补时，不含加时/点球）。<br>
         必须完全命中比分才能获胜。难度较高，赔率也更丰厚！
       </div>
-      <div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:8px">💰 赔率范围</div>
-      <div style="background:#F7F8FA;border-radius:8px;padding:10px;font-size:11px;color:var(--text2);line-height:1.8;margin-bottom:10px">
-        <table style="width:100%;border-collapse:collapse;font-size:11px">
-          <thead><tr style="background:rgba(3,166,109,0.08)"><th style="padding:6px;text-align:left">比分类型</th><th style="padding:6px;text-align:right">示例</th><th style="padding:6px;text-align:right">赔率范围</th></tr></thead>
+      <div class="fw7-text-base-mb8">💰 正波膽赔率范围</div>
+      <div class="rule-table-wrap">
+        <table class="table-collapse">
+          <thead><tr class="table-head-green"><th class="table-th-left">比分类型</th><th class="table-th-right">示例</th><th class="table-th-right">赔率范围</th></tr></thead>
           <tbody>
-            <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px">常规比分</td><td style="padding:6px;text-align:right">1:0, 1:1, 2:1</td><td style="padding:6px;text-align:right;color:var(--green)">5x - 8x</td></tr>
-            <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px">中等比分</td><td style="padding:6px;text-align:right">2:0, 3:1, 0:0</td><td style="padding:6px;text-align:right;color:var(--purple-start)">8x - 15x</td></tr>
-            <tr><td style="padding:6px">冷门比分</td><td style="padding:6px;text-align:right">3:2, 3:3, 4:1</td><td style="padding:6px;text-align:right;color:var(--accent-mid)">15x - 50x</td></tr>
+            <tr class="border-b"><td class="table-td">常规比分</td><td class="table-th-right">1:0, 1:1, 2:1</td><td class="table-td-green">5x - 8x</td></tr>
+            <tr class="border-b"><td class="table-td">中等比分</td><td class="table-th-right">2:0, 3:1, 0:0</td><td class="table-td-purple">8x - 15x</td></tr>
+            <tr><td class="table-td">冷门比分</td><td class="table-th-right">3:2, 3:3, 4:1</td><td class="table-td-accent">15x - 50x</td></tr>
           </tbody>
         </table>
       </div>
-      <div style="background:#FFF0F1;border-radius:8px;padding:10px;font-size:11px;color:var(--red-dark);line-height:1.7">
+      <div class="rule-note rule-note-red">
         <b>⚠️ 注意：</b>正波膽难度较高，但单注赔率远高于反波膽。适合追求高回报的玩家。不可与反波膽混合投注。
+      </div>
+      <div class="text-sm text-muted rule-text">
+        <b>📝 投注示例：</b>预测 巴黎 vs 马赛 比分 1:1，投注 100 USDT @ 赔率 6.50。<br>
+        最终比分 1:1 → 赢！获得 100 × 6.50 = 650 USDT<br>
+        最终比分 2:1 → 输。未命中精确比分。
       </div>
     </div>
 
     <!-- Rule: 冠亚预测 -->
-    <div style="background:var(--surface);border-radius:14px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow);border-left:4px solid var(--gold)">
-      <h3 style="font-size:16px;font-weight:800;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:6px">👑 冠亚预测 · 赛事冠军/亚军</h3>
-      <div style="background:#FFF8E1;border-radius:8px;padding:10px;margin-bottom:10px;font-size:12px;color:var(--text2);line-height:1.7">
-        <b>玩法说明：</b>预测<b style="color:var(--gold)">冠军</b>或<b style="color:#C0C0C0">亚军</b>归属（适用于世界杯、欧冠等杯赛）。<br>
+    <div class="rule-card rule-card-border-gold">
+      <h3 class="rule-heading">👑 3. 冠亚预测 · 赛事冠军/亚军</h3>
+      <div class="rule-note rule-note-gold">
+        <b>玩法说明：</b>预测<b class="color-gold">冠军</b>或<b class="text-muted">亚军</b>归属（适用于世界杯、欧冠等杯赛）。<br>
         赛事结束后统一结算。可同时投冠军和亚军。
       </div>
-      <div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:8px">💰 赔率范围</div>
-      <div style="background:#F7F8FA;border-radius:8px;padding:10px;font-size:11px;color:var(--text2);line-height:1.8;margin-bottom:10px">
-        <table style="width:100%;border-collapse:collapse;font-size:11px">
-          <thead><tr style="background:rgba(218,165,32,0.12)"><th style="padding:6px;text-align:left">投注类型</th><th style="padding:6px;text-align:right">赔率范围</th></tr></thead>
+      <div class="fw7-text-base-mb8">💰 赔率范围</div>
+      <div class="rule-table-wrap">
+        <table class="table-collapse">
+          <thead><tr class="table-head-gold"><th class="table-th-left">投注类型</th><th class="table-th-right">强队赔率</th><th class="table-th-right">中等赔率</th><th class="table-th-right">弱队赔率</th></tr></thead>
           <tbody>
-            <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px">🏆 冠军</td><td style="padding:6px;text-align:right;color:var(--gold)">6x - 10x</td></tr>
-            <tr><td style="padding:6px">🥈 亚军</td><td style="padding:6px;text-align:right;color:var(--text2)">4x - 7x</td></tr>
+            <tr class="border-b"><td class="table-td">🏆 冠军</td><td class="table-td-green">5x - 6x</td><td class="table-td-purple">7x - 10x</td><td class="table-td-accent">12x - 30x</td></tr>
+            <tr><td class="table-td">🥈 亚军</td><td class="table-td-green">4x - 4.5x</td><td class="table-td-purple">5x - 7x</td><td class="table-td-accent">8x - 16x</td></tr>
           </tbody>
         </table>
       </div>
-      <div style="font-size:11px;color:var(--text3);line-height:1.7;margin-bottom:8px">
+      <div class="text-sm text-muted rule-text-mb8" >
         <b>📝 投注示例：</b>投巴西 冠军 100 USDT @ 赔率 5.50 → 如果巴西夺冠，获得 550 USDT
       </div>
-      <div style="background:#F0F2F5;border-radius:8px;padding:10px;font-size:11px;color:var(--text2);line-height:1.7">
-        <b>🔒 结算规则：</b>赛事结束后，管理员确认结果并统一结算。赢款自动到账户余额。
+    </div>
+
+    <!-- Rule: AI 智投 -->
+    <div class="rule-card rule-card-border-ai">
+      <h3 class="rule-heading">🤖 4. AI 智投 · 智能托管</h3>
+      <div class="rule-note rule-note-ai">
+        <b>玩法说明：</b>将 USDT 存入 AI 托管金库，由深度学习模型自动执行反波膽投注策略。<br>
+        基于 5000 万场历史数据训练，凯利公式仓位管理，7×24 小时自动运行。
+      </div>
+      
+      <div class="ai-rule-stats">
+        <div class="ai-rule-stat">
+          <div class="ars-val">67.3%</div>
+          <div class="ars-label">AI实战胜率</div>
+        </div>
+        <div class="ai-rule-stat">
+          <div class="ars-val">≈15%</div>
+          <div class="ars-label">月化收益</div>
+        </div>
+        <div class="ai-rule-stat">
+          <div class="ars-val">1.87</div>
+          <div class="ars-label">夏普比率</div>
+        </div>
+        <div class="ai-rule-stat">
+          <div class="ars-val">-2.1%</div>
+          <div class="ars-label">最大回撤</div>
+        </div>
+      </div>
+
+      <div class="fw7-text-base-mb8">📋 操作流程</div>
+      <div class="rule-dense">
+        <div>1️⃣ <b>存入 USDT</b> → 将资金转入 AI 托管金库</div>
+        <div>2️⃣ <b>AI 自动投注</b> → 系统 7×24 自动分析比赛，执行反波膽策略</div>
+        <div>3️⃣ <b>收益累积</b> → 每日结算，收益自动复投（可设置）</div>
+        <div>4️⃣ <b>提取收益</b> → 随时提取本金和收益（需在结算窗口）</div>
+      </div>
+
+      <div class="fw7-text-base-mb8">⏱️ 锁定期与费率</div>
+      <div class="rule-table-wrap">
+        <table class="table-collapse">
+          <thead><tr class="table-head-ai"><th class="table-th-left">项目</th><th class="table-th-right">说明</th></tr></thead>
+          <tbody>
+            <tr class="border-b"><td class="table-td">最低存入</td><td class="table-th-right">100 USDT</td></tr>
+            <tr class="border-b"><td class="table-td">锁定期</td><td class="table-th-right">7 天（提前赎回扣除 5% 手续费）</td></tr>
+            <tr class="border-b"><td class="table-td">管理费</td><td class="table-th-right">收益的 20%（仅在盈利时收取）</td></tr>
+            <tr class="border-b"><td class="table-td">结算周期</td><td class="table-th-right">每日 00:00 UTC+8 结算</td></tr>
+            <tr><td class="table-td">风控机制</td><td class="table-th-right">凯利公式仓位管理 · 最大回撤 -5% 自动熔断</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Rule: VIP 系统 -->
+    <div class="rule-card rule-card-border-vip">
+      <h3 class="rule-heading">👑 5. VIP 系统 · 5级会员体系</h3>
+      <div class="rule-note rule-note-vip">
+        <b>规则说明：</b>VIP 等级基于<b>累计流水（Turnover）</b>自动升级。<br>
+        等级越高，返佣比例越高。代理押金在升级时自动返还。
+      </div>
+
+      <div class="rule-table-wrap">
+        <table class="table-collapse vip-table">
+          <thead><tr class="table-head-vip">
+            <th class="table-th-center">VIP 等级</th>
+            <th class="table-th-right">累计流水</th>
+            <th class="table-th-right">反波膽返佣</th>
+            <th class="table-th-right">正波膽返佣</th>
+            <th class="table-th-right">AI 返佣</th>
+          </tr></thead>
+          <tbody>
+            <tr class="border-b vip-row-1">
+              <td class="table-td-center">👑 VIP 1</td>
+              <td class="table-th-right">$20,000</td>
+              <td class="table-td-green">0.2%</td>
+              <td class="table-td-green">1.0%</td>
+              <td class="table-td-green">0.1%</td>
+            </tr>
+            <tr class="border-b vip-row-2">
+              <td class="table-td-center">👑 VIP 2</td>
+              <td class="table-th-right">$100,000</td>
+              <td class="table-td-purple">0.4%</td>
+              <td class="table-td-purple">2.0%</td>
+              <td class="table-td-purple">0.2%</td>
+            </tr>
+            <tr class="border-b vip-row-3">
+              <td class="table-td-center">💎 VIP 3</td>
+              <td class="table-th-right">$1,000,000</td>
+              <td class="table-td-accent">0.6%</td>
+              <td class="table-td-accent">2.5%</td>
+              <td class="table-td-accent">0.3%</td>
+            </tr>
+            <tr class="border-b vip-row-4">
+              <td class="table-td-center">💎 VIP 4</td>
+              <td class="table-th-right">$10,000,000</td>
+              <td class="table-td-red">0.7%</td>
+              <td class="table-td-red">3.0%</td>
+              <td class="table-td-red">0.4%</td>
+            </tr>
+            <tr>
+              <td class="table-td-center">👑💎 VIP 5</td>
+              <td class="table-th-right">$50,000,000</td>
+              <td class="table-td-gold">0.8%</td>
+              <td class="table-td-gold">3.5%</td>
+              <td class="table-td-gold">0.5%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="rule-note rule-note-gold">
+        <b>💡 代理押金返还：</b>升级到 VIP 1 时需缴纳押金，此后每升一级自动返还押金。<br>
+        累计流水达到更高级别门槛后，自动升级并即时享受更高返佣比例。
+      </div>
+    </div>
+
+    <!-- Rule: 财富再分配 -->
+    <div class="rule-card rule-card-border-revenue">
+      <h3 class="rule-heading">💰 6. 财富再分配 · 收益共享机制</h3>
+      <div class="rule-note rule-note-revenue">
+        <b>机制说明：</b>平台所有手续费收入的 70% 将回馈社区。<br>
+        通过流水分红 + VIP返佣 + 团队代理等多层机制实现财富再分配。
+      </div>
+
+      <div class="fw7-text-base-mb8">📊 收入分配结构</div>
+      <div class="rule-table-wrap">
+        <table class="table-collapse">
+          <thead><tr class="table-head-revenue"><th class="table-th-left">分配对象</th><th class="table-th-right">比例</th><th class="table-th-right">说明</th></tr></thead>
+          <tbody>
+            <tr class="border-b"><td class="table-td">👥 团队代理</td><td class="table-td-purple">30%</td><td class="table-th-right">代理佣金 + 流水分红</td></tr>
+            <tr class="border-b"><td class="table-td">💰 国库基金</td><td class="table-td-green">30%</td><td class="table-th-right">平台运营 + 风险储备</td></tr>
+            <tr class="border-b"><td class="table-td">🎁 质押者分红</td><td class="table-td-accent">30%</td><td class="table-th-right">VIP 用户额外分红</td></tr>
+            <tr><td class="table-td">🏢 团队运营</td><td class="table-td-red">10%</td><td class="table-th-right">技术研发 + 合规</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="rule-dense-mt8">
+        <div>✅ <b>流水分红：</b>邀请好友注册，好友每笔投注你获得 20% 流水分红</div>
+        <div>✅ <b>VIP 返佣：</b>按 VIP 等级的返佣比例，每笔投注自动返佣</div>
+        <div>✅ <b>连胜加奖：</b>连续猜对 3 场奖金翻倍，5 场 3x，10 场 10x</div>
+        <div>✅ <b>首充翻倍：</b>新用户首次充值即享 100% 奖励，最高赠送 500 USDT</div>
+      </div>
+    </div>
+
+    <!-- Rule: 风控 -->
+    <div class="rule-card rule-card-border-risk">
+      <h3 class="rule-heading">🛡️ 7. 风控体系 · 资金安全保障</h3>
+      <div class="rule-note rule-note-risk">
+        <b>多层防护：</b>19888 采用多层风控机制确保奖池安全和用户资金保障。
+      </div>
+
+      <div class="risk-rule-grid">
+        <div class="risk-rule-item">
+          <div class="rri-icon">🛡️</div>
+          <div class="rri-title">奖池保护</div>
+          <div class="rri-desc">单格赔付上限 = 奖池 10%<br>单场总赔付 ≤ 奖池 50%</div>
+        </div>
+        <div class="risk-rule-item">
+          <div class="rri-icon">⚡</div>
+          <div class="rri-title">自动熔断</div>
+          <div class="rri-desc">日回撤超 3% 自动暂停<br>最大回撤 -5% 硬熔断</div>
+        </div>
+        <div class="risk-rule-item">
+          <div class="rri-icon">🔗</div>
+          <div class="rri-title">链上透明</div>
+          <div class="rri-desc">所有投注记录 BSC 链上可查<br>USDT 结算，无需信任</div>
+        </div>
+        <div class="risk-rule-item">
+          <div class="rri-icon">📊</div>
+          <div class="rri-title">凯利仓位</div>
+          <div class="rri-desc">AI 模型动态仓位管理<br>单笔 ≤ 总仓位 8.3%</div>
+        </div>
+      </div>
+
+      <div class="rule-dense-mt8">
+        <div>✅ <b>平台角色：</b>19888 不参与对赌，仅收取服务费（反波膽 15%，正波膽 20%），确保平台中立</div>
+        <div>✅ <b>资金隔离：</b>用户资金与平台运营资金完全分离，链上合约托管</div>
+        <div>✅ <b>合规持牌：</b>Anjouan 合法持牌运营，License ALSI-202510002-FI1</div>
+        <div>✅ <b>审计机制：</b>定期第三方合约审计，确保代码安全无后门</div>
       </div>
     </div>
 
     <!-- Rule: 通用规则 -->
-    <div style="background:var(--surface);border-radius:14px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow);border-left:4px solid var(--text3)">
-      <h3 style="font-size:16px;font-weight:800;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:6px">📋 通用规则</h3>
-      <div style="font-size:12px;color:var(--text2);line-height:2">
+    <div class="rule-card rule-card-border-muted">
+      <h3 class="rule-heading">📋 8. 通用规则与合规声明</h3>
+      <div class="text-sm text-muted rule-dense" >
         <div>✅ <b>投注流程：</b>连接钱包 → USDT充值 → 选择玩法 → 点击格子/比分 → 确认金额 → 提交投注</div>
         <div>✅ <b>结算时效：</b>赛事结束后 5-30 分钟内管理员结算，赢款自动到账</div>
         <div>✅ <b>撤销规则：</b>开赛前可撤销投注（需申请）；开赛后不可撤销</div>
@@ -1424,7 +1518,7 @@
         <div>✅ <b>异常比分：</b>以官方结果为准（含伤停补时，不含加时/点球大战）</div>
         <div>✅ <b>多格投注：</b>反波膽支持同时选多个格子，每格独立计算</div>
         <div>✅ <b>最低投注：</b>单格最低 1 USDT，无上限（受奖池10%赔付上限约束）</div>
-        <div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)">
+        <div class="rule-compliance">
           🛡️ <b>合规声明：</b>19888 由 Winsupreme Technology Limitada 持牌运营<br>
           License ALSI-202510002-FI1 · Anjouan, Comoros<br>
           严格遵守 The Computer Gaming Licensing Act 007 of 2005
@@ -1433,8 +1527,8 @@
     </div>
 
     <!-- Back to home -->
-    <div style="text-align:center;padding:20px 0 40px">
-      <button onclick="app.navigateTo('home')" style="background:var(--accent-grad);color:#fff;border:none;padding:12px 40px;border-radius:24px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(102,126,234,0.3)">🏠 返回首页</button>
+    <div class="text-center-p20-40">
+      <button onclick="app.navigateTo('home')" class="btn-home-return">🏠 返回首页</button>
     </div>
   </div>
 </div>
@@ -1472,6 +1566,14 @@
     <span class="tb-label">规则</span>
   </div>
 </nav>
+
+<!-- ===== BRANDED LOADING SPINNER OVERLAY ===== -->
+<div class="loading-overlay" id="loading-overlay">
+  <div class="text-center">
+    <div class="loading-spinner"></div>
+    <div class="loading-spinner-text" id="loading-text">加载中...</div>
+  </div>
+</div>
 
 <script src="js/app.js"></script>
 </body>

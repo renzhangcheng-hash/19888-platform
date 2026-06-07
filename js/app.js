@@ -7,54 +7,44 @@
 (function() {
   'use strict';
 
-  // ==================== ADMIN DATA LOADER ====================
-  function loadAdminMatches() {
-    try { const d = localStorage.getItem('19888_matches'); if (d) return JSON.parse(d); } catch {}
-    try { const d = localStorage.getItem('19888_admin_matches'); if (d) return JSON.parse(d); } catch {}
-    return null;
-  }
-  function loadAdminTeams() {
-    try { const d = localStorage.getItem('19888_champion_teams'); if (d) return JSON.parse(d); } catch {}
-    try { const d = localStorage.getItem('19888_admin_teams'); if (d) return JSON.parse(d); } catch {}
-    return null;
-  }
-
   // ==================== CONFIG ====================
-  var API_BASE = '/api';
-  var apiAvailable = false;
+  const API_BASE = '/api';
+  let apiAvailable = false;
 
   // ==================== STATE ====================
-  var walletAddress = null;
-  var walletProvider = null;
-  var currentPage = 'home';
-  var currentTab = 'recommend';
-  var currentLang = 'cn';
+  let walletAddress = null;
+  let walletProvider = null;
+  let currentPage = 'home';
+  let currentTab = 'recommend';
+  let currentLang = 'cn';
+  let currentFilter = 'all';
 
   // Page navigation history stack for gesture-back
-  var pageHistory = ['home'];
+  let pageHistory = ['home'];
 
   // USDT / BSC
-  var BSC_RPC = 'https://bsc-dataseed.binance.org/';
-  var USDT_ADDRESS = '0x55d398326f99059fF775485246999027B3197955';
-  var USDT_DECIMALS = 18;
-  var PLATFORM_ADDRESS = '0x4B16c5dE96eB2117bBE5Fd171E4d20361976F324';
-  var usdtBalance = 0;
-  var currentDetailMatchId = null;
+  const BSC_RPC = 'https://ethereum-sepolia-rpc.publicnode.com';
+  const USDT_ADDRESS = '0x98f1609261A1BE6B25e33FBDBa409dF93CD083cf';
+  const USDT_DECIMALS = 18;
+  const PLATFORM_ADDRESS = '0x02fda9c22d6f8733bA507Ed1019d67571626e9DA';
+  let usdtBalance = 0;
+  let currentDetailMatchId = null;
 
-  // ==================== CONTRACT ADDRESSES (Anvil local -> BSC testnet for prod) ====================
-  var CONTRACT_USDT = '0x0B306BF915C4d645ff596e518fAf3F9669b97016';
-  var CONTRACT_POOL = '0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE';
-  var CONTRACT_ANTI = '0x3Aa5ebB10DC797CAC828524e59A333d0A371443c';
-  var CONTRACT_CHAMP = '0x322813Fd9A801c5507c9de605d63CEA4f2CE6c44';
-  var BSC_USDT_REAL = '0x55d398326f99059fF775485246999027B3197955';
-  var viemLoaded = false;
+  // ==================== CONTRACT ADDRESSES (Sepolia testnet) ====================
+  const CONTRACT_USDT = '0x98f1609261A1BE6B25e33FBDBa409dF93CD083cf';
+  const CONTRACT_POOL = '0x02fda9c22d6f8733bA507Ed1019d67571626e9DA';
+  const CONTRACT_ANTI = '0x865C5C27c75eFE75a18EBC0B51F2CA0aEb6597aD';
+  const CONTRACT_CHAMP = '0x938246dee823cEFe5574E4d195EfAD0467b2ED71';
+  const CONTRACT_SCORE = '0x4d915d461109E19C4b80AD2bb81780F096d60C68';
+  const BSC_USDT_REAL = '0x98f1609261A1BE6B25e33FBDBa409dF93CD083cf';
+  let viemLoaded = false;
 
   // ==================== DYNAMIC VIEM CDN LOADER ====================
   function loadViemCDN(cb) {
     if (typeof window.viem !== 'undefined' && window.viem.encodeFunctionData) {
       viemLoaded = true; if (cb) cb(); return;
     }
-    var script = document.createElement('script');
+    let script = document.createElement('script');
     script.src = 'https://cdn.jsdelivr.net/npm/viem@2.21.55/dist/umd/index.js';
     script.onload = function() {
       if (typeof window.viem !== 'undefined' && window.viem.encodeFunctionData) viemLoaded = true;
@@ -83,11 +73,11 @@
       case 'POOL': return [
         { type:'function', name:'deposit', inputs:[{name:'amount',type:'uint256'}], outputs:[], stateMutability:'nonpayable' },
         { type:'function', name:'withdraw', inputs:[{name:'amount',type:'uint256'}], outputs:[], stateMutability:'nonpayable' },
-        { type:'function', name:'balanceOf', inputs:[{name:'user',type:'address'}], outputs:[{type:'uint256'}], stateMutability:'view' }
+        { type:'function', name:'userBalance', inputs:[{name:'user',type:'address'}], outputs:[{type:'uint256'}], stateMutability:'view' }
       ];
       case 'ANTI': return [
         { type:'function', name:'placeBet', inputs:[{name:'matchId',type:'uint256'},{name:'cell',type:'uint8'},{name:'amount',type:'uint256'}], outputs:[], stateMutability:'nonpayable' },
-        { type:'function', name:'createMatch', inputs:[{name:'homeTeam',type:'string'},{name:'awayTeam',type:'string'},{name:'matchTime',type:'uint256'},{name:'odds',type:'uint256[]'}], outputs:[], stateMutability:'nonpayable' }
+        { type:'function', name:'createMatch', inputs:[{name:'matchId',type:'uint256'},{name:'homeTeam',type:'string'},{name:'awayTeam',type:'string'},{name:'matchTime',type:'uint256'}], outputs:[], stateMutability:'nonpayable' }
       ];
       case 'CHAMP': return [
         { type:'function', name:'placeBet', inputs:[{name:'teamId',type:'uint256'},{name:'betType',type:'uint8'},{name:'amount',type:'uint256'}], outputs:[], stateMutability:'nonpayable' },
@@ -101,10 +91,10 @@
   async function contractApprove(spender, amount) {
     if (!viemLoaded || !walletProvider) return null;
     try {
-      var abi = getContractABI('USDT');
-      var parsed = window.viem.parseUnits(String(amount), 18);
-      var data = window.viem.encodeFunctionData({ abi:abi, functionName:'approve', args:[spender, parsed] });
-      var tx = await walletProvider.request({ method:'eth_sendTransaction', params:[{ from:walletAddress, to:CONTRACT_USDT, data:data }] });
+      let abi = getContractABI('USDT');
+      let parsed = window.viem.parseUnits(String(amount), 18);
+      let data = window.viem.encodeFunctionData({ abi:abi, functionName:'approve', args:[spender, parsed] });
+      let tx = await walletProvider.request({ method:'eth_sendTransaction', params:[{ from:walletAddress, to:CONTRACT_USDT, data:data }] });
       return tx;
     } catch(e) { console.error('[19888] approve error:', e); return null; }
   }
@@ -113,13 +103,13 @@
     if (!viemLoaded || !walletProvider) { showToast('链上交互不可用，请确保已连接钱包'); return null; }
     try {
       showToast('请在钱包中确认授权...');
-      var approveTx = await contractApprove(CONTRACT_POOL, amount);
+      let approveTx = await contractApprove(CONTRACT_POOL, amount);
       if (!approveTx) { showToast('授权失败或已取消'); return null; }
       showToast('授权成功，请在钱包中确认充值...');
-      var abi = getContractABI('POOL');
-      var parsed = window.viem.parseUnits(String(amount), 18);
-      var data = window.viem.encodeFunctionData({ abi:abi, functionName:'deposit', args:[parsed] });
-      var tx = await walletProvider.request({ method:'eth_sendTransaction', params:[{ from:walletAddress, to:CONTRACT_POOL, data:data }] });
+      let abi = getContractABI('POOL');
+      let parsed = window.viem.parseUnits(String(amount), 18);
+      let data = window.viem.encodeFunctionData({ abi:abi, functionName:'deposit', args:[parsed] });
+      let tx = await walletProvider.request({ method:'eth_sendTransaction', params:[{ from:walletAddress, to:CONTRACT_POOL, data:data }] });
       showToast('链上充值已提交！TX: ' + tx.substring(0, 14) + '...');
       refreshBalance();
       return tx;
@@ -130,10 +120,10 @@
     if (!viemLoaded || !walletProvider) { showToast('链上交互不可用'); return null; }
     try {
       showToast('请在钱包中确认提现...');
-      var abi = getContractABI('POOL');
-      var parsed = window.viem.parseUnits(String(amount), 18);
-      var data = window.viem.encodeFunctionData({ abi:abi, functionName:'withdraw', args:[parsed] });
-      var tx = await walletProvider.request({ method:'eth_sendTransaction', params:[{ from:walletAddress, to:CONTRACT_POOL, data:data }] });
+      let abi = getContractABI('POOL');
+      let parsed = window.viem.parseUnits(String(amount), 18);
+      let data = window.viem.encodeFunctionData({ abi:abi, functionName:'withdraw', args:[parsed] });
+      let tx = await walletProvider.request({ method:'eth_sendTransaction', params:[{ from:walletAddress, to:CONTRACT_POOL, data:data }] });
       showToast('链上提现已提交！TX: ' + tx.substring(0, 14) + '...');
       refreshBalance();
       return tx;
@@ -143,12 +133,12 @@
   async function contractPlaceAntiBet(matchId, cell, amount) {
     if (!viemLoaded || !walletProvider) return null;
     try {
-      var approveTx = await contractApprove(CONTRACT_ANTI, amount);
+      let approveTx = await contractApprove(CONTRACT_ANTI, amount);
       if (!approveTx) return null;
-      var abi = getContractABI('ANTI');
-      var parsed = window.viem.parseUnits(String(amount), 18);
-      var data = window.viem.encodeFunctionData({ abi:abi, functionName:'placeBet', args:[BigInt(matchId), cell, parsed] });
-      var tx = await walletProvider.request({ method:'eth_sendTransaction', params:[{ from:walletAddress, to:CONTRACT_ANTI, data:data }] });
+      let abi = getContractABI('ANTI');
+      let parsed = window.viem.parseUnits(String(amount), 18);
+      let data = window.viem.encodeFunctionData({ abi:abi, functionName:'placeBet', args:[BigInt(matchId), cell, parsed] });
+      let tx = await walletProvider.request({ method:'eth_sendTransaction', params:[{ from:walletAddress, to:CONTRACT_ANTI, data:data }] });
       return tx;
     } catch(e) { console.error('[19888] placeAntiBet error:', e); return null; }
   }
@@ -156,12 +146,12 @@
   async function contractPlaceChampionBet(teamId, betType, amount) {
     if (!viemLoaded || !walletProvider) return null;
     try {
-      var approveTx = await contractApprove(CONTRACT_CHAMP, amount);
+      let approveTx = await contractApprove(CONTRACT_CHAMP, amount);
       if (!approveTx) return null;
-      var abi = getContractABI('CHAMP');
-      var parsed = window.viem.parseUnits(String(amount), 18);
-      var data = window.viem.encodeFunctionData({ abi:abi, functionName:'placeBet', args:[BigInt(teamId), betType, parsed] });
-      var tx = await walletProvider.request({ method:'eth_sendTransaction', params:[{ from:walletAddress, to:CONTRACT_CHAMP, data:data }] });
+      let abi = getContractABI('CHAMP');
+      let parsed = window.viem.parseUnits(String(amount), 18);
+      let data = window.viem.encodeFunctionData({ abi:abi, functionName:'placeBet', args:[BigInt(teamId), betType, parsed] });
+      let tx = await walletProvider.request({ method:'eth_sendTransaction', params:[{ from:walletAddress, to:CONTRACT_CHAMP, data:data }] });
       return tx;
     } catch(e) { console.error('[19888] placeChampionBet error:', e); return null; }
   }
@@ -169,9 +159,9 @@
   // ==================== USDT BALANCE ====================
   async function getUSDTBalance(address) {
     try {
-      var r = await fetch(BSC_RPC, {method:'POST',headers:{'Content-Type':'application/json'},
+      let r = await fetch(BSC_RPC, {method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({jsonrpc:'2.0',id:1,method:'eth_call',params:[{to:USDT_ADDRESS,data:'0x70a08231000000000000000000000000'+address.replace('0x','')},'latest']})});
-      var j = await r.json();
+      let j = await r.json();
       if (j.result) return parseInt(j.result,16)/1e18;
     } catch(e) {}
     return 0;
@@ -179,19 +169,19 @@
 
   async function refreshBalance() {
     if (!walletAddress) return;
-    var bal = await getUSDTBalance(walletAddress);
+    let bal = await getUSDTBalance(walletAddress);
     usdtBalance = bal;
-    var el = document.getElementById('profile-balance');
+    let el = document.getElementById('profile-balance');
     if (el) el.textContent = bal.toFixed(2) + ' USDT';
     return bal;
   }
 
   // ==================== DEPOSIT / WITHDRAW MODALS ====================
   function showDepositModal() {
-    var div = document.getElementById('deposit-modal');
+    let div = document.getElementById('deposit-modal');
     if (!div) {
       div = document.createElement('div'); div.id = 'deposit-modal'; div.className = 'dialog-overlay';
-      div.innerHTML = '<div class="dialog" style="max-width:340px"><div class="dialog-header">💳 USDT 充值</div><div class="dialog-body" style="text-align:center;padding:20px"><p style="color:var(--text2);font-size:12px;margin-bottom:12px">向以下地址转账 USDT（BSC/BEP-20）</p><div style="background:#F7F8FA;padding:12px;border-radius:8px;word-break:break-all;font-size:11px;margin-bottom:12px;user-select:all">'+PLATFORM_ADDRESS+'</div><p style="color:var(--red);font-size:11px">⚠️ 仅支持 BSC 链 USDT</p><p style="color:var(--red);font-size:11px">其他链转账将永久丢失</p></div><div class="dialog-footer"><button class="btn-cancel" onclick="this.closest(\'.dialog-overlay\').style.display=\'none\'">关闭</button></div></div>';
+      div.innerHTML = '<div class="dialog" style="max-width:340px"><div class="dialog-header">💳 USDT 充值</div><div class="dialog-body" style="text-align:center;padding:20px"><p style="color:var(--text2);font-size:12px;margin-bottom:12px">向以下地址转账 USDT（Sepolia）</p><div style="background:#F7F8FA;padding:12px;border-radius:8px;word-break:break-all;font-size:11px;margin-bottom:12px;user-select:all">'+PLATFORM_ADDRESS+'</div><p style="color:var(--red);font-size:11px">⚠️ 仅支持 Sepolia 链 USDT</p><p style="color:var(--red);font-size:11px">其他链转账将永久丢失</p></div><div class="dialog-footer"><button class="btn-cancel" onclick="this.closest(\'.dialog-overlay\').style.display=\'none\'">关闭</button></div></div>';
       document.body.appendChild(div);
     }
     div.style.display = 'flex';
@@ -199,7 +189,7 @@
   }
 
   function showWithdrawModal() {
-    var div = document.getElementById('withdraw-modal');
+    let div = document.getElementById('withdraw-modal');
     if (!div) {
       div = document.createElement('div'); div.id = 'withdraw-modal'; div.className = 'dialog-overlay';
       div.innerHTML = '<div class="dialog"><div class="dialog-header">📤 USDT 提现</div><div class="dialog-body" style="padding:15px"><label style="font-size:12px">提现地址</label><input type="text" id="w-addr" placeholder="0x..." style="width:100%;padding:10px;background:#F7F8FA;border:1px solid var(--border);border-radius:8px;margin-bottom:10px;font-size:13px"><label style="font-size:12px">金额 (USDT)</label><input type="number" id="w-amount" placeholder="100" step="0.01" min="10" style="width:100%;padding:10px;background:#F7F8FA;border:1px solid var(--border);border-radius:8px;margin-bottom:10px;font-size:13px"><p style="font-size:11px;color:var(--text3)">可用余额: <span id="w-balance">0.00</span> USDT</p><p style="font-size:11px;color:var(--red);margin-top:8px">⚠️ 最低提现 10 USDT</p></div><div class="dialog-footer"><button class="btn-cancel" onclick="this.closest(\'.dialog-overlay\').style.display=\'none\'">取消</button><button class="btn-confirm" onclick="app.submitWithdraw()">确认提现</button></div></div>';
@@ -211,75 +201,102 @@
   }
 
   function submitWithdraw() {
-    var addr = document.getElementById('w-addr').value.trim();
-    var amount = parseFloat(document.getElementById('w-amount').value);
+    let addr = document.getElementById('w-addr').value.trim();
+    let amount = parseFloat(document.getElementById('w-amount').value);
     if (!addr || addr.length < 10) { showToast('请输入有效地址'); return; }
     if (isNaN(amount) || amount < 10) { showToast('最低提现 10 USDT'); return; }
-    var records = JSON.parse(localStorage.getItem('19888_withdraw_requests') || '[]');
+    let records = JSON.parse(localStorage.getItem('19888_withdraw_requests') || '[]');
     records.push({ address:addr, amount:amount, wallet:walletAddress, time:new Date().toISOString(), status:'pending' });
     localStorage.setItem('19888_withdraw_requests', JSON.stringify(records));
     showToast('提现申请已提交！管理员审核后到账');
     document.getElementById('withdraw-modal').style.display = 'none';
   }
 
-  var betRecords = [];
-  var userBalance = 0;
-  var betCart = [];
-  var oddsFlashTimer = null;
-  var oddsFlashInterval = null;
-  var audioCtx = null;
+  let betRecords = [];
+  let userBalance = 0;
+  let betCart = [];
+  let oddsFlashTimer = null;
+  let oddsFlashInterval = null;
+  let audioCtx = null;
 
   // ==================== API ====================
-  async function apiCall(endpoint, opts) {
+  let pendingApiCalls = 0;
+
+  function showLoading(msg) {
+    msg = msg || '加载中...';
+    let overlay = document.getElementById('loading-overlay');
+    let textEl = document.getElementById('loading-text');
+    if (overlay) overlay.classList.add('show');
+    if (textEl) textEl.textContent = msg;
+    pendingApiCalls++;
+  }
+
+  function hideLoading() {
+    pendingApiCalls = Math.max(0, pendingApiCalls - 1);
+    if (pendingApiCalls <= 0) {
+      pendingApiCalls = 0;
+      let overlay = document.getElementById('loading-overlay');
+      if (overlay) overlay.classList.remove('show');
+    }
+  }
+
+  async function apiCall(endpoint, opts, showSpinner) {
     opts = opts || {};
+    if (showSpinner !== false) showLoading();
     try {
-      var res = await fetch(API_BASE + endpoint, {
+      let res = await fetch(API_BASE + endpoint, {
         headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         method: opts.method || 'GET',
         body: opts.body || undefined
       });
-      var data = await res.json();
+      let data = await res.json();
       apiAvailable = true;
       return data;
     } catch(e) {
       apiAvailable = false;
       return null;
+    } finally {
+      if (showSpinner !== false) hideLoading();
     }
   }
 
   // ==================== TEAM FLAGS ====================
-  var TEAM_FLAGS = {
+  const TEAM_FLAGS = {
     "巴西": "\uD83C\uDDE7\uD83C\uDDF7", "阿根廷": "\uD83C\uDDE6\uD83C\uDDF7", "法国": "\uD83C\uDDEB\uD83C\uDDF7", "英格兰": "\uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62\uDB40\uDC65\uDB40\uDC6E\uDB40\uDC67\uDB40\uDC7F",
     "西班牙": "\uD83C\uDDEA\uD83C\uDDF8", "德国": "\uD83C\uDDE9\uD83C\uDDEA", "葡萄牙": "\uD83C\uDDF5\uD83C\uDDF9", "荷兰": "\uD83C\uDDF3\uD83C\uDDF1",
     "克罗地亚": "\uD83C\uDDED\uD83C\uDDF7", "比利时": "\uD83C\uDDE7\uD83C\uDDEA", "格鲁吉亚": "\uD83C\uDDEC\uD83C\uDDEA", "罗马尼亚": "\uD83C\uDDF7\uD83C\uDDF4",
     "摩洛哥": "\uD83C\uDDF2\uD83C\uDDE6", "马达加斯加": "\uD83C\uDDF2\uD83C\uDDEC", "威尔士": "\uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62\uDB40\uDC77\uDB40\uDC6C\uDB40\uDC73\uDB40\uDC7F", "加纳": "\uD83C\uDDEC\uD83C\uDDED",
   };
 
-  var FLAGS = {
+  const FLAGS = {
     "巴西":"\uD83C\uDDE7\uD83C\uDDF7","阿根廷":"\uD83C\uDDE6\uD83C\uDDF7","法国":"\uD83C\uDDEB\uD83C\uDDF7","英格兰":"\uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62\uDB40\uDC65\uDB40\uDC6E\uDB40\uDC67\uDB40\uDC7F",
     "西班牙":"\uD83C\uDDEA\uD83C\uDDF8","德国":"\uD83C\uDDE9\uD83C\uDDEA","葡萄牙":"\uD83C\uDDF5\uD83C\uDDF9","荷兰":"\uD83C\uDDF3\uD83C\uDDF1",
     "克罗地亚":"\uD83C\uDDED\uD83C\uDDF7","比利时":"\uD83C\uDDE7\uD83C\uDDEA","格鲁吉亚":"\uD83C\uDDEC\uD83C\uDDEA","罗马尼亚":"\uD83C\uDDF7\uD83C\uDDF4",
     "摩洛哥":"\uD83C\uDDF2\uD83C\uDDE6","马达加斯加":"\uD83C\uDDF2\uD83C\uDDEC","威尔士":"\uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62\uDB40\uDC77\uDB40\uDC6C\uDB40\uDC73\uDB40\uDC7F","加纳":"\uD83C\uDDEC\uD83C\uDDED",
   };
 
-  function teamLogoUrl(name) {
-    var slug = name.replace(/[^a-zA-Z\u4e00-\u9fff]/g, '_').toLowerCase();
-    return 'img/teams/' + slug + '.png';
+  function teamLogoUrl(name, ext) {
+    let slug = name.replace(/[^a-zA-Z\u4e00-\u9fff]/g, '_').toLowerCase();
+    return 'img/teams/' + slug + '.' + (ext || 'png');
   }
 
   function teamLogoImg(name, size) {
-    var s = size || 50;
+    let s = size || 50;
     if (FLAGS[name]) {
       return '<span style="display:inline-flex;align-items:center;justify-content:center;width:' + s + 'px;height:' + s + 'px;border-radius:50%;background:linear-gradient(135deg,#E8EBF5,#DDE1F0);font-size:' + Math.round(s*0.58) + 'px;flex-shrink:0;overflow:hidden">' + FLAGS[name] + '</span>';
     }
-    var url = teamLogoUrl(name);
-    var initials = name.replace(/\s/g,'').slice(0,3).toUpperCase() || '⚽';
-    var fallback = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#E8EBF5"/><text x="50" y="58" text-anchor="middle" font-size="' + (initials.length > 2 ? '28' : '38') + '" fill="#999" font-family="Arial" font-weight="900">' + initials + '</text></svg>');
-    return '<img src="' + url + '" width="' + s + '" height="' + s + '" style="border-radius:50%;object-fit:contain;background:#E8EBF5;flex-shrink:0" alt="' + name + '" loading="lazy" onerror="this.onerror=null;this.src=\'' + fallback + '\'">';
+    let webpUrl = teamLogoUrl(name, 'webp');
+    let pngUrl = teamLogoUrl(name, 'png');
+    let initials = name.replace(/\s/g,'').slice(0,3).toUpperCase() || '⚽';
+    let fallback = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#E8EBF5"/><text x="50" y="58" text-anchor="middle" font-size="' + (initials.length > 2 ? '28' : '38') + '" fill="#999" font-family="Arial" font-weight="900">' + initials + '</text></svg>');
+    return '<picture>' +
+      '<source srcset="' + webpUrl + '" type="image/webp">' +
+      '<img src="' + pngUrl + '" width="' + s + '" height="' + s + '" style="border-radius:50%;object-fit:contain;background:#E8EBF5;flex-shrink:0" alt="' + name + '" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=\'' + fallback + '\'">' +
+      '</picture>';
   }
 
   // ==================== MOCK DATA ====================
-  var mockMatches = [
+  const mockMatches = [
     { id:1, league:'法甲 第38轮', home:'巴黎圣日耳曼', away:'马赛', time:'2026-06-03 03:00', odds_home:1.82, odds_draw:3.50, odds_away:4.20, status:'live', venue:'王子公园球场', referee:'克莱芒·蒂尔潘' },
     { id:2, league:'英超 第38轮', home:'曼城', away:'利物浦', time:'2026-06-04 00:30', odds_home:2.10, odds_draw:3.30, odds_away:3.40, status:'upcoming', venue:'伊蒂哈德球场', referee:'迈克尔·奥利弗' },
     { id:3, league:'西甲 第38轮', home:'皇马', away:'巴萨', time:'2026-06-05 04:00', odds_home:2.40, odds_draw:3.20, odds_away:2.90, status:'upcoming', venue:'伯纳乌球场', referee:'安东尼奥·马特乌' },
@@ -292,7 +309,7 @@
     { id:10, league:'西甲 第37轮', home:'马德里竞技', away:'塞维利亚', time:'2026-06-09 04:00', odds_home:1.75, odds_draw:3.60, odds_away:4.80, status:'upcoming', venue:'大都会球场', referee:'卡洛斯·德尔塞罗' },
   ];
 
-  var mockChampionTeams = [
+  const mockChampionTeams = [
     { id:1, name:'巴西', championship_odds:5.50, runner_up_odds:4.20 },
     { id:2, name:'法国', championship_odds:6.00, runner_up_odds:4.50 },
     { id:3, name:'阿根廷', championship_odds:7.50, runner_up_odds:5.50 },
@@ -303,12 +320,12 @@
     { id:8, name:'荷兰', championship_odds:15.00, runner_up_odds:9.50 },
   ];
 
-  var scoreGrid18 = ['0:0','0:1','0:2','0:3','1:0','1:1','1:2','1:3','2:0','2:1','2:2','2:3','3:0','3:1','3:2','3:3','主4+','客4+'];
+  const scoreGrid18 = ['0:0','0:1','0:2','0:3','1:0','1:1','1:2','1:3','2:0','2:1','2:2','2:3','3:0','3:1','3:2','3:3','主4+','客4+'];
 
   // ==================== LUCKY944 PROBABILITY ENGINE ====================
   // Score probability distribution (18格反波膽基础概率)
   // Sum must be ~100%
-  var SCORE_PROB_DIST = {
+  const SCORE_PROB_DIST = {
     '1:1': 0.15, '2:1': 0.12, '1:0': 0.10, '2:0': 0.08,
     '0:0': 0.07, '1:2': 0.06, '2:2': 0.05, '3:1': 0.04,
     '0:1': 0.04, '3:0': 0.03, '0:2': 0.03, '3:2': 0.03,
@@ -318,14 +335,14 @@
 
   // Normalize probabilities to ensure sum = 1.0
   function normalizeProbs(dist) {
-    var sum = 0;
-    for (var k in dist) { if (dist.hasOwnProperty(k)) sum += dist[k]; }
-    var norm = {};
-    for (var k in dist) { if (dist.hasOwnProperty(k)) norm[k] = dist[k] / sum; }
+    let sum = 0;
+    for (let k in dist) { if (dist.hasOwnProperty(k)) sum += dist[k]; }
+    let norm = {};
+    for (let k in dist) { if (dist.hasOwnProperty(k)) norm[k] = dist[k] / sum; }
     return norm;
   }
 
-  var SCORE_PROB_NORM = normalizeProbs(SCORE_PROB_DIST);
+  const SCORE_PROB_NORM = normalizeProbs(SCORE_PROB_DIST);
 
   /**
    * 反波膽赔率计算 (18格)
@@ -333,10 +350,10 @@
    * 赔率 = (1 / (1 - 该比分概率)) * 0.85  (House Edge 15%)
    */
   function computeAntiOdds(score) {
-    var prob = SCORE_PROB_NORM[score] || 0.01;
-    var loseProb = Math.max(1 - prob, 0.001); // probability you lose (exact match)
-    var rawOdds = 1 / loseProb;
-    var odds = rawOdds * 0.85; // House Edge 15%
+    let prob = SCORE_PROB_NORM[score] || 0.01;
+    let loseProb = Math.max(1 - prob, 0.001); // probability you lose (exact match)
+    let rawOdds = 1 / loseProb;
+    let odds = rawOdds * 0.85; // House Edge 15%
     return Math.max(1.01, +odds.toFixed(2));
   }
 
@@ -345,9 +362,9 @@
    * 赔率 = (1 / 概率) * 0.80  (House Edge 20%)
    */
   function computeCorrectScoreOdds(score) {
-    var prob = SCORE_PROB_NORM[score] || 0.01;
-    var rawOdds = 1 / prob;
-    var odds = rawOdds * 0.80; // House Edge 20%
+    let prob = SCORE_PROB_NORM[score] || 0.01;
+    let rawOdds = 1 / prob;
+    let odds = rawOdds * 0.80; // House Edge 20%
     return Math.max(1.01, +odds.toFixed(2));
   }
 
@@ -366,7 +383,7 @@
    * 中等队(阿根廷/英格兰): 冠军7-8x, 亚军5-6x
    * 弱队(荷兰等): 冠军12-15x, 亚军8-10x
    */
-  var TEAM_TIER = {
+  const TEAM_TIER = {
     '巴西': { tier: 'strong', champBase: 5.50, runnerBase: 4.20 },
     '法国': { tier: 'strong', champBase: 6.00, runnerBase: 4.50 },
     '阿根廷': { tier: 'medium', champBase: 7.50, runnerBase: 5.50 },
@@ -386,19 +403,19 @@
   };
 
   function computeChampionOdds(teamName, baseOdds) {
-    var tier = TEAM_TIER[teamName];
+    let tier = TEAM_TIER[teamName];
     if (tier) {
       // Add small random fluctuation (+/-5%)
-      var fluctuation = 1 + (Math.random() - 0.5) * 0.10;
+      let fluctuation = 1 + (Math.random() - 0.5) * 0.10;
       return +(tier.champBase * fluctuation).toFixed(2);
     }
     return baseOdds || 8.00;
   }
 
   function computeRunnerUpOdds(teamName, baseOdds) {
-    var tier = TEAM_TIER[teamName];
+    let tier = TEAM_TIER[teamName];
     if (tier) {
-      var fluctuation = 1 + (Math.random() - 0.5) * 0.10;
+      let fluctuation = 1 + (Math.random() - 0.5) * 0.10;
       return +(tier.runnerBase * fluctuation).toFixed(2);
     }
     return baseOdds || 6.00;
@@ -412,13 +429,13 @@
    * @returns {object} 结算结果 { totalBets, wonCount, lostCount, totalPayout }
    */
   function settleMatchBets(matchName, finalScore) {
-    var results = { totalBets: 0, wonCount: 0, lostCount: 0, totalPayout: 0, settledRecords: [] };
+    let results = { totalBets: 0, wonCount: 0, lostCount: 0, totalPayout: 0, settledRecords: [] };
 
     betRecords.forEach(function(record, idx) {
       if (record.status !== 'pending') return;
       // Match by team name (strip score suffix)
-      var recordMatch = record.team ? record.team.split(' ')[0] : '';
-      var targetMatch = matchName;
+      let recordMatch = record.team ? record.team.split(' ')[0] : '';
+      let targetMatch = matchName;
       // Check if the record belongs to this match
       if (recordMatch.indexOf(targetMatch.split(' vs ')[0]) === -1 &&
           recordMatch.indexOf(targetMatch.split(' vs ')[1]) === -1) {
@@ -429,12 +446,12 @@
       results.totalBets++;
 
       // Extract the score this bet was placed on
-      var betScore = record.score || extractScoreFromTeam(record.team);
+      let betScore = record.score || extractScoreFromTeam(record.team);
       if (!betScore) { return; } // Can't determine bet score
 
       // Determine win/loss
       // 反波膽: user wins if final score != bet score
-      var isWin = (finalScore !== betScore);
+      let isWin = (finalScore !== betScore);
       
       if (isWin) {
         record.status = 'won';
@@ -462,14 +479,14 @@
    * @param {string} runnerUpTeam - 亚军球队名
    */
   function settleChampionBets(championTeam, runnerUpTeam) {
-    var results = { totalBets: 0, wonCount: 0, lostCount: 0, totalPayout: 0 };
+    let results = { totalBets: 0, wonCount: 0, lostCount: 0, totalPayout: 0 };
 
     betRecords.forEach(function(record) {
       if (record.status !== 'pending') return;
       if (record.type !== '冠军' && record.type !== '亚军') return;
 
       results.totalBets++;
-      var isWin = false;
+      let isWin = false;
 
       if (record.type === '冠军' && record.team === championTeam) {
         isWin = true;
@@ -498,19 +515,19 @@
   function extractScoreFromTeam(teamStr) {
     if (!teamStr) return null;
     // teamStr format: "巴黎圣日耳曼 vs 马赛 1:1" or "巴黎圣日耳曼 vs 马赛"
-    var parts = teamStr.split(' ');
-    var lastPart = parts[parts.length - 1];
+    let parts = teamStr.split(' ');
+    let lastPart = parts[parts.length - 1];
     if (/^\d+:\d+$/.test(lastPart)) return lastPart;
     if (lastPart === '主4+') return '主4+';
     if (lastPart === '客4+') return '客4+';
     // Try to find score pattern in the string
-    var match = teamStr.match(/(\d+:\d+|主4\+|客4\+)/);
+    let match = teamStr.match(/(\d+:\d+|主4\+|客4\+)/);
     return match ? match[0] : null;
   }
 
   // Store last known odds for directional flash tracking
-  var lastOddsMap = {};
-  var oddsElements = [];
+  let lastOddsMap = {};
+  let oddsElements = [];
 
   // ==================== ENHANCED SOUND SYSTEM (6 distinct sounds) ====================
   function getAudioCtx() {
@@ -522,24 +539,24 @@
   }
 
   function resumeCtx() {
-    var ctx = getAudioCtx();
+    let ctx = getAudioCtx();
     if (ctx && ctx.state === 'suspended') ctx.resume();
   }
 
   // 1. Success chime (ascending C-E-G triad) — bet confirmed
   function playSuccessSound() {
-    var ctx = getAudioCtx();
+    let ctx = getAudioCtx();
     if (!ctx) return;
     resumeCtx();
-    var now = ctx.currentTime;
-    var notes = [
+    let now = ctx.currentTime;
+    let notes = [
       { freq: 523.25, start: 0,    dur: 0.12 },
       { freq: 659.25, start: 0.1,  dur: 0.12 },
       { freq: 783.99, start: 0.2,  dur: 0.30 }
     ];
     notes.forEach(function(note) {
-      var osc = ctx.createOscillator();
-      var gain = ctx.createGain();
+      let osc = ctx.createOscillator();
+      let gain = ctx.createGain();
       osc.type = 'sine';
       osc.frequency.setValueAtTime(note.freq, now + note.start);
       gain.gain.setValueAtTime(0, now + note.start);
@@ -554,12 +571,12 @@
 
   // 2. Click / tap sound — UI interaction
   function playClickSound() {
-    var ctx = getAudioCtx();
+    let ctx = getAudioCtx();
     if (!ctx) return;
     resumeCtx();
-    var now = ctx.currentTime;
-    var osc = ctx.createOscillator();
-    var gain = ctx.createGain();
+    let now = ctx.currentTime;
+    let osc = ctx.createOscillator();
+    let gain = ctx.createGain();
     osc.type = 'sine';
     osc.frequency.setValueAtTime(800, now);
     osc.frequency.exponentialRampToValueAtTime(400, now + 0.06);
@@ -573,12 +590,12 @@
 
   // 3. Error / alert buzz — validation failure
   function playErrorSound() {
-    var ctx = getAudioCtx();
+    let ctx = getAudioCtx();
     if (!ctx) return;
     resumeCtx();
-    var now = ctx.currentTime;
-    var osc = ctx.createOscillator();
-    var gain = ctx.createGain();
+    let now = ctx.currentTime;
+    let osc = ctx.createOscillator();
+    let gain = ctx.createGain();
     osc.type = 'square';
     osc.frequency.setValueAtTime(220, now);
     gain.gain.setValueAtTime(0.07, now);
@@ -592,19 +609,19 @@
 
   // 4. Swipe sound — subtle whoosh
   function playSwipeSound() {
-    var ctx = getAudioCtx();
+    let ctx = getAudioCtx();
     if (!ctx) return;
     resumeCtx();
-    var now = ctx.currentTime;
-    var bufferSize = ctx.sampleRate * 0.15;
-    var buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-    var data = buffer.getChannelData(0);
-    for (var i = 0; i < bufferSize; i++) {
+    let now = ctx.currentTime;
+    let bufferSize = ctx.sampleRate * 0.15;
+    let buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    let data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
       data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 2) * 0.04;
     }
-    var src = ctx.createBufferSource();
+    let src = ctx.createBufferSource();
     src.buffer = buffer;
-    var filter = ctx.createBiquadFilter();
+    let filter = ctx.createBiquadFilter();
     filter.type = 'bandpass';
     filter.frequency.setValueAtTime(1200, now);
     filter.Q.setValueAtTime(0.5, now);
@@ -616,12 +633,12 @@
 
   // 5. Add-to-cart sound — short pop
   function playAddCartSound() {
-    var ctx = getAudioCtx();
+    let ctx = getAudioCtx();
     if (!ctx) return;
     resumeCtx();
-    var now = ctx.currentTime;
-    var osc = ctx.createOscillator();
-    var gain = ctx.createGain();
+    let now = ctx.currentTime;
+    let osc = ctx.createOscillator();
+    let gain = ctx.createGain();
     osc.type = 'triangle';
     osc.frequency.setValueAtTime(660, now);
     osc.frequency.exponentialRampToValueAtTime(880, now + 0.05);
@@ -635,12 +652,12 @@
 
   // 6. Odds-up / odds-down tick sounds
   function playOddsTickSound(up) {
-    var ctx = getAudioCtx();
+    let ctx = getAudioCtx();
     if (!ctx) return;
     resumeCtx();
-    var now = ctx.currentTime;
-    var osc = ctx.createOscillator();
-    var gain = ctx.createGain();
+    let now = ctx.currentTime;
+    let osc = ctx.createOscillator();
+    let gain = ctx.createGain();
     osc.type = 'sine';
     osc.frequency.setValueAtTime(up ? 880 : 440, now);
     gain.gain.setValueAtTime(0.04, now);
@@ -653,17 +670,17 @@
 
   // ==================== ENHANCED RIPPLE EFFECT ====================
   function createRipple(e) {
-    var target = e.currentTarget;
-    var oldRipple = target.querySelector('.ripple-effect');
+    let target = e.currentTarget;
+    let oldRipple = target.querySelector('.ripple-effect');
     if (oldRipple) oldRipple.remove();
 
-    var ripple = document.createElement('span');
+    let ripple = document.createElement('span');
     ripple.className = 'ripple-effect';
-    var rect = target.getBoundingClientRect();
-    var size = Math.max(rect.width, rect.height);
+    let rect = target.getBoundingClientRect();
+    let size = Math.max(rect.width, rect.height);
     ripple.style.width = ripple.style.height = size + 'px';
 
-    var x, y;
+    let x, y;
     if (e.touches) {
       x = e.touches[0].clientX - rect.left - size / 2;
       y = e.touches[0].clientY - rect.top - size / 2;
@@ -697,12 +714,12 @@
   function trackOddsElements() {
     oddsElements = [];
     document.querySelectorAll('.odds-tag .val, .cell-odds, .o-val').forEach(function(el) {
-      var key = el.getAttribute('data-odds-key');
+      let key = el.getAttribute('data-odds-key');
       if (!key) {
         key = 'odds_' + Math.random().toString(36).substr(2, 8);
         el.setAttribute('data-odds-key', key);
       }
-      var currentVal = parseFloat(el.textContent) || 1.0;
+      let currentVal = parseFloat(el.textContent) || 1.0;
       if (!(key in lastOddsMap)) lastOddsMap[key] = currentVal;
       oddsElements.push({ el: el, key: key });
     });
@@ -718,14 +735,14 @@
       el.classList.add('flash-down');
     }
     // Add direction arrow indicator
-    var existing = el.querySelector('.odds-arrow');
+    let existing = el.querySelector('.odds-arrow');
     if (!existing) {
-      var arrow = document.createElement('span');
+      let arrow = document.createElement('span');
       arrow.className = 'odds-arrow';
       arrow.style.cssText = 'display:inline-block;margin-left:2px;font-size:10px;font-weight:700;transition:opacity 0.3s';
       el.appendChild(arrow);
     }
-    var arrowEl = el.querySelector('.odds-arrow');
+    let arrowEl = el.querySelector('.odds-arrow');
     arrowEl.textContent = direction === 'up' ? '\u2191' : '\u2193';
     arrowEl.style.color = direction === 'up' ? 'var(--green)' : 'var(--red)';
     arrowEl.style.opacity = '1';
@@ -740,21 +757,21 @@
       trackOddsElements();
       if (oddsElements.length === 0) return;
 
-      var count = 1 + Math.floor(Math.random() * 4);
-      var indices = [];
+      let count = 1 + Math.floor(Math.random() * 4);
+      let indices = [];
       while (indices.length < count && indices.length < oddsElements.length) {
-        var idx = Math.floor(Math.random() * oddsElements.length);
+        let idx = Math.floor(Math.random() * oddsElements.length);
         if (indices.indexOf(idx) === -1) indices.push(idx);
       }
 
       indices.forEach(function(i) {
-        var entry = oddsElements[i];
+        let entry = oddsElements[i];
         if (!entry || !entry.el) return;
-        var prev = lastOddsMap[entry.key] || parseFloat(entry.el.textContent) || 1.0;
-        var delta = prev * (Math.random() * 0.06) * (Math.random() > 0.5 ? 1 : -1);
-        var newVal = Math.max(1.01, prev + delta);
+        let prev = lastOddsMap[entry.key] || parseFloat(entry.el.textContent) || 1.0;
+        let delta = prev * (Math.random() * 0.06) * (Math.random() > 0.5 ? 1 : -1);
+        let newVal = Math.max(1.01, prev + delta);
         newVal = +newVal.toFixed(2);
-        var direction = newVal >= prev ? 'up' : 'down';
+        let direction = newVal >= prev ? 'up' : 'down';
 
         flashOddsElement(entry.el, direction);
         playOddsTickSound(direction === 'up');
@@ -774,17 +791,17 @@
 
   // ==================== ENHANCED SWIPEABLE MATCH CARDS ====================
   function initSwipeCards() {
-    var container = document.querySelector('.match-cards-container, #match-list, #matches-page-list');
+    let container = document.querySelector('.match-cards-container, #match-list, #matches-page-list');
     if (!container) return;
     container.addEventListener('touchstart', handleSwipeStart, { passive: true });
     container.addEventListener('touchmove', handleSwipeMove, { passive: false });
     container.addEventListener('touchend', handleSwipeEnd, { passive: true });
   }
 
-  var swipeData = { startX: 0, startY: 0, card: null, offset: 0 };
+  let swipeData = { startX: 0, startY: 0, card: null, offset: 0 };
 
   function handleSwipeStart(e) {
-    var card = e.target.closest('.match-card');
+    let card = e.target.closest('.match-card');
     if (!card) return;
     swipeData.card = card;
     swipeData.startX = e.touches[0].clientX;
@@ -795,8 +812,8 @@
 
   function handleSwipeMove(e) {
     if (!swipeData.card) return;
-    var dx = e.touches[0].clientX - swipeData.startX;
-    var dy = e.touches[0].clientY - swipeData.startY;
+    let dx = e.touches[0].clientX - swipeData.startX;
+    let dy = e.touches[0].clientY - swipeData.startY;
     // Only horizontal swipe (ignore vertical scrolls)
     if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
       e.preventDefault();
@@ -807,7 +824,7 @@
   }
 
   function handleSwipeEnd() {
-    var card = swipeData.card;
+    let card = swipeData.card;
     if (!card) return;
     card.style.transition = 'transform 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease';
     if (Math.abs(swipeData.offset) > 120) {
@@ -831,15 +848,15 @@
   // ==================== ENHANCED COUNT-UP ANIMATION (预估收益) ====================
   function animateCountUp(el, from, to, duration) {
     duration = duration || 600;
-    var start = null;
-    var range = to - from;
+    let start = null;
+    let range = to - from;
 
     function step(timestamp) {
       if (!start) start = timestamp;
-      var progress = Math.min((timestamp - start) / duration, 1);
+      let progress = Math.min((timestamp - start) / duration, 1);
       // Ease-out cubic
-      var eased = 1 - Math.pow(1 - progress, 3);
-      var current = from + range * eased;
+      let eased = 1 - Math.pow(1 - progress, 3);
+      let current = from + range * eased;
       el.textContent = current.toFixed(2);
       if (progress < 1) {
         requestAnimationFrame(step);
@@ -851,12 +868,12 @@
   }
 
   function updateBetProfit() {
-    var amount = parseFloat(document.getElementById('bet-amount-input').value) || 0;
-    var overlay = document.getElementById('bet-dialog-overlay');
-    var odds = overlay._betData ? overlay._betData.odds : 0;
-    var profitEl = document.getElementById('bet-profit');
-    var oldProfit = parseFloat(profitEl.textContent) || 0;
-    var newProfit = amount > 0 ? (amount * odds - amount) : 0;
+    let amount = parseFloat(document.getElementById('bet-amount-input').value) || 0;
+    let overlay = document.getElementById('bet-dialog-overlay');
+    let odds = overlay._betData ? overlay._betData.odds : 0;
+    let profitEl = document.getElementById('bet-profit');
+    let oldProfit = parseFloat(profitEl.textContent) || 0;
+    let newProfit = amount > 0 ? (amount * odds - amount) : 0;
 
     // Animate the profit count-up / count-down
     if (Math.abs(newProfit - oldProfit) > 0.05) {
@@ -866,83 +883,61 @@
     }
 
     // Update estimated return total
-    var totalEl = document.getElementById('bet-total-return');
+    let totalEl = document.getElementById('bet-total-return');
     if (totalEl) {
       totalEl.textContent = amount > 0 ? (amount * odds).toFixed(2) : '0.00';
     }
   }
 
   // ==================== ENHANCED PAGE TRANSITIONS + GESTURE BACK ====================
-  var pageOrder = ['home', 'matches', 'detail', 'ai', 'records', 'profile', 'rules'];
+  const pageOrder = ['home', 'matches', 'detail', 'ai', 'records', 'profile', 'rules'];
 
   function navigateTo(page) {
     if (currentPage === page) return;
 
-    var oldPage = currentPage;
+    let oldPage = currentPage;
     currentPage = page;
 
     // Push to history for back navigation
     if (pageHistory[pageHistory.length - 1] !== page) {
       pageHistory.push(page);
     }
-    // Keep history manageable
     if (pageHistory.length > 20) pageHistory.shift();
 
-    var oldIdx = pageOrder.indexOf(oldPage);
-    var newIdx = pageOrder.indexOf(page);
-    var direction = (newIdx >= oldIdx) ? 'forward' : 'backward';
+    const oldIdx = pageOrder.indexOf(oldPage);
+    const newIdx = pageOrder.indexOf(page);
+    let direction = (newIdx >= oldIdx) ? 'forward' : 'backward';
 
-    var allPages = document.querySelectorAll('.page');
-    var targetPage = document.getElementById('page-' + page);
+    let targetPage = document.getElementById('page-' + page);
     if (!targetPage) return;
 
-    // Phase 1: Prepare entering page offscreen
-    targetPage.style.transition = 'none';
-    var offsetX = direction === 'forward' ? 35 : -35;
-    targetPage.style.transform = 'translateX(' + offsetX + 'px)';
-    targetPage.style.opacity = '0';
-    targetPage.classList.add('active');
-    void targetPage.offsetWidth;
-
-    // Phase 2: Exit old page
+    // Exit old active pages with slide-out animation
+    let allPages = document.querySelectorAll('.page');
     allPages.forEach(function(p) {
       if (p !== targetPage && p.classList.contains('active')) {
-        p.style.transition = 'opacity 0.18s ease, transform 0.22s cubic-bezier(0.4,0,0.2,1)';
-        p.style.transform = 'translateX(' + (-offsetX * 0.6) + 'px)';
-        p.style.opacity = '0';
-        var handler = function(el) {
-          return function() {
-            el.classList.remove('active');
-            el.style.transform = '';
-            el.style.opacity = '';
-            el.style.transition = '';
-            el.removeEventListener('transitionend', handler);
-          };
-        }(p);
-        p.addEventListener('transitionend', handler, { once: false });
+        p.style.animation = 'none';
+        p.offsetHeight; // force reflow
+        p.style.animation = '';
+        // Remove any inline transition/transform
+        p.style.transform = '';
+        p.style.opacity = '';
+        p.style.transition = '';
+        p.classList.remove('active');
       }
     });
 
-    // Phase 3: Animate new page in
-    setTimeout(function() {
-      targetPage.style.transition = 'opacity 0.28s ease 0.04s, transform 0.28s cubic-bezier(0.4,0,0.2,1) 0.04s';
-      targetPage.style.transform = 'translateX(0)';
-      targetPage.style.opacity = '1';
-      var cleanup = function() {
-        targetPage.style.transition = '';
-        targetPage.style.transform = '';
-        targetPage.style.opacity = '';
-        targetPage.removeEventListener('transitionend', cleanup);
-      };
-      targetPage.addEventListener('transitionend', cleanup, { once: false });
-    }, 40);
+    // Animate new page in via CSS animation
+    targetPage.style.animation = 'none';
+    targetPage.offsetHeight; // force reflow
+    targetPage.style.animation = '';
+    targetPage.classList.add('active');
 
     // Update tabbar
     document.querySelectorAll('.tabbar-item').forEach(function(i) { i.classList.remove('active'); });
-    var tabMap = { home:0, matches:1, ai:2, records:3, profile:4, detail:1, rules:5 };
-    var idx = tabMap[page];
+    let tabMap = { home:0, matches:1, ai:2, records:3, profile:4, detail:1, rules:5 };
+    let idx = tabMap[page];
     if (idx !== undefined) {
-      var items = document.querySelectorAll('.tabbar-item');
+      let items = document.querySelectorAll('.tabbar-item');
       if (items[idx]) items[idx].classList.add('active');
     }
 
@@ -958,15 +953,15 @@
   function goBackPage() {
     if (pageHistory.length > 1) {
       pageHistory.pop(); // remove current
-      var prev = pageHistory[pageHistory.length - 1];
+      let prev = pageHistory[pageHistory.length - 1];
       navigateTo(prev);
     }
   }
 
   function initGestureBack() {
-    var touchStartX = 0;
-    var touchStartY = 0;
-    var backIndicator = null;
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let backIndicator = null;
 
     document.addEventListener('touchstart', function(e) {
       if (e.touches.length !== 1) return;
@@ -985,8 +980,8 @@
 
     document.addEventListener('touchmove', function(e) {
       if (!touchStartX || e.touches.length !== 1) return;
-      var dx = e.touches[0].clientX - touchStartX;
-      var dy = e.touches[0].clientY - touchStartY;
+      let dx = e.touches[0].clientX - touchStartX;
+      let dy = e.touches[0].clientY - touchStartY;
       if (dx > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) {
         if (backIndicator) backIndicator.style.opacity = Math.min(1, dx / 120);
       }
@@ -995,7 +990,7 @@
     document.addEventListener('touchend', function(e) {
       if (!touchStartX) return;
       if (backIndicator) backIndicator.style.opacity = '0';
-      var dx = (e.changedTouches[0] ? e.changedTouches[0].clientX : 0) - touchStartX;
+      let dx = (e.changedTouches[0] ? e.changedTouches[0].clientX : 0) - touchStartX;
       if (dx > 80 && pageHistory.length > 1) {
         playSwipeSound();
         goBackPage();
@@ -1008,40 +1003,40 @@
     if (currentTab === tab) return;
     currentTab = tab;
 
-    var contents = document.querySelectorAll('.tab-content');
+    let contents = document.querySelectorAll('.tab-content');
     contents.forEach(function(c) {
       if (c.classList.contains('active')) {
-        c.style.transition = 'opacity 0.15s ease';
-        c.style.opacity = '0';
-        setTimeout(function() { c.classList.remove('active'); c.style.opacity = ''; c.style.transition = ''; }, 150);
+        c.style.animation = 'fadeSlideOut .2s ease forwards';
+        setTimeout(function() {
+          c.classList.remove('active');
+          c.style.animation = '';
+        }, 200);
       }
     });
 
     document.querySelectorAll('.tab-nav-item').forEach(function(i) { i.classList.remove('active'); });
 
-    var newContent = document.getElementById('tab-' + tab);
+    let newContent = document.getElementById('tab-' + tab);
     if (newContent) {
       newContent.classList.add('active');
-      newContent.style.opacity = '0';
-      newContent.style.transition = 'opacity 0.2s ease 0.1s';
-      void newContent.offsetWidth;
-      newContent.style.opacity = '1';
-      setTimeout(function() { newContent.style.transition = ''; newContent.style.opacity = ''; }, 350);
+      newContent.style.animation = 'none';
+      newContent.offsetHeight; // force reflow
+      newContent.style.animation = '';
     }
 
-    var tabMap = { recommend:0, champion:1, about:2 };
-    var idx = tabMap[tab];
+    let tabMap = { recommend:0, champion:1, about:2 };
+    let idx = tabMap[tab];
     if (idx !== undefined) document.querySelectorAll('.tab-nav-item')[idx].classList.add('active');
     if (tab === 'champion') { renderChampionBet(); renderHotRanking(); }
   }
 
   // ==================== HOME – MATCH CARDS ====================
   function matchCardHTML(m) {
-    var timeParts = (m.time || '').split(' ');
-    var dateStr = timeParts.length > 1 ? timeParts[0].slice(5) : '';
-    var timeStr = timeParts.length > 1 ? timeParts[1].slice(0,5) : (m.time || '--');
-    var isLive = m.status === 'live';
-    var statusText = m.status === 'live' ? '\uD83D\uDD34 直播中' : m.status === 'finished' ? '已结束' : '未开赛';
+    let timeParts = (m.time || '').split(' ');
+    let dateStr = timeParts.length > 1 ? timeParts[0].slice(5) : '';
+    let timeStr = timeParts.length > 1 ? timeParts[1].slice(0,5) : (m.time || '--');
+    let isLive = m.status === 'live';
+    let statusText = m.status === 'live' ? '\uD83D\uDD34 直播中' : m.status === 'finished' ? '已结束' : '未开赛';
     return '\n      <div class="match-card swipe-card' + (isLive ? ' live' : '') + '" onclick="app.navigateTo(\'detail\'); app.loadMatchDetail(' + m.id + ')" title="' + (m.venue || '') + '">\n        <div class="match-league">' + m.league + (isLive ? ' <span style="color:var(--red);font-weight:700">LIVE</span>' : '') + '</div>\n        <div class="match-content">\n          <div class="team">\n            <div class="team-logo" style="background:none">' + teamLogoImg(m.home, 50) + '</div>\n            <div class="team-name">' + m.home + '</div>\n          </div>\n          <div class="match-time">\n            <div class="time">' + timeStr + '</div>\n            <div class="date">' + dateStr + '</div>\n            <div class="status" style="color:' + (isLive ? 'var(--red)' : 'var(--text-muted)') + '">' + statusText + '</div>\n          </div>\n          <div class="team">\n            <div class="team-logo" style="background:none">' + teamLogoImg(m.away, 50) + '</div>\n            <div class="team-name">' + m.away + '</div>\n          </div>\n        </div>\n        <div class="match-odds">\n          <div class="odds-tag">主胜<br><span class="val">' + (m.odds_home || (m.odds && m.odds.home) || '\u2014') + '</span></div>\n          <div class="odds-tag">平局<br><span class="val">' + (m.odds_draw || (m.odds && m.odds.draw) || '\u2014') + '</span></div>\n          <div class="odds-tag">客胜<br><span class="val">' + (m.odds_away || (m.odds && m.odds.away) || '\u2014') + '</span></div>\n        </div>\n      </div>';
   }
 
@@ -1067,7 +1062,7 @@
   }
 
   function showDetailSkeleton() {
-    var grid = document.getElementById('grid-18');
+    let grid = document.getElementById('grid-18');
     if (!grid) return;
     grid.classList.add('skeleton-loading');
     grid.innerHTML = Array(18).fill(0).map(function() {
@@ -1078,20 +1073,15 @@
     }).join('');
   }
 
-  function showListSkeleton(containerId) {
-    var container = document.getElementById(containerId);
-    if (!container) return;
-    showSkeletons(container, 6);
-  }
-
   async function renderMatchCards() {
-    var container = document.getElementById('match-list');
+    try {
+    let container = document.getElementById('match-list');
     if (!container) return;
 
     showSkeletons(container, 4);
-    var data = mockMatches;
+    let data = mockMatches;
 
-    var apiData = await apiCall('/matches');
+    let apiData = await apiCall('/matches');
     if (apiData && apiData.code === 0 && apiData.data.length > 0) data = apiData.data;
 
     await new Promise(function(r) { setTimeout(r, 400); });
@@ -1100,19 +1090,20 @@
     initRippleEffects();
     initSwipeCards();
     trackOddsElements();
+    } catch(e) { console.error('[19888] renderMatchCards error:', e); }
   }
 
   // ==================== HOT BETTING LEADERBOARD (冠亚投注排行榜) ====================
   function computeHotRanking() {
-    var rankings = {};
+    let rankings = {};
 
     // Aggregate from localStorage bet records
     betRecords.forEach(function(r) {
-      var team = r.team || '';
+      let team = r.team || '';
       // Extract team name (strip score suffix, etc.)
-      var matchParts = team.split(' vs ');
+      let matchParts = team.split(' vs ');
       matchParts.forEach(function(part) {
-        var name = part.trim().split(' ')[0];
+        let name = part.trim().split(' ')[0];
         if (name) {
           if (!rankings[name]) rankings[name] = { count: 0, amount: 0 };
           rankings[name].count += 1;
@@ -1122,15 +1113,15 @@
     });
 
     // Also aggregate champion bets
-    var champRecords = [];
+    let champRecords = [];
     try {
-      var cr = localStorage.getItem('19888_bet_records');
+      let cr = localStorage.getItem('19888_bet_records');
       if (cr) champRecords = JSON.parse(cr);
     } catch(e) {}
 
     champRecords.forEach(function(r) {
       if (r.type === '冠军' || r.type === '亚军') {
-        var name = r.team;
+        let name = r.team;
         if (name) {
           if (!rankings[name]) rankings[name] = { count: 0, amount: 0 };
           rankings[name].count += 1;
@@ -1150,7 +1141,7 @@
     }
 
     // Sort by count desc
-    var sorted = Object.keys(rankings).map(function(name) {
+    let sorted = Object.keys(rankings).map(function(name) {
       return { name: name, count: rankings[name].count, amount: rankings[name].amount };
     }).sort(function(a, b) { return b.count - a.count; });
 
@@ -1158,16 +1149,16 @@
   }
 
   function renderHotRanking() {
-    var container = document.getElementById('hot-ranking-list');
+    let container = document.getElementById('hot-ranking-list');
     if (!container) return;
 
-    var ranking = computeHotRanking();
-    var medals = ['\uD83E\uDD47', '\uD83E\uDD48', '\uD83E\uDD49', '4', '5', '6', '7', '8', '9', '10'];
+    let ranking = computeHotRanking();
+    let medals = ['\uD83E\uDD47', '\uD83E\uDD48', '\uD83E\uDD49', '4', '5', '6', '7', '8', '9', '10'];
 
     container.innerHTML = '<div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:8px;text-align:center">\uD83D\uDD25 热门投注排行</div>' +
       ranking.map(function(item, idx) {
-        var barWidth = ranking.length > 0 ? Math.round((item.count / ranking[0].count) * 100) : 50;
-        var flag = FLAGS[item.name] || '';
+        let barWidth = ranking.length > 0 ? Math.round((item.count / ranking[0].count) * 100) : 50;
+        let flag = FLAGS[item.name] || '';
         return '<div class="ranking-row" style="display:flex;align-items:center;padding:6px 8px;margin-bottom:4px;background:rgba(255,255,255,0.04);border-radius:8px;position:relative;overflow:hidden">' +
           '<div style="position:absolute;left:0;top:0;bottom:0;width:' + barWidth + '%;background:linear-gradient(90deg,rgba(218,165,32,0.08),rgba(218,165,32,0.02));border-radius:8px;transition:width 0.6s ease"></div>' +
           '<span style="width:28px;font-size:14px;font-weight:700;z-index:1;text-align:center">' + medals[idx] + '</span>' +
@@ -1181,7 +1172,7 @@
 
   // ==================== CHAMPION BET ====================
   async function renderChampionBet() {
-    var grid = document.getElementById('teams-grid');
+    let grid = document.getElementById('teams-grid');
     if (!grid) return;
 
     grid.innerHTML = Array(8).fill(0).map(function() {
@@ -1199,11 +1190,11 @@
       '</div>';
     }).join('');
 
-    var teams = mockChampionTeams;
-    var totalBet = 12850;
-    var totalWin = 67420;
+    let teams = mockChampionTeams;
+    let totalBet = 12850;
+    let totalWin = 67420;
 
-    var apiData = await apiCall('/champion-bet/odds');
+    let apiData = await apiCall('/champion-bet/odds');
     if (apiData && apiData.code === 0 && apiData.data) {
       teams = apiData.data.odds || teams;
       totalBet = apiData.data.total_bet || totalBet;
@@ -1213,13 +1204,13 @@
     await new Promise(function(r) { setTimeout(r, 300); });
 
     grid.innerHTML = teams.map(function(t) {
-      var champOdds = computeChampionOdds(t.name, t.championship_odds);
-      var runnerOdds = computeRunnerUpOdds(t.name, t.runner_up_odds);
+      let champOdds = computeChampionOdds(t.name, t.championship_odds);
+      let runnerOdds = computeRunnerUpOdds(t.name, t.runner_up_odds);
       return '\n      <div class="team-card">\n        <div class="t-logo" style="background:none">' + teamLogoImg(t.name, 56) + '<span style="display:none;align-items:center;justify-content:center;width:52px;height:52px;border-radius:50%;background:var(--bg-input);color:var(--text-muted);font-size:26px">\u26BD</span></div>\n        <div class="t-name">' + t.name + '</div>\n        <div class="odds-row">\n          <div><span class="o-label">冠军</span><br><span class="o-val">' + champOdds + '</span></div>\n          <div><span class="o-label">亚军</span><br><span class="o-val">' + runnerOdds + '</span></div>\n        </div>\n        <div class="bet-btns">\n          <button class="btn-champion" onclick="app.openBetDialog(\'' + t.name + '\', ' + t.id + ', \'champion\', ' + champOdds + ')">投冠军</button>\n          <button class="btn-runnerup" onclick="app.openBetDialog(\'' + t.name + '\', ' + t.id + ', \'runnerup\', ' + runnerOdds + ')">投亚军</button>\n        </div>\n      </div>\n    ';
     }).join('');
 
-    var totalBetEl = document.getElementById('total-bet');
-    var totalWinEl = document.getElementById('total-win');
+    let totalBetEl = document.getElementById('total-bet');
+    let totalWinEl = document.getElementById('total-win');
     if (totalBetEl) totalBetEl.textContent = totalBet.toFixed(2);
     if (totalWinEl) totalWinEl.textContent = totalWin.toFixed(2);
 
@@ -1232,21 +1223,21 @@
 
   // ==================== BET DIALOG (enhanced with count-up animation) ====================
   function openBetDialog(teamName, teamId, betType, odds) {
-    var overlay = document.getElementById('bet-dialog-overlay');
-    var typeName = betType === 'champion' ? '冠军' : '亚军';
+    let overlay = document.getElementById('bet-dialog-overlay');
+    let typeName = betType === 'champion' ? '冠军' : '亚军';
     document.getElementById('bet-team-name').textContent = teamName;
     document.getElementById('bet-type-name').textContent = typeName;
     document.getElementById('bet-odds').textContent = odds;
     document.getElementById('bet-amount-input').value = '';
     document.getElementById('bet-profit').textContent = '0.00';
-    var totalEl = document.getElementById('bet-total-return');
+    let totalEl = document.getElementById('bet-total-return');
     if (totalEl) totalEl.textContent = '0.00';
     overlay.classList.add('show');
     overlay._betData = { teamName: teamName, teamId: teamId, betType: betType, odds: odds, typeName: typeName };
 
     // Focus input
     setTimeout(function() {
-      var inp = document.getElementById('bet-amount-input');
+      let inp = document.getElementById('bet-amount-input');
       if (inp) inp.focus();
     }, 300);
   }
@@ -1256,20 +1247,20 @@
   }
 
   async function confirmBet() {
-    var overlay = document.getElementById('bet-dialog-overlay');
-    var amount = parseFloat(document.getElementById('bet-amount-input').value);
+    let overlay = document.getElementById('bet-dialog-overlay');
+    let amount = parseFloat(document.getElementById('bet-amount-input').value);
     if (!amount || amount < 1) { playErrorSound(); showToast('请输入正确的投注金额'); return; }
     if (!walletAddress) { playErrorSound(); showToast('请先连接钱包'); return; }
 
-    var data = overlay._betData;
-    var odds = data.odds;
+    let data = overlay._betData;
+    let odds = data.odds;
 
     // Try on-chain contract interaction first (when viem + wallet available)
     if (viemLoaded && walletProvider) {
-      var betType = data.betType === 'champion' ? 1 : 2;
-      var tx = await contractPlaceChampionBet(data.teamId, betType, amount);
+      let betType = data.betType === 'champion' ? 1 : 2;
+      let tx = await contractPlaceChampionBet(data.teamId, betType, amount);
       if (tx) {
-        var onchainRecord = {
+        let onchainRecord = {
           id: Date.now(), team: data.teamName, type: data.typeName,
           amount: amount, odds: odds, potentialWin: (amount * odds).toFixed(2),
           time: new Date().toLocaleString('zh-CN'), status: 'pending', tx: tx
@@ -1287,7 +1278,7 @@
     }
 
     if (apiAvailable) {
-      var res = await apiCall('/champion-bet/place', {
+      let res = await apiCall('/champion-bet/place', {
         method: 'POST',
         body: JSON.stringify({
           team_id: data.teamId,
@@ -1307,7 +1298,7 @@
       }
     }
 
-    var record = {
+    let record = {
       id: Date.now(), team: data.teamName, type: data.typeName,
       amount: amount, odds: odds, potentialWin: (amount * odds).toFixed(2),
       time: new Date().toLocaleString('zh-CN'), status: 'pending'
@@ -1323,12 +1314,12 @@
 
   // ==================== MATCH LIST PAGE ====================
   async function renderMatchList() {
-    var container = document.getElementById('matches-page-list');
+    let container = document.getElementById('matches-page-list');
     if (!container) return;
 
     showSkeletons(container, 6);
-    var data = mockMatches.concat(mockMatches);
-    var apiData = await apiCall('/matches');
+    let data = mockMatches.concat(mockMatches);
+    let apiData = await apiCall('/matches');
     if (apiData && apiData.code === 0 && apiData.data.length > 0) data = apiData.data;
 
     await new Promise(function(r) { setTimeout(r, 350); });
@@ -1339,70 +1330,17 @@
     trackOddsElements();
   }
 
-  // ==================== REALISTIC 18-GRID ODDS ====================
-  // Odds = 1 / probability_of_NOT_occurring
-  // The less likely a score, the higher the odds (and rarer it is)
-  function calculateGrid18Odds(homeTeam, awayTeam) {
-    // Score probability tiers (based on real football stats)
-    // Tier 1 (most common): 1:0, 1:1, 0:1, 2:1  -> high occurrence probability
-    // Tier 2 (common): 2:0, 0:0, 2:2, 1:2      -> medium occurrence
-    // Tier 3 (uncommon): 0:2, 3:1, 3:0, 1:3    -> low occurrence
-    // Tier 4 (rare): 2:3, 3:2, 3:3, 0:3        -> very low occurrence
-    // Tier 5 (extreme): 主4+, 客4+               -> extremely rare
-    
-    var scoreProbabilities = {
-      '0:0': 0.05, '0:1': 0.12, '0:2': 0.035, '0:3': 0.006,
-      '1:0': 0.14, '1:1': 0.11, '1:2': 0.04, '1:3': 0.008,
-      '2:0': 0.07, '2:1': 0.09, '2:2': 0.03, '2:3': 0.004,
-      '3:0': 0.025, '3:1': 0.02, '3:2': 0.006, '3:3': 0.002,
-      '主4+': 0.004, '客4+': 0.003
-    };
-    
-    // Calculate odds: if probability of score = P, then probability of NOT that score = 1-P
-    // For anti-score betting: odds = 1 / (1-P) * margin_factor
-    // But to make odds more attractive, we use a boost factor for rare scores
-    return scoreGrid18.map(function(score) {
-      var prob = scoreProbabilities[score] || 0.01;
-      var notProb = 1 - prob;
-      var baseOdds = 1 / notProb;
-      // Add slight randomness for live odds feel
-      var jitter = 1 + (Math.random() * 0.04 - 0.02); // +/- 2% jitter
-      // Boost rare score odds (rarer scores = higher odds for anti-bet)
-      var boost = prob < 0.01 ? (1 / prob) * 0.02 : 1; // Big boost for extreme scores
-      var odds = Math.max(1.01, +(baseOdds * jitter * boost).toFixed(2));
-      return { score: score, odds: odds, probability: prob };
-    });
-  }
-
-  // ==================== SCORE PREDICTION ODDS (正波膽) ====================
-  function calculateScoreOdds(homeTeam, awayTeam) {
-    // For score prediction (正波膽), odds = 1/probability * 0.85 (house edge)
-    var scoreProbabilities = {
-      '1:0': 0.15, '2:1': 0.10, '1:1': 0.11, '2:0': 0.08,
-      '3:1': 0.04, '0:0': 0.06, '3:0': 0.03, '2:2': 0.035,
-      '0:1': 0.13, '1:2': 0.05, '3:2': 0.015, '0:2': 0.04,
-      '1:3': 0.012, '4:1': 0.008, '0:3': 0.01, '3:3': 0.005,
-      '4:0': 0.004, '4:2': 0.003, '2:3': 0.008, '4:3': 0.002,
-      '5:0': 0.001, '0:4': 0.003, '5:1': 0.001, '6:0': 0.0005
-    };
-    var scoreOrder = ['1:0','2:1','1:1','2:0','3:1','0:0','3:0','2:2','0:1','1:2','3:2','0:2','1:3','4:1','0:3','3:3','4:0','4:2','2:3','4:3','5:0','0:4','5:1','6:0'];
-    return scoreOrder.map(function(score) {
-      var prob = scoreProbabilities[score] || 0.005;
-      var odds = +(1 / prob * 0.85).toFixed(2);
-      return { score: score, odds: odds };
-    });
-  }
 
   // ==================== MATCH DETAIL ====================
   async function loadMatchDetail(matchId) {
     currentDetailMatchId = matchId;
-    var match = mockMatches.find(function(m) { return m.id === matchId; }) || mockMatches[0];
+    let match = mockMatches.find(function(m) { return m.id === matchId; }) || mockMatches[0];
     // Use lucky944 probability engine for 18-grid odds
-    var grid18 = computeAllAntiOdds();
+    let grid18 = computeAllAntiOdds();
 
     showDetailSkeleton();
 
-    var apiData = await apiCall('/matches/' + matchId);
+    let apiData = await apiCall('/matches/' + matchId);
     if (apiData && apiData.code === 0 && apiData.data) {
       match = apiData.data;
       if (apiData.data.grid_18 && apiData.data.grid_18.length) {
@@ -1410,24 +1348,112 @@
       }
     }
 
-    var timeParts = (match.time || '').split(' ');
+    let timeParts = (match.time || '').split(' ');
     document.getElementById('md-league').textContent = match.league;
     document.getElementById('md-home').textContent = match.home;
     document.getElementById('md-away').textContent = match.away;
     document.getElementById('md-time').textContent = timeParts.length > 1 ? timeParts[1].slice(0,5) : (match.time || '--');
     document.getElementById('md-date').textContent = timeParts.length > 1 ? timeParts[0].slice(5) : '';
+    document.getElementById('md-venue').textContent = '📍 ' + (match.venue || '--');
+    document.getElementById('md-referee').textContent = '👨‍⚖️ ' + (match.referee || '--');
+
+    // Update H2H with actual team names
+    let h2hHome = document.querySelectorAll('.ht-home');
+    let h2hAway = document.querySelectorAll('.ht-away');
+    h2hHome.forEach(function(el) { el.textContent = match.home; });
+    h2hAway.forEach(function(el) { el.textContent = match.away; });
+    document.getElementById('h2h-summary-line').textContent = match.home + ' 3胜 1平 1负';
+    document.getElementById('rf-home-name').textContent = match.home;
+    document.getElementById('rf-away-name').textContent = match.away;
+
+    // Populate champion detail tab
+    let champHomeName = document.getElementById('champion-home-name');
+    let champAwayName = document.getElementById('champion-away-name');
+    let champHomeFlag = document.getElementById('champion-home-flag');
+    let champAwayFlag = document.getElementById('champion-away-flag');
+    let champHomeOdds = document.getElementById('champion-home-odds');
+    let champAwayOdds = document.getElementById('champion-away-odds');
+    let runHomeName = document.getElementById('runnerup-home-name');
+    let runAwayName = document.getElementById('runnerup-away-name');
+    let runHomeOdds = document.getElementById('runnerup-home-odds');
+    let runAwayOdds = document.getElementById('runnerup-away-odds');
+
+    if (champHomeName) champHomeName.textContent = match.home;
+    if (champAwayName) champAwayName.textContent = match.away;
+    if (champHomeFlag) champHomeFlag.innerHTML = teamLogoImg(match.home, 48);
+    if (champAwayFlag) champAwayFlag.innerHTML = teamLogoImg(match.away, 48);
+    if (runHomeName) runHomeName.textContent = match.home;
+    if (runAwayName) runAwayName.textContent = match.away;
+
+    let hChampOdds = computeChampionOdds(match.home, 6.00);
+    let aChampOdds = computeChampionOdds(match.away, 7.00);
+    let hRunnerOdds = computeRunnerUpOdds(match.home, 4.50);
+    let aRunnerOdds = computeRunnerUpOdds(match.away, 5.00);
+
+    if (champHomeOdds) champHomeOdds.textContent = hChampOdds.toFixed(2);
+    if (champAwayOdds) champAwayOdds.textContent = aChampOdds.toFixed(2);
+    if (runHomeOdds) runHomeOdds.textContent = hRunnerOdds.toFixed(2);
+    if (runAwayOdds) runAwayOdds.textContent = aRunnerOdds.toFixed(2);
 
     await new Promise(function(r) { setTimeout(r, 200); });
 
-    var grid = document.getElementById('grid-18');
+    let grid = document.getElementById('grid-18');
     grid.classList.remove('skeleton-loading');
-    var matchName = match.home + ' vs ' + match.away;
-    grid.innerHTML = grid18.map(function(cell) {
-      return '\n      <div class="grid-cell" onclick="app.quickBet(\'' + cell.score + '\', ' + cell.odds + ', \'' + matchName + '\')">\n        <div class="cell-score">' + cell.score + '</div>\n        <div class="cell-odds" data-odds-key="' + cell.score + '">' + cell.odds + '</div>\n      </div>\n    ';
-    }).join('');
+    let matchName = match.home + ' vs ' + match.away;
+
+    // === WORLD-CLASS 4x4 + 2 LAYOUT ===
+    // First 16 cells = 4x4 grid (0:0 to 3:3)
+    // Last 2 cells = bottom row (主4+, 客4+)
+    let top16 = grid18.slice(0, 16);
+    let bottom2 = grid18.slice(16, 18);
+
+    let topHTML = '<div class="grid-18-4x4">' + top16.map(function(cell) {
+      let riskClass = '';
+      let winBadgeHTML = '';
+      if (cell.odds > 30) riskClass = ' grid-high-risk';
+      if (cell.odds <= 2.5) winBadgeHTML = '<div class="win-badge">88%</div>';
+      let oddsColor = cell.odds < 3 ? 'var(--green)' : cell.odds < 15 ? 'var(--accent)' : cell.odds < 40 ? 'var(--accent-mid)' : 'var(--red)';
+      let exposureHTML = cell.odds > 20 ? '<div class="exposure-bar" style="width:' + Math.min(100, cell.odds) + '%"></div>' : '';
+      return '<div class="grid-cell micro-pop haptic-tap' + riskClass + '" onclick="app.quickBet(\'' + cell.score + '\', ' + cell.odds + ', \'' + matchName + '\')" data-score="' + cell.score + '" data-odds="' + cell.odds + '">' +
+        winBadgeHTML +
+        '<div class="cell-score">' + cell.score + '</div>' +
+        '<div class="cell-odds" data-odds-key="' + cell.score + '" style="color:' + oddsColor + '">' + cell.odds + '</div>' +
+        exposureHTML +
+      '</div>';
+    }).join('') + '</div>';
+
+    let bottomHTML = '<div class="grid-18-bottom">' + bottom2.map(function(cell) {
+      let winBadgeHTML = '';
+      if (cell.odds > 100) winBadgeHTML = '<div class="win-badge">97%</div>';
+      let oddsColor = cell.odds < 10 ? 'var(--green)' : cell.odds < 50 ? 'var(--accent-mid)' : 'var(--red)';
+      return '<div class="grid-cell micro-pop haptic-tap grid-high-risk" onclick="app.quickBet(\'' + cell.score + '\', ' + cell.odds + ', \'' + matchName + '\')" data-score="' + cell.score + '" data-odds="' + cell.odds + '">' +
+        winBadgeHTML +
+        '<div class="cell-score" style="font-size:14px">' + cell.score + '</div>' +
+        '<div class="cell-odds" data-odds-key="' + cell.score + '" style="color:' + oddsColor + '">' + cell.odds + '</div>' +
+        '<div class="exposure-bar" style="width:100%"></div>' +
+      '</div>';
+    }).join('') + '</div>';
+
+    // Bet amount + payout preview
+    let betPreviewHTML = '<div style="margin-top:12px;display:flex;gap:8px;align-items:center">' +
+      '<input type="number" id="grid-bet-amount" placeholder="投注金额" min="1" step="10" value="100" ' +
+        'style="flex:1;padding:10px 12px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;text-align:center;background:var(--bg);color:var(--text)" ' +
+        'oninput="app.updateGridPayout()">' +
+      '<div class="bet-payout-preview" style="flex:1;margin-top:0" id="grid-payout-preview">' +
+        '<div class="payout-label">预估回报</div>' +
+        '<div class="payout-amount" id="grid-payout-amount">0.00</div>' +
+        '<div class="payout-label">USDT</div>' +
+      '</div>' +
+    '</div>';
+
+    grid.innerHTML = topHTML + bottomHTML + betPreviewHTML;
 
     // Store match data for cart use
     grid._matchData = { matchId: matchId, matchName: matchName, grid18: grid18 };
+    grid._selectedScore = null;
+
+    // Init grid selection tracking
+    initGridSelection(grid, grid18, matchName);
 
     initRippleEffects();
     trackOddsElements();
@@ -1435,6 +1461,82 @@
     // Push detail to history
     if (pageHistory[pageHistory.length - 1] !== 'detail') {
       pageHistory.push('detail');
+    }
+
+    // Update match info card
+    document.getElementById('detail-league-name').textContent = match.league;
+    document.getElementById('detail-venue-name').textContent = match.venue || '--';
+    document.getElementById('detail-ref-name').textContent = match.referee || '--';
+
+    // Update grid payout on load
+    setTimeout(function() { updateGridPayout(); }, 100);
+  }
+
+  // === GRID SELECTION TRACKING ===
+  function initGridSelection(grid, grid18, matchName) {
+    let cells = grid.querySelectorAll('.grid-cell[data-score]');
+    cells.forEach(function(cell) {
+      cell.addEventListener('click', function(e) {
+        let score = cell.getAttribute('data-score');
+        let odds = parseFloat(cell.getAttribute('data-odds'));
+
+        // Toggle selection
+        let wasSelected = cell.classList.contains('grid-selected');
+        cells.forEach(function(c) { c.classList.remove('grid-selected'); });
+        if (!wasSelected) {
+          cell.classList.add('grid-selected');
+          grid._selectedScore = { score: score, odds: odds };
+
+          // Haptic feedback
+          triggerHaptic();
+          playClickSound();
+
+          // Micro-bounce animation
+          cell.classList.add('micro-bounce');
+          setTimeout(function() { cell.classList.remove('micro-bounce'); }, 400);
+
+          // Update payout
+          updateGridPayout();
+        } else {
+          grid._selectedScore = null;
+          updateGridPayout();
+        }
+      });
+    });
+  }
+
+  // === GRID PAYOUT CALCULATOR ===
+  function updateGridPayout() {
+    let amountEl = document.getElementById('grid-bet-amount');
+    let payoutEl = document.getElementById('grid-payout-amount');
+    if (!amountEl || !payoutEl) return;
+
+    let amount = parseFloat(amountEl.value) || 0;
+    let grid = document.getElementById('grid-18');
+    let selected = grid && grid._selectedScore ? grid._selectedScore : null;
+    let odds = selected ? selected.odds : 0;
+
+    let oldPayout = parseFloat(payoutEl.textContent) || 0;
+    let newPayout = amount > 0 && odds > 0 ? (amount * odds) : 0;
+
+    if (Math.abs(newPayout - oldPayout) > 0.05 && newPayout > 0) {
+      animateCountUp(payoutEl, oldPayout, newPayout, 350);
+    } else {
+      payoutEl.textContent = newPayout.toFixed(2);
+    }
+
+    // Color based on payout
+    let preview = document.getElementById('grid-payout-preview');
+    if (preview) {
+      if (newPayout > 0) preview.style.opacity = '1';
+      else preview.style.opacity = '0.5';
+    }
+  }
+
+  // === HAPTIC FEEDBACK ===
+  function triggerHaptic() {
+    if (navigator.vibrate && navigator.vibrate.length !== undefined) {
+      try { navigator.vibrate(10); } catch(e) {}
     }
   }
 
@@ -1446,7 +1548,7 @@
 
   // ==================== ENHANCED BET CART SYSTEM (lucky944 style) ====================
   function addToCart(score, odds, matchName) {
-    var existing = betCart.find(function(b) { return b.score === score && b.matchName === matchName; });
+    let existing = betCart.find(function(b) { return b.score === score && b.matchName === matchName; });
     if (existing) {
       existing.amount += 100;
       existing.estimatedReturn = +(existing.amount * existing.odds).toFixed(2);
@@ -1464,7 +1566,7 @@
   }
 
   function removeFromCart(index) {
-    var removed = betCart.splice(index, 1);
+    let removed = betCart.splice(index, 1);
     updateCartUI();
     if (removed.length) showToast('已移除 ' + removed[0].matchName + ' ' + removed[0].score);
   }
@@ -1478,11 +1580,11 @@
   }
 
   function updateCartUI() {
-    var cart = document.getElementById('betCart');
-    var count = document.getElementById('cartCount');
-    var total = document.getElementById('cartTotal');
-    var cartItems = document.getElementById('cartItems');
-    var cartSummary = document.getElementById('cartSummary');
+    let cart = document.getElementById('betCart');
+    let count = document.getElementById('cartCount');
+    let total = document.getElementById('cartTotal');
+    let cartItems = document.getElementById('cartItems');
+    let cartSummary = document.getElementById('cartSummary');
     if (!cart) return;
 
     if (betCart.length === 0) {
@@ -1495,9 +1597,9 @@
 
       // Render individual cart items with odds and estimated returns
       if (cartItems) {
-        var totalPotential = 0;
+        let totalPotential = 0;
         cartItems.innerHTML = betCart.map(function(b, idx) {
-          var returnAmt = b.estimatedReturn || +(b.amount * b.odds).toFixed(2);
+          let returnAmt = b.estimatedReturn || +(b.amount * b.odds).toFixed(2);
           totalPotential += returnAmt;
           return '<div class="cart-item" style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px">' +
             '<div style="flex:1;min-width:0">' +
@@ -1515,13 +1617,13 @@
         }).join('');
         if (cartSummary) {
           cartSummary.style.display = 'block';
-          var totalSum = betCart.reduce(function(s, b) { return s + b.amount; }, 0);
+          let totalSum = betCart.reduce(function(s, b) { return s + b.amount; }, 0);
           total.textContent = totalSum + ' USDT';
-          var potentialEl = document.getElementById('cartPotential');
+          let potentialEl = document.getElementById('cartPotential');
           if (potentialEl) potentialEl.textContent = totalPotential.toFixed(2) + ' USDT';
         }
       } else {
-        var sum = betCart.reduce(function(s, b) { return s + b.amount; }, 0);
+        let sum = betCart.reduce(function(s, b) { return s + b.amount; }, 0);
         if (total) total.textContent = sum + ' USDT';
       }
     }
@@ -1531,16 +1633,16 @@
     if (!walletAddress) { playErrorSound(); showToast('请先连接钱包'); return; }
     if (betCart.length === 0) return;
 
-    var total = betCart.reduce(function(s, b) { return s + b.amount; }, 0);
+    let total = betCart.reduce(function(s, b) { return s + b.amount; }, 0);
 
     // Try on-chain contract interaction first (when viem + wallet available)
     if (viemLoaded && walletProvider && currentDetailMatchId) {
-      var allSuccess = true;
-      for (var ci = 0; ci < betCart.length; ci++) {
-        var b = betCart[ci];
-        var cell = scoreToCellIndex(b.score);
+      let allSuccess = true;
+      for (let ci = 0; ci < betCart.length; ci++) {
+        let b = betCart[ci];
+        let cell = scoreToCellIndex(b.score);
         if (cell < 0) { allSuccess = false; continue; }
-        var tx = await contractPlaceAntiBet(currentDetailMatchId, cell, b.amount);
+        let tx = await contractPlaceAntiBet(currentDetailMatchId, cell, b.amount);
         if (tx) {
           betRecords.unshift({
             id: Date.now() + ci, team: b.matchName + ' ' + b.score,
@@ -1585,10 +1687,10 @@
 
   // ==================== CONFETTI ====================
   function spawnConfetti() {
-    var colors = ['#DC143C','#DAA520','#FFD700','#03A66D','#667eea','#f5576c'];
-    for (var i = 0; i < 50; i++) {
+    let colors = ['#DC143C','#DAA520','#FFD700','#03A66D','#667eea','#f5576c'];
+    for (let i = 0; i < 50; i++) {
       setTimeout(function() {
-        var piece = document.createElement('div');
+        let piece = document.createElement('div');
         piece.className = 'confetti-piece';
         piece.style.left = Math.random() * 100 + '%';
         piece.style.top = -(Math.random() * 100) + 'px';
@@ -1606,9 +1708,9 @@
 
   // ==================== BADGES ====================
   function updateBadges() {
-    var badge = document.getElementById('badge-records');
+    let badge = document.getElementById('badge-records');
     if (!badge) return;
-    var pending = betRecords.filter(function(r) { return r.status === 'pending'; }).length;
+    let pending = betRecords.filter(function(r) { return r.status === 'pending'; }).length;
     if (pending > 0) {
       badge.textContent = pending > 99 ? '99+' : pending;
       badge.classList.add('show');
@@ -1619,46 +1721,82 @@
 
   // ==================== SPARKLINE ====================
   function renderSparkline(containerId, data, color) {
-    var container = document.getElementById(containerId);
+    let container = document.getElementById(containerId);
     if (!container) return;
-    var max = Math.max.apply(null, data.concat([1]));
+    let max = Math.max.apply(null, data.concat([1]));
     container.innerHTML = data.map(function(v) {
-      var h = Math.max(4, (v / max) * 100);
+      let h = Math.max(4, (v / max) * 100);
       return '<div class="sparkline-bar" style="height:' + h + '%;background:' + (color || 'var(--gold)') + '"></div>';
     }).join('');
   }
 
-  // ==================== PULL TO REFRESH ====================
-  var pullStart = 0;
+  // ==================== ENHANCED PULL TO REFRESH ====================
+  let pullStart = 0;
+  let pullDistance = 0;
+  let pullingDown = false;
+  const pullThreshold = 70;
+
   function initPullRefresh() {
-    var main = document.querySelector('.main') || document.body;
-    var indicator = document.getElementById('pullIndicator');
+    let main = document.querySelector('.main') || document.body;
+    let indicator = document.getElementById('pullIndicator');
+    if (!indicator) return;
 
     main.addEventListener('touchstart', function(e) {
-      if (window.scrollY === 0) pullStart = e.touches[0].clientY;
+      if (window.scrollY <= 5 && e.touches.length === 1) {
+        pullStart = e.touches[0].clientY;
+        pullDistance = 0;
+        pullingDown = false;
+      } else {
+        pullStart = 0;
+      }
     }, { passive: true });
 
     main.addEventListener('touchmove', function(e) {
-      if (window.scrollY === 0 && pullStart > 0) {
-        var dy = e.touches[0].clientY - pullStart;
-        if (dy > 30 && indicator) indicator.classList.add('active');
+      if (pullStart === 0) return;
+      let dy = e.touches[0].clientY - pullStart;
+      pullDistance = dy;
+      if (dy > 20 && !pullingDown) {
+        pullingDown = true;
+        indicator.classList.add('active');
+        let pullText = indicator.querySelector('.pull-text');
+        if (pullText) pullText.textContent = '下拉刷新';
+      }
+      if (dy > pullThreshold && indicator.classList.contains('active')) {
+        let pullText = indicator.querySelector('.pull-text');
+        if (pullText) pullText.textContent = '释放刷新';
       }
     }, { passive: true });
 
     main.addEventListener('touchend', async function() {
-      if (indicator && indicator.classList.contains('active')) {
-        indicator.textContent = '\u27F3 刷新中...';
+      if (!pullingDown) { pullStart = 0; return; }
+      if (pullDistance > pullThreshold && indicator && indicator.classList.contains('active')) {
+        // Trigger refresh
+        indicator.classList.add('refreshing');
+        let pullText = indicator.querySelector('.pull-text');
+        if (pullText) pullText.textContent = '刷新中...';
+
         await renderMatchCards();
+        await renderChampionBet();
+        await renderRecords(currentFilter || 'all');
+
+        indicator.classList.remove('refreshing');
         indicator.classList.remove('active');
-        indicator.textContent = '\u2193 下拉刷新';
+        let pullText2 = indicator.querySelector('.pull-text');
+        if (pullText2) pullText2.textContent = '下拉刷新';
+      } else {
+        indicator.classList.remove('active');
+        let pullText = indicator.querySelector('.pull-text');
+        if (pullText) pullText.textContent = '下拉刷新';
       }
       pullStart = 0;
+      pullDistance = 0;
+      pullingDown = false;
     }, { passive: true });
   }
 
   // ==================== RECORDS PAGE ====================
   async function renderRecords(filter) {
-    var container = document.getElementById('records-list');
+    let container = document.getElementById('records-list');
     if (!container) return;
 
     container.innerHTML = Array(4).fill(0).map(function() {
@@ -1669,10 +1807,10 @@
       '</div>';
     }).join('');
 
-    var records = betRecords;
+    let records = betRecords;
 
     if (apiAvailable && walletAddress) {
-      var res = await apiCall('/bets?address=' + encodeURIComponent(walletAddress));
+      let res = await apiCall('/bets?address=' + encodeURIComponent(walletAddress));
       if (res && res.code === 0 && res.data.length > 0) {
         records = res.data.map(function(r) { return {
           id: r.id, team: r.team_name, type: r.bet_type_name,
@@ -1694,8 +1832,8 @@
     }
 
     container.innerHTML = records.map(function(r) {
-      var cls = r.status === 'won' ? 'positive' : r.status === 'lost' ? 'negative' : 'pending';
-      var txt = r.status === 'won' ? '已赢' : r.status === 'lost' ? '已输' : '进行中';
+      let cls = r.status === 'won' ? 'positive' : r.status === 'lost' ? 'negative' : 'pending';
+      let txt = r.status === 'won' ? '已赢' : r.status === 'lost' ? '已输' : '进行中';
       return '<div class="record-item">\n        <div><div class="r-league">' + r.type + '</div><div class="r-time">' + r.time + '</div></div>\n        <div class="r-match">' + r.team + '</div>\n        <div class="r-amount"><div>$' + r.amount + '</div><div class="' + cls + '">' + txt + '</div></div>\n      </div>';
     }).join('');
 
@@ -1703,6 +1841,7 @@
   }
 
   function filterRecords(filter) {
+    currentFilter = filter;
     document.querySelectorAll('#page-records .record-filter button').forEach(function(b) { b.classList.remove('active'); });
     if (event && event.target) event.target.classList.add('active');
     renderRecords(filter);
@@ -1710,19 +1849,33 @@
   }
 
   // ==================== PROFILE ====================
+  let lastProfileBalance = 0;
+
   function renderProfile() {
     if (walletAddress) {
       document.getElementById('profile-addr').textContent =
         walletAddress.substring(0, 6) + '...' + walletAddress.substring(walletAddress.length - 4);
       document.getElementById('profile-name').textContent = '19888 用户';
-      document.getElementById('profile-balance').textContent = userBalance.toFixed(2);
-      document.getElementById('wallet-status').innerHTML = '<div class="m-left"><span class="m-icon">\uD83D\uDC5B</span> 钱包连接</div><span style="color:var(--green);margin-right:10px">\u25CF 已连接</span>';
+
+      // Animate balance count-up/down
+      let balEl = document.getElementById('profile-balance');
+      let newBal = userBalance;
+      if (Math.abs(newBal - lastProfileBalance) > 0.01 && balEl) {
+        animateCountUp(balEl, lastProfileBalance, newBal, 500);
+      } else if (balEl) {
+        balEl.textContent = newBal.toFixed(2);
+      }
+      lastProfileBalance = newBal;
+
+      document.getElementById('wallet-status').innerHTML = '<div class="m-left"><span class="m-icon">👛</span> 钱包连接</div><span style="color:var(--green);margin-right:10px">● 已连接</span>';
     } else {
       document.getElementById('profile-addr').textContent = '未连接';
       document.getElementById('profile-name').textContent = '请连接钱包';
       document.getElementById('profile-balance').textContent = '0.00';
-      document.getElementById('wallet-status').innerHTML = '<div class="m-left"><span class="m-icon">\uD83D\uDC5B</span> 钱包连接</div><span style="color:var(--text-muted);margin-right:10px">\u25CB 未连接</span>';
+      document.getElementById('wallet-status').innerHTML = '<div class="m-left"><span class="m-icon">👛</span> 钱包连接</div><span style="color:var(--text-muted);margin-right:10px">○ 未连接</span>';
     }
+    renderVIPStatus();
+    updateAIInvestUI();
   }
 
   // ==================== WALLET ====================
@@ -1809,8 +1962,8 @@
   }
 
   function updateWalletUI() {
-    var btn = document.getElementById('wallet-btn');
-    var addrSpan = document.getElementById('wallet-addr');
+    let btn = document.getElementById('wallet-btn');
+    let addrSpan = document.getElementById('wallet-addr');
     if (walletAddress) {
       addrSpan.textContent = walletAddress.substring(walletAddress.length - 4);
       btn.classList.add('connected');
@@ -1838,7 +1991,7 @@
     currentLang = lang;
     localStorage.setItem('19888_lang', lang);
     document.querySelectorAll('.lang-option').forEach(function(o) { o.classList.remove('selected'); });
-    var opt = document.querySelector('.lang-option[data-lang="' + lang + '"]');
+    let opt = document.querySelector('.lang-option[data-lang="' + lang + '"]');
     if (opt) opt.classList.add('selected');
     closeLangModal();
     showToast('语言已切换');
@@ -1847,7 +2000,7 @@
 
   // ==================== UTILS ====================
   function showToast(message) {
-    var toast = document.getElementById('toast');
+    let toast = document.getElementById('toast');
     toast.textContent = message; toast.classList.add('show');
     clearTimeout(toast._timeout);
     toast._timeout = setTimeout(function() { toast.classList.remove('show'); }, 2000);
@@ -1857,17 +2010,17 @@
     try { localStorage.setItem('19888_bet_records', JSON.stringify(betRecords)); localStorage.setItem('19888_balance', userBalance); } catch(e) {}
   }
   function loadData() {
-    try { var r = localStorage.getItem('19888_bet_records'); if (r) betRecords = JSON.parse(r); userBalance = +localStorage.getItem('19888_balance') || 0; } catch(e) {}
+    try { let r = localStorage.getItem('19888_bet_records'); if (r) betRecords = JSON.parse(r); userBalance = +localStorage.getItem('19888_balance') || 0; } catch(e) {}
   }
 
   // ==================== COUNTDOWN ====================
   function updateCountdown() {
-    var el = document.getElementById('countdown');
+    let el = document.getElementById('countdown');
     if (!el) return;
-    var diff = new Date('2026-06-11T00:00:00').getTime() - Date.now();
+    let diff = new Date('2026-06-11T00:00:00').getTime() - Date.now();
     if (diff <= 0) { el.textContent = '世界杯已开幕！'; return; }
-    var d = Math.floor(diff/86400000), h = Math.floor((diff%86400000)/3600000);
-    var m = Math.floor((diff%3600000)/60000), s = Math.floor((diff%60000)/1000);
+    let d = Math.floor(diff/86400000), h = Math.floor((diff%86400000)/3600000);
+    let m = Math.floor((diff%3600000)/60000), s = Math.floor((diff%60000)/1000);
     el.textContent = '世界杯倒计时：' + d + '天' + h + '小时' + m + '分' + s + '秒';
   }
 
@@ -1898,13 +2051,13 @@
     // Hide all tab bodies
     document.querySelectorAll('#page-detail .detail-tab-body').forEach(function(d) { d.style.display = 'none'; });
     // Show selected tab
-    var target = document.getElementById(tabId);
+    let target = document.getElementById(tabId);
     if (target) target.style.display = 'block';
     if (tabId === 'tab-h2h') renderH2H();
     if (tabId === 'tab-recent') renderRecentForm();
     // Load score grid if switching to score tab
     if (tabId === 'tab-score' && currentDetailMatchId) {
-      var match = mockMatches.find(function(m) { return m.id === currentDetailMatchId; });
+      let match = mockMatches.find(function(m) { return m.id === currentDetailMatchId; });
       if (match) loadScoreGrid(match);
     }
     playClickSound();
@@ -1912,10 +2065,10 @@
 
   // ==================== SCORE GRID (正波膽) ====================
   function loadScoreGrid(match) {
-    var grid = document.getElementById('score-grid');
+    let grid = document.getElementById('score-grid');
     if (!grid) return;
     
-    var scores = computeCorrectScoreOdds ? 
+    let scores = computeCorrectScoreOdds ? 
       scoreGrid18.map(function(s) { return { score: s, odds: computeCorrectScoreOdds(s) }; }) :
       [
         { score: '1:0', odds: 6.50 }, { score: '2:1', odds: 8.50 }, { score: '1:1', odds: 7.20 },
@@ -1927,7 +2080,7 @@
       ];
 
     grid.innerHTML = scores.map(function(s) {
-      var oddsColor = s.odds < 10 ? 'var(--green)' : s.odds < 20 ? 'var(--purple-start)' : s.odds < 50 ? 'var(--accent-mid)' : 'var(--red)';
+      let oddsColor = s.odds < 10 ? 'var(--green)' : s.odds < 20 ? 'var(--purple-start)' : s.odds < 50 ? 'var(--accent-mid)' : 'var(--red)';
       return '<div class="score-cell" style="background:var(--surface);border-radius:10px;padding:12px 8px;text-align:center;box-shadow:var(--shadow);cursor:pointer;transition:all .2s;border:2px solid transparent" onclick="app.selectScoreBet(\'' + s.score + '\', ' + s.odds + ')" onmouseover="this.style.borderColor=\'var(--accent)\';this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.borderColor=\'transparent\';this.style.transform=\'none\'">' +
         '<b style="font-size:15px;display:block;color:var(--text)">' + s.score + '</b>' +
         '<span style="font-size:13px;font-weight:700;color:' + oddsColor + '">' + s.odds + '</span>' +
@@ -1937,7 +2090,7 @@
     initRippleEffects();
   }
 
-  var scoreBetData = null;
+  let scoreBetData = null;
 
   function selectScoreBet(score, odds) {
     scoreBetData = { score: score, odds: odds };
@@ -1951,9 +2104,9 @@
   }
 
   function updateScoreBetProfit() {
-    var amount = parseFloat(document.getElementById('score-bet-amount').value) || 0;
+    let amount = parseFloat(document.getElementById('score-bet-amount').value) || 0;
     if (scoreBetData) {
-      var profit = amount > 0 ? (amount * scoreBetData.odds - amount) : 0;
+      let profit = amount > 0 ? (amount * scoreBetData.odds - amount) : 0;
       document.getElementById('score-bet-profit').textContent = profit.toFixed(2);
     }
   }
@@ -1961,10 +2114,10 @@
   function confirmScoreBet() {
     if (!scoreBetData) { showToast('请先选择一个比分'); return; }
     if (!walletAddress) { playErrorSound(); showToast('请先连接钱包'); return; }
-    var amount = parseFloat(document.getElementById('score-bet-amount').value) || 0;
+    let amount = parseFloat(document.getElementById('score-bet-amount').value) || 0;
     if (amount < 1) { playErrorSound(); showToast('请输入有效投注金额(最低1 USDT)'); return; }
 
-    var record = {
+    let record = {
       id: Date.now(),
       team: scoreBetData.score,
       type: '正波膽',
@@ -1994,15 +2147,15 @@
   }
 
   // ==================== CHAMPION DETAIL BET (冠亚 - 赛事详情页) ====================
-  var championDetailData = null;
+  let championDetailData = null;
 
   function selectChampionSide(side) {
-    var homeCard = document.getElementById('champion-home-card');
-    var awayCard = document.getElementById('champion-away-card');
-    var homeOdds = parseFloat(document.getElementById('champion-home-odds').textContent) || 1.90;
-    var awayOdds = parseFloat(document.getElementById('champion-away-odds').textContent) || 2.05;
-    var homeName = document.getElementById('champion-home-name').textContent;
-    var awayName = document.getElementById('champion-away-name').textContent;
+    let homeCard = document.getElementById('champion-home-card');
+    let awayCard = document.getElementById('champion-away-card');
+    let homeOdds = parseFloat(document.getElementById('champion-home-odds').textContent) || 1.90;
+    let awayOdds = parseFloat(document.getElementById('champion-away-odds').textContent) || 2.05;
+    let homeName = document.getElementById('champion-home-name').textContent;
+    let awayName = document.getElementById('champion-away-name').textContent;
 
     // Reset both cards
     if (homeCard) homeCard.style.borderColor = 'transparent';
@@ -2021,12 +2174,12 @@
   }
 
   function selectChampionRunnerup(side) {
-    var homeCard = document.getElementById('runnerup-home-card');
-    var awayCard = document.getElementById('runnerup-away-card');
-    var homeOdds = parseFloat(document.getElementById('runnerup-home-odds').textContent) || 4.20;
-    var awayOdds = parseFloat(document.getElementById('runnerup-away-odds').textContent) || 4.50;
-    var homeName = document.getElementById('runnerup-home-name').textContent;
-    var awayName = document.getElementById('runnerup-away-name').textContent;
+    let homeCard = document.getElementById('runnerup-home-card');
+    let awayCard = document.getElementById('runnerup-away-card');
+    let homeOdds = parseFloat(document.getElementById('runnerup-home-odds').textContent) || 4.20;
+    let awayOdds = parseFloat(document.getElementById('runnerup-away-odds').textContent) || 4.50;
+    let homeName = document.getElementById('runnerup-home-name').textContent;
+    let awayName = document.getElementById('runnerup-away-name').textContent;
 
     // Reset both cards
     if (homeCard) homeCard.style.borderColor = 'transparent';
@@ -2052,15 +2205,15 @@
     document.getElementById('champion-bet-profit').textContent = '0.00';
     document.getElementById('champion-bet-panel').style.display = 'block';
     setTimeout(function() {
-      var inp = document.getElementById('champion-bet-amount');
+      let inp = document.getElementById('champion-bet-amount');
       if (inp) inp.focus();
     }, 200);
   }
 
   function updateChampionBetProfit() {
-    var amount = parseFloat(document.getElementById('champion-bet-amount').value) || 0;
+    let amount = parseFloat(document.getElementById('champion-bet-amount').value) || 0;
     if (championDetailData) {
-      var profit = amount > 0 ? (amount * championDetailData.odds - amount) : 0;
+      let profit = amount > 0 ? (amount * championDetailData.odds - amount) : 0;
       document.getElementById('champion-bet-profit').textContent = profit.toFixed(2);
     }
   }
@@ -2068,10 +2221,10 @@
   function confirmChampionBet() {
     if (!championDetailData) { showToast('请先选择投注方'); return; }
     if (!walletAddress) { playErrorSound(); showToast('请先连接钱包'); return; }
-    var amount = parseFloat(document.getElementById('champion-bet-amount').value) || 0;
+    let amount = parseFloat(document.getElementById('champion-bet-amount').value) || 0;
     if (amount < 1) { playErrorSound(); showToast('请输入有效投注金额(最低1 USDT)'); return; }
 
-    var record = {
+    let record = {
       id: Date.now(),
       team: championDetailData.team,
       type: championDetailData.type,
@@ -2099,10 +2252,10 @@
     document.getElementById('champion-bet-profit').textContent = '0.00';
     document.getElementById('champion-bet-odds').textContent = '--';
     // Reset card borders
-    var homeCard = document.getElementById('champion-home-card');
-    var awayCard = document.getElementById('champion-away-card');
-    var rHomeCard = document.getElementById('runnerup-home-card');
-    var rAwayCard = document.getElementById('runnerup-away-card');
+    let homeCard = document.getElementById('champion-home-card');
+    let awayCard = document.getElementById('champion-away-card');
+    let rHomeCard = document.getElementById('runnerup-home-card');
+    let rAwayCard = document.getElementById('runnerup-away-card');
     if (homeCard) homeCard.style.borderColor = 'transparent';
     if (awayCard) awayCard.style.borderColor = 'transparent';
     if (rHomeCard) rHomeCard.style.borderColor = 'transparent';
@@ -2137,34 +2290,234 @@
     el.innerHTML = '<div class="recent-card"><div class="recent-team"><strong>巴黎圣日耳曼</strong> 近5场: <span class="form-char win">W</span><span class="form-char win">W</span><span class="form-char lose">L</span><span class="form-char draw">D</span><span class="form-char win">W</span> <span style="font-size:11px;color:var(--text3)">进12球/失5球</span></div><div class="recent-team" style="margin-top:10px"><strong>马赛</strong> 近5场: <span class="form-char win">W</span><span class="form-char win">W</span><span class="form-char win">W</span><span class="form-char draw">D</span><span class="form-char win">W</span> <span style="font-size:11px;color:var(--text3)">进8球/失2球</span></div></div>';
   }
 
+  // ==================== VIP SYSTEM ====================
+  const VIP_TIERS = {
+    1: { name: 'VIP 1', icon: '👑', title: '新晋会员', turnover: 20000, antiRebate: 0.2, scoreRebate: 1.0, aiRebate: 0.1 },
+    2: { name: 'VIP 2', icon: '👑', title: '银牌会员', turnover: 100000, antiRebate: 0.4, scoreRebate: 2.0, aiRebate: 0.2 },
+    3: { name: 'VIP 3', icon: '💎', title: '金牌会员', turnover: 1000000, antiRebate: 0.6, scoreRebate: 2.5, aiRebate: 0.3 },
+    4: { name: 'VIP 4', icon: '💎', title: '铂金会员', turnover: 10000000, antiRebate: 0.7, scoreRebate: 3.0, aiRebate: 0.4 },
+    5: { name: 'VIP 5', icon: '👑💎', title: '钻石会员', turnover: 50000000, antiRebate: 0.8, scoreRebate: 3.5, aiRebate: 0.5 }
+  };
+
+  let userVipLevel = 1;
+  let userTurnover = 0;
+
+  function computeVIPLevel(turnover) {
+    let level = 0;
+    for (let i = 5; i >= 1; i--) {
+      if (turnover >= VIP_TIERS[i].turnover) { level = i; break; }
+    }
+    return level;
+  }
+
+  function renderVIPStatus() {
+    let level = computeVIPLevel(userTurnover) || userVipLevel || 1;
+    let tier = VIP_TIERS[level];
+
+    // Update VIP status card
+    let iconEl = document.getElementById('vip-level-icon');
+    let nameEl = document.getElementById('vip-level-name');
+    let titleEl = document.getElementById('vip-level-title');
+    let tierBadgeEl = document.getElementById('vip-tier-badge');
+    if (iconEl) iconEl.textContent = tier.icon;
+    if (nameEl) nameEl.textContent = tier.name;
+    if (titleEl) titleEl.textContent = tier.title;
+
+    // Update tier badge
+    if (tierBadgeEl) {
+      tierBadgeEl.textContent = tier.name;
+      tierBadgeEl.className = 'vip-tier-badge vip-tier-' + level;
+    }
+
+    // Update rebate rates
+    let antiRebateEl = document.getElementById('vip-anti-rebate');
+    let scoreRebateEl = document.getElementById('vip-score-rebate');
+    let aiRebateEl = document.getElementById('vip-ai-rebate');
+    if (antiRebateEl) antiRebateEl.textContent = tier.antiRebate + '%';
+    if (scoreRebateEl) scoreRebateEl.textContent = tier.scoreRebate + '%';
+    if (aiRebateEl) aiRebateEl.textContent = tier.aiRebate + '%';
+
+    // Update VIP progress bar
+    let turnoverEl = document.getElementById('vip-turnover');
+    let nextNeededEl = document.getElementById('vip-next-needed');
+    let progressFillEl = document.getElementById('vip-progress-fill');
+    
+    if (turnoverEl) turnoverEl.textContent = '$' + userTurnover.toLocaleString();
+    
+    if (level >= 5) {
+      if (nextNeededEl) nextNeededEl.textContent = '已达到最高等级 🎉';
+      if (progressFillEl) progressFillEl.style.width = '100%';
+    } else {
+      let nextTier = VIP_TIERS[level + 1];
+      let needed = nextTier.turnover - userTurnover;
+      if (nextNeededEl) nextNeededEl.textContent = '$' + needed.toLocaleString();
+      let progress = level > 0 ? (userTurnover - VIP_TIERS[level].turnover) / (nextTier.turnover - VIP_TIERS[level].turnover) * 100 : (userTurnover / nextTier.turnover) * 100;
+      if (progressFillEl) {
+        let newWidth = Math.min(100, Math.max(0, progress));
+        progressFillEl.style.width = newWidth + '%';
+      }
+    }
+
+    // Update menu VIP badge
+    let menuBadge = document.querySelector('#page-profile .menu-badge');
+    if (menuBadge) menuBadge.textContent = tier.name;
+  }
+
+  // ==================== AI INVESTMENT PANEL ====================
+  let aiInvestBalance = 0;
+  let aiInvestProfit = 0;
+
+  function aiDeposit() {
+    let amount = parseFloat(document.getElementById('ai-deposit-amount').value);
+    if (!amount || amount < 100) { playErrorSound(); showToast('最低存入 100 USDT'); return; }
+    if (!walletAddress) { playErrorSound(); showToast('请先连接钱包'); return; }
+    
+    aiInvestBalance += amount;
+    updateAIInvestUI();
+    document.getElementById('ai-deposit-amount').value = '';
+    
+    // Record as turnover
+    userTurnover += amount;
+    userVipLevel = computeVIPLevel(userTurnover);
+    renderVIPStatus();
+    saveData();
+    
+    playSuccessSound();
+    showToast('AI 托管存入成功！' + amount + ' USDT');
+  }
+
+  function aiWithdraw() {
+    let amount = parseFloat(document.getElementById('ai-withdraw-amount').value);
+    if (!amount || amount < 10) { playErrorSound(); showToast('最低提取 10 USDT'); return; }
+    if (amount > aiInvestBalance) { playErrorSound(); showToast('余额不足'); return; }
+    if (!walletAddress) { playErrorSound(); showToast('请先连接钱包'); return; }
+    
+    // 5% early withdrawal fee if within 7-day lock
+    let fee = amount * 0.05;
+    let netAmount = amount - fee;
+    aiInvestBalance -= amount;
+    if (aiInvestProfit > 0) aiInvestProfit = Math.max(0, aiInvestProfit - amount * 0.1);
+    updateAIInvestUI();
+    document.getElementById('ai-withdraw-amount').value = '';
+    
+    showToast('AI 提取成功！到手 ' + netAmount.toFixed(2) + ' USDT (手续费 ' + fee.toFixed(2) + ')');
+    playSuccessSound();
+  }
+
+  function updateAIInvestUI() {
+    let balEl = document.getElementById('ai-invest-balance');
+    let profitEl = document.getElementById('ai-invest-profit');
+    let aprEl = document.getElementById('ai-invest-apr');
+
+    if (balEl) {
+      let oldBal = parseFloat(balEl.textContent) || 0;
+      let newBal = aiInvestBalance;
+      if (Math.abs(newBal - oldBal) > 0.01) {
+        animateCountUp(balEl, oldBal, newBal, 500);
+      } else {
+        balEl.textContent = aiInvestBalance.toFixed(2);
+      }
+    }
+    if (profitEl) {
+      profitEl.textContent = (aiInvestProfit >= 0 ? '+' : '') + aiInvestProfit.toFixed(2);
+      profitEl.className = aiInvestProfit >= 0 ? 'ais-val green' : 'ais-val';
+    }
+
+    // Calculate daily return rate (0.3% ~ 1.2%)
+    let dailyRate = aiInvestBalance > 0 ? (0.3 + Math.random() * 0.9) : 0;
+    let monthlyReturn = aiInvestBalance * (Math.pow(1 + dailyRate/100, 30) - 1);
+    let annualReturn = aiInvestBalance * (Math.pow(1 + dailyRate/100, 365) - 1);
+
+    if (aprEl) {
+      let monthlyRate = aiInvestBalance > 0 ? (monthlyReturn / aiInvestBalance * 100).toFixed(1) : '≈15';
+      aprEl.textContent = '≈' + monthlyRate + '%';
+    }
+
+    // Update daily return elements if they exist
+    let dailyRateEl = document.getElementById('ai-daily-rate');
+    let monthlyRetEl = document.getElementById('ai-monthly-ret');
+    let annualRetEl = document.getElementById('ai-annual-ret');
+    if (dailyRateEl) dailyRateEl.textContent = dailyRate.toFixed(2) + '%';
+    if (monthlyRetEl) monthlyRetEl.textContent = monthlyReturn.toFixed(2);
+    if (annualRetEl) annualRetEl.textContent = annualReturn.toFixed(2);
+
+    // Update settlement time
+    let settleEl = document.getElementById('ai-next-settle');
+    if (settleEl) {
+      let tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+      settleEl.textContent = tomorrow.toISOString().split('T')[0] + ' 00:00 UTC+8';
+    }
+
+    // Update lock status
+    let lockEl = document.getElementById('ai-lock-status');
+    if (lockEl) {
+      if (aiInvestBalance > 0) {
+        lockEl.className = 'ai-lock-status locked';
+        lockEl.innerHTML = '🔒 <span>锁定期 · 7天后解锁</span>';
+      } else {
+        lockEl.className = 'ai-lock-status unlocked';
+        lockEl.innerHTML = '✅ <span>无锁定 · 可自由存取</span>';
+      }
+    }
+
+    // Render AI sparkline
+    renderAISparkline();
+  }
+
+  // === AI INVESTMENT SPARKLINE ===
+  function renderAISparkline() {
+    let container = document.getElementById('ai-sparkline');
+    if (!container) return;
+
+    // Generate 30-day performance data
+    let data = [];
+    let val = aiInvestBalance || 1000;
+    let base = val * 0.85;
+    for (let i = 0; i < 30; i++) {
+      val = val * (1 + (Math.random() - 0.3) * 0.02);
+      data.push(Math.max(base * 0.7, val));
+    }
+
+    let max = Math.max.apply(null, data);
+    let min = Math.min.apply(null, data);
+    let range = max - min || 1;
+
+    container.innerHTML = data.map(function(v, i) {
+      let h = ((v - min) / range) * 85 + 10;
+      return '<div class="ai-sparkline-bar" style="height:' + h + '%;opacity:' + (0.5 + 0.5 * i/30) + '"></div>';
+    }).join('');
+  }
+
   // ==================== INIT ====================
   async function init() {
     loadData();
     loadViemCDN(); // Load viem for on-chain contract interactions (non-blocking)
-    var savedLang = localStorage.getItem('19888_lang');
+    let savedLang = localStorage.getItem('19888_lang');
     if (savedLang) {
       currentLang = savedLang;
       document.querySelectorAll('.lang-option').forEach(function(o) { o.classList.remove('selected'); });
-      var opt = document.querySelector('.lang-option[data-lang="' + savedLang + '"]');
+      let opt = document.querySelector('.lang-option[data-lang="' + savedLang + '"]');
       if (opt) opt.classList.add('selected');
     }
 
     // Probe API
-    apiAvailable = !!(await apiCall('/status'));
+    try { apiAvailable = !!(await apiCall('/status')); } catch(e) { apiAvailable = false; console.error('[19888] API probe error:', e); }
 
     // Dialogs
-    var betOverlay = document.getElementById('bet-dialog-overlay');
+    let betOverlay = document.getElementById('bet-dialog-overlay');
     if (betOverlay) betOverlay.addEventListener('click', function(e) { if (e.target === this) closeBetDialog(); });
-    var langModal = document.getElementById('lang-modal');
+    let langModal = document.getElementById('lang-modal');
     if (langModal) langModal.addEventListener('click', function(e) { if (e.target.classList.contains('lang-modal-mask')) closeLangModal(); });
     document.querySelectorAll('.quick-amounts button').forEach(function(btn) {
       btn.addEventListener('click', function() { document.getElementById('bet-amount-input').value = this.dataset.amount; updateBetProfit(); });
     });
-    var amountInput = document.getElementById('bet-amount-input');
+    let amountInput = document.getElementById('bet-amount-input');
     if (amountInput) amountInput.addEventListener('input', updateBetProfit);
-    var confirmBtn = document.getElementById('btn-confirm-bet');
+    let confirmBtn = document.getElementById('btn-confirm-bet');
     if (confirmBtn) confirmBtn.addEventListener('click', confirmBet);
-    var cancelBtn = document.getElementById('btn-cancel-bet');
+    let cancelBtn = document.getElementById('btn-cancel-bet');
     if (cancelBtn) cancelBtn.addEventListener('click', closeBetDialog);
 
     // Initialize ripple effect
@@ -2184,19 +2537,43 @@
     updateBadges();
     initPullRefresh();
     initSwipeCards();
-    setInterval(updateCountdown, 1000);
+    let countdownInterval = setInterval(updateCountdown, 1000);
 
     // Render sparkline for AI page
-    var sparkData = [2.1,1.8,3.2,2.9,4.1,3.5,2.7,5.0,4.3,3.1,6.2,5.8,4.0,7.5,6.1];
+    let sparkData = [2.1,1.8,3.2,2.9,4.1,3.5,2.7,5.0,4.3,3.1,6.2,5.8,4.0,7.5,6.1];
     renderSparkline('sparkline-ai', sparkData, 'var(--green)');
 
     // Re-init ripple on dynamic content updates via MutationObserver
-    var observer = new MutationObserver(function() {
+    let domObserver = new MutationObserver(function() {
       initRippleEffects();
       trackOddsElements();
     });
-    observer.observe(document.body, { childList: true, subtree: true });
+    domObserver.observe(document.body, { childList: true, subtree: true });
   }
+
+  // ==================== CLEANUP ON PAGE UNLOAD ====================
+  window.addEventListener('beforeunload', function() {
+    // Clear all intervals
+    if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+    if (oddsFlashInterval) { clearInterval(oddsFlashInterval); oddsFlashInterval = null; }
+    if (oddsFlashTimer) { clearTimeout(oddsFlashTimer); oddsFlashTimer = null; }
+    
+    // Disconnect MutationObserver
+    if (domObserver) { domObserver.disconnect(); domObserver = null; }
+    
+    // Stop odds flash
+    stopOddsFlash();
+  });
+
+  // ==================== GLOBAL ERROR HANDLER ====================
+  window.onerror = function(message, source, lineno, colno, error) {
+    console.error('[19888] Global error:', message, 'at', source + ':' + lineno + ':' + colno, error);
+    try {
+      const toast = document.getElementById('toast');
+      if (toast) { toast.textContent = '应用错误，请刷新页面'; toast.classList.add('show'); }
+    } catch(e) {}
+    return true;
+  };
 
   // ==================== PUBLIC API ====================
   window.app = {
@@ -2265,7 +2642,18 @@
     switchDetailTab: switchDetailTab,
     copyInviteCode: copyInviteCode,
     shareInviteLink: shareInviteLink,
-    markAllRead: markAllRead
+    markAllRead: markAllRead,
+    // NEW: AI Investment Panel
+    aiDeposit: aiDeposit,
+    aiWithdraw: aiWithdraw,
+    updateAIInvestUI: updateAIInvestUI,
+    // NEW: Grid-18 enhanced
+    updateGridPayout: updateGridPayout,
+    triggerHaptic: triggerHaptic,
+    renderAISparkline: renderAISparkline,
+    // Loading spinner
+    showLoading: showLoading,
+    hideLoading: hideLoading
   };
 
   if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }

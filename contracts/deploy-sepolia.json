@@ -1,0 +1,19 @@
+{
+  "network": "sepolia",
+  "chainId": 11155111,
+  "deployer": "0x2D7fD65f2Ebb74EF91c1Cc27CEdb0eBaC2FdbbA6",
+  "rpc": "https://ethereum-sepolia-rpc.publicnode.com",
+  "explorer": "https://sepolia.etherscan.io",
+  "contracts": {
+    "MockUSDT": "0x98f1609261A1BE6B25e33FBDBa409dF93CD083cf",
+    "LuckyPool": "0x02fda9c22d6f8733bA507Ed1019d67571626e9DA",
+    "AntiScoreBet": "0x865C5C27c75eFE75a18EBC0B51F2CA0aEb6597aD",
+    "ScoreBet": "0x4d915d461109E19C4b80AD2bb81780F096d60C68",
+    "ChampionBet": "0x938246dee823cEFe5574E4d195EfAD0467b2ED71",
+    "AIVault": "0x238568FaA599DA490c745d3C651b5ab1846Caeb0",
+    "RevenueShare": "0xCe660ab1721B0E23Be5C6Aa714F8e41f71ee61eB",
+    "VIPStaking": "0x5CDA189eB43CDb954b8D30B5df66BF3b9d4045b8"
+  },
+  "note": "ScoreBet redeployed 2026-06-07: fixed missing __Ownable_init in initialize()",
+  "old_ScoreBet": "0xfFd6f4a8F1291bC5CE09e52C6C3534920cC19094"
+}

@@ -96,7 +96,7 @@ contract LuckyPoolTest is Test {
         
         vm.startPrank(alice);
         usdt.approve(address(pool), 500 ether);
-        vm.expectRevert("CB active");
+        vm.expectRevert(abi.encodeWithSignature("EnforcedPause()"));
         pool.deposit(500 ether);
     }
 }
@@ -125,6 +125,9 @@ contract AntiScoreBetTest is Test {
             abi.encodeCall(AntiScoreBet.initialize, address(pool))
         );
         anti = AntiScoreBet(address(antiProxy));
+
+        // Authorize AntiScoreBet to call pool.recordBet
+        pool.setAuthorizedContract(address(anti), true);
         vm.stopPrank();
         
         usdt.mint(alice, 10000 ether);
