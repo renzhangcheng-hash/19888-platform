@@ -1,1580 +1,628 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <title>19888 - 反波膽竞猜平台 | 无惧未来 赛事无忧</title>
-  <meta name="description" content="19888 — 不猜结果，反猜意外。SABA 27年盘口数据库 × AI深度学习，5000万场历史训练，让每一脚射门都有价值。">
-  <meta name="theme-color" content="#F0F2F5">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="19888">
-  <meta property="og:title" content="19888 - 反波膽竞猜平台">
-  <meta property="og:description" content="不猜结果，反猜意外。让每一脚射门都有价值。">
-  <meta property="og:image" content="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 630'><rect width='1200' height='630' fill='%23667eea'/><text x='600' y='350' text-anchor='middle' font-size='120' font-weight='900' fill='white' font-family='Arial'>19888</text></svg>">
-  <link rel="manifest" href="/manifest.json">
-
-  <!-- Resource Hints: preconnect to RPC endpoint -->
-  <link rel="preconnect" href="https://ethereum-sepolia-rpc.publicnode.com" crossorigin>
-
-  <!-- Preload critical CSS for faster first paint -->
-  <link rel="preload" href="css/style.css" as="style">
-  <link rel="preload" href="js/app.js" as="script">
-
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23F0F2F5'/><text x='50' y='65' text-anchor='middle' font-size='44' font-weight='900' fill='%23764ba2' font-family='Arial'>19888</text></svg>">
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1" />
+    <meta name="renderer" content="webkit" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no" />
+    <meta name="format-detection" content="telephone=no" />
+    <title>19888|首页</title>
+    <meta name="description" content="19888 - 专业的反波胆竞猜平台" />
+    <meta name="keywords" content="反波胆竞猜,体育投注,足球竞猜,19888" />
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="css/lucky944.css" />
 </head>
-<body>
+<body class="index">
 
-<!-- Skip to content -- accessibility -->
-<a class="skip-to-content" href="#main-content">跳转到主内容</a>
-
-<!-- Noscript warning -->
-<noscript>
-  <div class="noscript-warning">
-    ⚠️ 请启用 JavaScript 以正常使用本平台。JavaScript is required for this platform.
-  </div>
-</noscript>
-
-<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js');}</script>
-
-<!-- LANGUAGE MODAL -->
-<div class="lang-modal" id="lang-modal">
-  <div class="lang-modal-mask" onclick="app.closeLangModal()"></div>
-  <div class="lang-modal-box">
-    <div class="lang-modal-title">🌐 Language / 语言</div>
-    <div class="lang-option selected" data-lang="cn" onclick="app.setLanguage('cn')">🇨🇳 简体中文 ✓</div>
-    <div class="lang-option" data-lang="cntw" onclick="app.setLanguage('cntw')">🇭🇰 繁體中文</div>
-    <div class="lang-option" data-lang="en" onclick="app.setLanguage('en')">🇬🇧 English</div>
-    <div class="lang-option" data-lang="vn" onclick="app.setLanguage('vn')">🇻🇳 Tiếng Việt</div>
-    <div class="lang-option" data-lang="kr" onclick="app.setLanguage('kr')">🇰🇷 한국어</div>
-    <div class="lang-option" data-lang="jp" onclick="app.setLanguage('jp')">🇯🇵 日本語</div>
-    <div class="lang-option" data-lang="th" onclick="app.setLanguage('th')">🇹🇭 ภาษาไทย</div>
-    <div class="lang-option" data-lang="id" onclick="app.setLanguage('id')">🇮🇩 Bahasa Indonesia</div>
-  </div>
-</div>
-
-<!-- TOAST -->
-<div class="toast" id="toast"></div>
-
-<!-- BET DIALOG -->
-<div class="dialog-overlay" id="bet-dialog-overlay">
-  <div class="dialog-box">
-    <div class="dialog-title">投注确认</div>
-    <div class="dialog-body">
-      <div class="team-display">
-        <div class="d-logo">⚽</div>
-        <div class="d-name" id="bet-team-name">--</div>
-        <div class="d-type" id="bet-type-name">--</div>
-      </div>
-      <div class="form-group">
-        <label>投注金额 (USDT)</label>
-        <input type="number" id="bet-amount-input" placeholder="请输入投注金额" min="1" step="1" oninput="app.updateBetProfit()">
-        <div class="quick-amounts">
-          <button data-amount="100">100</button>
-          <button data-amount="500">500</button>
-          <button data-amount="1000">1000</button>
-          <button data-amount="5000">5000</button>
+    <!-- HEADER -->
+    <div class="header">
+        <div class="global-lang-switch-btn" id="globalLangSwitchBtn">
+            <span style="font-size:18px;line-height:22px;">🌐</span>
         </div>
-      </div>
-      <div class="odds-info">
-        <span>赔率: <em id="bet-odds">--</em></span>
-        <span>潜在收益: <em id="bet-profit">0</em> USDT</span>
-      </div>
-    </div>
-    <div class="dialog-footer">
-      <button class="btn-cancel" id="btn-cancel-bet" onclick="app.closeBetDialog()">取消</button>
-      <button class="btn-confirm" id="btn-confirm-bet" onclick="app.confirmBet()">确认投注</button>
-    </div>
-  </div>
-</div>
-
-<!-- ===== NEW: PROMOTIONS MODAL ===== -->
-<div class="promo-overlay" id="promo-overlay">
-  <div class="promo-sheet">
-    <div class="promo-sheet-handle"></div>
-    <div class="promo-sheet-header">
-      <h2>🎁 活动中心</h2>
-      <button class="promo-sheet-close" onclick="app.closePromoModal()">✕</button>
-    </div>
-    <div class="promo-sheet-body">
-      <div class="promo-card">
-        <div class="pc-tag">🔥 限时</div>
-        <div class="pc-title">首充翻倍 · 充100送100</div>
-        <div class="pc-desc">新用户首次充值即享 100% 奖励，最高赠送 500 USDT</div>
-        <div class="pc-reward">💰 最高 500 USDT</div>
-        <div class="pc-btn" onclick="app.showDepositModal()">立即充值</div>
-      </div>
-      <div class="promo-card promo-gold">
-        <div class="pc-tag">🏆 赛事</div>
-        <div class="pc-title">世界杯冠军竞猜 · 瓜分百万奖池</div>
-        <div class="pc-desc">预测 2026 世界杯冠军，命中即瓜分 1,000,000 USDT</div>
-        <div class="pc-reward">🏆 1,000,000 USDT</div>
-        <div class="pc-btn" onclick="app.navigateTo('home');app.switchTab('champion');app.closePromoModal()">立即竞猜</div>
-      </div>
-      <div class="promo-card promo-red">
-        <div class="pc-tag">👥 邀请</div>
-        <div class="pc-title">邀请好友 · 双向返佣</div>
-        <div class="pc-desc">邀请即享 20% 流水分红，好友得 10 USDT 注册奖励</div>
-        <div class="pc-reward">💎 永久 20% 分红</div>
-        <div class="pc-btn" onclick="app.navigateTo('profile');app.closePromoModal()">邀请好友</div>
-      </div>
-      <div class="promo-card promo-teal">
-        <div class="pc-tag">🎯 连赢</div>
-        <div class="pc-title">连胜加奖 · 最高 10 倍杠杆</div>
-        <div class="pc-desc">连续猜对 3 场奖金翻倍，5 场 3x，10 场 10x</div>
-        <div class="pc-reward">🚀 最高 10x 奖励</div>
-        <div class="pc-btn" onclick="app.navigateTo('ai')">AI 智投冲连胜</div>
-      </div>
-      <div class="text-xs-muted-pt8">更多活动持续更新中 · 最终解释权归 19888 所有</div>
-    </div>
-  </div>
-</div>
-
-<!-- ===== NEW: NOTIFICATION CENTER ===== -->
-<div class="notify-dropdown" id="notify-dropdown">
-  <div class="notify-header">
-    <h3>🔔 消息通知</h3>
-    <span class="mark-all" onclick="app.markAllRead()">全部已读</span>
-  </div>
-  <div class="notify-list" id="notify-list">
-    <div class="notify-item unread" onclick="app.navigateTo('records')">
-      <div class="notify-dot"></div>
-      <div class="notify-emoji">✅</div>
-      <div class="notify-content">
-        <div class="notify-title">投注结算成功</div>
-        <div class="notify-desc">巴黎 vs 马赛 投注已结算，盈利 +182 USDT</div>
-        <div class="notify-time">2 分钟前</div>
-      </div>
-    </div>
-    <div class="notify-item unread" onclick="app.navigateTo('ai')">
-      <div class="notify-dot"></div>
-      <div class="notify-emoji">🤖</div>
-      <div class="notify-content">
-        <div class="notify-title">AI 智投推荐已更新</div>
-        <div class="notify-desc">今日新增 5 场高置信度推荐，胜率预测 85%+</div>
-        <div class="notify-time">15 分钟前</div>
-      </div>
-    </div>
-    <div class="notify-item" onclick="app.openPromoModal()">
-      <div class="notify-emoji">🎁</div>
-      <div class="notify-content">
-        <div class="notify-title">新活动上线 · 首充翻倍</div>
-        <div class="notify-desc">限时活动：新用户首充即享 100% 奖励，最高送 500 USDT</div>
-        <div class="notify-time">1 小时前</div>
-      </div>
-    </div>
-    <div class="notify-item" onclick="app.navigateTo('records')">
-      <div class="notify-emoji">📋</div>
-      <div class="notify-content">
-        <div class="notify-title">连胜纪录更新</div>
-        <div class="notify-desc">恭喜！你已达成 8 场连胜，距 10 场翻倍奖励还差 2 场</div>
-        <div class="notify-time">3 小时前</div>
-      </div>
-    </div>
-    <div class="notify-item">
-      <div class="notify-emoji">🛡️</div>
-      <div class="notify-content">
-        <div class="notify-title">系统维护通知</div>
-        <div class="notify-desc">6月5日 02:00-04:00 (UTC+8) 系统例行维护，期间暂停投注</div>
-        <div class="notify-time">1 天前</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- HEADER -->
-<header class="header">
-  <div class="header-logo">
-    <span class="icon">🏆</span>
-    <span>19888</span>
-  </div>
-  <div class="header-right">
-    <button class="notify-btn" onclick="app.toggleNotifications(event)" aria-label="通知中心">
-      🔔 <span class="notify-badge" id="header-notify-badge">3</span>
-    </button>
-    <button class="lang-btn" onclick="app.openLangModal()" aria-label="语言切换">🌐</button>
-    <div class="wallet-btn" id="wallet-btn" onclick="app.toggleWallet()">
-      👛 <span id="wallet-addr">连接钱包</span>
-    </div>
-  </div>
-</header>
-
-<!-- ==================== PAGE: HOME ==================== -->
-<div class="page active" id="page-home">
-
-  <!-- Rich Banner with 3 slides -->
-  <div class="banner">
-    <div class="banner-slide">
-      <div class="main-text">19888</div>
-      <div class="sub-text">无惧未来 赛事无忧</div>
-      <div class="banner-tagline">反波膽竞猜 · 88.89% 理论胜率</div>
-      <div class="banner-cta">🔥 即刻投注</div>
-    </div>
-    <div class="banner-slide banner-slide-b d-none" >
-      <div class="main-text text-5xl" >AI 智投托管</div>
-      <div class="sub-text">5000万场历史训练 · 月化收益 ≈ 15%</div>
-      <div class="banner-tagline">凯利公式仓位管理 · 智能风控</div>
-      <div class="banner-cta">🤖 开启AI托管</div>
-    </div>
-    <div class="banner-slide banner-slide-c d-none" >
-      <div class="main-text text-5xl" >冠亚争霸赛</div>
-      <div class="sub-text">2026世界杯预演 · 谁是王者？</div>
-      <div class="banner-tagline">巴西 · 法国 · 阿根廷 · 英格兰</div>
-      <div class="banner-cta">👑 预测冠军</div>
-    </div>
-  </div>
-  <div class="banner-dots">
-    <span class="banner-dot active"></span>
-    <span class="banner-dot"></span>
-    <span class="banner-dot"></span>
-  </div>
-
-  <!-- Platform Stats Row -->
-  <div class="stats-row">
-    <div class="stats-card">
-      <div class="s-val">5,000万+</div>
-      <div class="s-label">历史训练场次</div>
-    </div>
-    <div class="stats-card">
-      <div class="s-val">88.89%</div>
-      <div class="s-label">理论胜率</div>
-    </div>
-    <div class="stats-card">
-      <div class="s-val">35-60</div>
-      <div class="s-label">日均赛事</div>
-    </div>
-    <div class="stats-card">
-      <div class="s-val">67.3%</div>
-      <div class="s-label">AI实战胜率</div>
-    </div>
-  </div>
-
-  <!-- ===== NEW: Promotions Banner ===== -->
-  <div class="promo-banner" onclick="app.openPromoModal()">
-    <div class="pb-icon">🎁</div>
-    <div>
-      <div class="pb-text">🔥 4大活动进行中 · 首充翻倍+世界杯竞猜</div>
-      <div class="pb-sub">最高获得 500 USDT 奖励 · 点击查看全部</div>
-    </div>
-    <div class="pb-cta">查看</div>
-  </div>
-
-  <!-- ===== NEW: Leaderboard Section ===== -->
-  <div class="leaderboard-section">
-    <div class="section-title">🏆 19888 排行榜</div>
-    <div class="leaderboard-tabs">
-      <div class="lb-tab active" onclick="document.querySelectorAll('.lb-tab').forEach(t=>t.classList.remove('active'));this.classList.add('active');document.getElementById('lb-hot').style.display='block';document.getElementById('lb-streak').style.display='none'">🔥 热门投注</div>
-      <div class="lb-tab" onclick="document.querySelectorAll('.lb-tab').forEach(t=>t.classList.remove('active'));this.classList.add('active');document.getElementById('lb-hot').style.display='none';document.getElementById('lb-streak').style.display='block'">⚡ 连胜榜</div>
-    </div>
-    <div id="lb-hot" class="lb-list">
-      <div class="lb-item" onclick="app.navigateTo('detail');app.loadMatchDetail(3)">
-        <div class="lb-rank gold">1</div>
-        <div class="lb-info"><div class="lb-name">🇪🇸 皇马 vs 巴萨</div><div class="lb-sub">西甲 · 12,580 人已投注</div></div>
-        <div class="lb-value">12.5K<span class="lb-trend up">↑18%</span></div>
-      </div>
-      <div class="lb-item" onclick="app.navigateTo('detail');app.loadMatchDetail(2)">
-        <div class="lb-rank silver">2</div>
-        <div class="lb-info"><div class="lb-name">🏴󠁧󠁢󠁥󠁮󠁧󠁿 曼城 vs 利物浦</div><div class="lb-sub">英超 · 9,820 人已投注</div></div>
-        <div class="lb-value">9.8K<span class="lb-trend up">↑12%</span></div>
-      </div>
-      <div class="lb-item" onclick="app.navigateTo('detail');app.loadMatchDetail(1)">
-        <div class="lb-rank bronze">3</div>
-        <div class="lb-info"><div class="lb-name">🇫🇷 巴黎 vs 马赛</div><div class="lb-sub">法甲 · 7,430 人已投注</div></div>
-        <div class="lb-value">7.4K<span class="lb-trend up">↑9%</span></div>
-      </div>
-      <div class="lb-item" onclick="app.navigateTo('detail');app.loadMatchDetail(6)">
-        <div class="lb-rank normal">4</div>
-        <div class="lb-info"><div class="lb-name">🇧🇷 巴西 vs 阿根廷</div><div class="lb-sub">国际友谊赛 · 6,150 人已投注</div></div>
-        <div class="lb-value">6.2K<span class="lb-trend down">↓3%</span></div>
-      </div>
-      <div class="lb-item" onclick="app.navigateTo('detail');app.loadMatchDetail(7)">
-        <div class="lb-rank normal">5</div>
-        <div class="lb-info"><div class="lb-name">🏆 欧冠决赛</div><div class="lb-sub">欧冠 · 5,840 人已投注</div></div>
-        <div class="lb-value">5.8K<span class="lb-trend up">↑22%</span></div>
-      </div>
-    </div>
-    <div id="lb-streak" class="lb-list d-none" >
-      <div class="lb-item">
-        <div class="lb-rank gold">1</div>
-        <div class="lb-info"><div class="lb-name">👤 用户 0x3A**cF91</div><div class="lb-sub">当前连胜 · 累计盈利 +8,420 USDT</div></div>
-        <div class="lb-value">15 连胜</div>
-      </div>
-      <div class="lb-item">
-        <div class="lb-rank silver">2</div>
-        <div class="lb-info"><div class="lb-name">👤 用户 0x7B**aD32</div><div class="lb-sub">当前连胜 · 累计盈利 +5,180 USDT</div></div>
-        <div class="lb-value">12 连胜</div>
-      </div>
-      <div class="lb-item">
-        <div class="lb-rank bronze">3</div>
-        <div class="lb-info"><div class="lb-name"><span class="text-normal text-muted">你</span> 当前用户</div><div class="lb-sub">当前连胜 · 累计盈利 +2,340 USDT</div></div>
-        <div class="lb-value">8 连胜</div>
-      </div>
-      <div class="lb-item">
-        <div class="lb-rank normal">4</div>
-        <div class="lb-info"><div class="lb-name">👤 用户 0x1F**eB87</div><div class="lb-sub">当前连胜 · 累计盈利 +3,910 USDT</div></div>
-        <div class="lb-value">7 连胜</div>
-      </div>
-      <div class="lb-item">
-        <div class="lb-rank normal">5</div>
-        <div class="lb-info"><div class="lb-name">👤 用户 0x9C**dA55</div><div class="lb-sub">当前连胜 · 累计盈利 +1,680 USDT</div></div>
-        <div class="lb-value">6 连胜</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Notice Bar -->
-  <div class="notice-bar">
-    <span class="icon">📢</span>
-    <span class="countdown" id="countdown">加载中...</span>
-  </div>
-
-  <!-- Quick Bet Strip -->
-  <div class="quick-bet-strip" id="quick-bet-strip">
-    <div class="quick-bet-chip" onclick="app.navigateTo('detail');app.loadMatchDetail(1)"><span class="qb-flag">🇫🇷</span>巴黎 vs 马赛<span class="qb-odds">1.82</span><span class="hot-badge">LIVE</span></div>
-    <div class="quick-bet-chip" onclick="app.navigateTo('detail');app.loadMatchDetail(2)"><span class="qb-flag">🏴󠁧󠁢󠁥󠁮󠁧󠁿</span>曼城 vs 利物浦<span class="qb-odds">2.10</span></div>
-    <div class="quick-bet-chip" onclick="app.navigateTo('detail');app.loadMatchDetail(3)"><span class="qb-flag">🇪🇸</span>皇马 vs 巴萨<span class="qb-odds">2.40</span></div>
-    <div class="quick-bet-chip" onclick="app.navigateTo('detail');app.loadMatchDetail(6)"><span class="qb-flag">🇧🇷</span>巴西 vs 阿根廷<span class="qb-odds">2.50</span></div>
-    <div class="quick-bet-chip" onclick="app.navigateTo('detail');app.loadMatchDetail(7)"><span class="qb-flag">🏆</span>欧冠决赛<span class="qb-odds">2.20</span></div>
-  </div>
-
-  <!-- Tab Nav -->
-  <div class="tab-nav">
-    <div class="tab-nav-item active" onclick="app.switchTab('recommend')">推荐赛事</div>
-    <div class="tab-nav-item" onclick="app.switchTab('champion')">冠亚预测</div>
-    <div class="tab-nav-item" onclick="app.switchTab('about')">关于我们</div>
-  </div>
-
-  <!-- Tab: Recommend Matches -->
-  <div class="tab-content active" id="tab-recommend">
-    <!-- League Filter -->
-    <div class="league-filter">
-      <div class="lf-chip active">全部</div>
-      <div class="lf-chip">🏆 欧冠</div>
-      <div class="lf-chip">🏴󠁧󠁢󠁥󠁮󠁧󠁿 英超</div>
-      <div class="lf-chip">🇪🇸 西甲</div>
-      <div class="lf-chip">🇫🇷 法甲</div>
-      <div class="lf-chip">🇮🇹 意甲</div>
-      <div class="lf-chip">🇩🇪 德甲</div>
-      <div class="lf-chip">🌍 国际赛</div>
-    </div>
-    <div id="match-list"></div>
-    <div class="text-center-p15">
-      <a href="javascript:app.navigateTo('matches')" class="link-purple">查看全部赛事 »</a>
-    </div>
-  </div>
-
-  <!-- Tab: Champion Prediction -->
-  <div class="tab-content" id="tab-champion">
-    <div class="champion-section">
-      <div class="champion-header">
-        <h3>🏆 2026 世界杯冠军预测</h3>
-        <div class="champion-stats">
-          <span>总投注额: <em id="total-bet">0</em> USDT</span>
-          <span>潜在奖池: <em id="total-win">0</em> USDT</span>
+        <div class="menuBtn"></div>
+        <div class="back"></div>
+        <div class="logo">
+            <span style="display:inline-block;vertical-align:middle;height:30px;line-height:30px;font-size:16px;font-weight:bold;color:#e53935;">19888</span>
         </div>
-      </div>
-      <!-- Champion Stats Bar -->
-      <div class="champion-stats-bar">
-        <div class="cs-item">
-          <div class="cs-val" id="cs-hot-team">巴西</div>
-          <div class="cs-lbl">🔥 最热投注</div>
+        <div class="tit">19888</div>
+        <div class="wallet-connect" id="walletBtn">
+            <span class="wallet-icon"></span>
+            <span class="wallet-address" id="walletAddress"></span>
         </div>
-        <div class="cs-item">
-          <div class="cs-val" id="cs-hot-odds">5.50</div>
-          <div class="cs-lbl">冠军赔率</div>
-        </div>
-        <div class="cs-item">
-          <div class="cs-val" id="cs-hot-runner">法国</div>
-          <div class="cs-lbl">🥈 亚军热门</div>
-        </div>
-        <div class="cs-item">
-          <div class="cs-val" id="cs-teams-count">32</div>
-          <div class="cs-lbl">参赛队伍</div>
-        </div>
-      </div>
-      <div class="teams-grid" id="teams-grid"></div>
-    </div>
-  </div>
-
-  <!-- Tab: About Us -->
-  <div class="tab-content" id="tab-about">
-    <div class="about-section">
-      <!-- About Hero -->
-      <div class="about-hero">
-        <h2>🏆 19888 反波膽竞猜平台</h2>
-        <p>不猜结果，反猜意外 — 让每一脚射门都有价值</p>
-        <p class="text-xs-mt6-dim">SABA 27年盘口数据库 · 5,000万场历史赛事 · AI深度学习</p>
-      </div>
-
-      <!-- Platform Stats -->
-      <div class="about-stats">
-        <div class="about-stat">
-          <div class="as-num">198</div>
-          <div class="as-label">覆盖国家/地区</div>
-        </div>
-        <div class="about-stat">
-          <div class="as-num">5,000万+</div>
-          <div class="as-label">历史训练数据</div>
-        </div>
-        <div class="about-stat">
-          <div class="as-num">67.3%</div>
-          <div class="as-label">AI模型胜率</div>
-        </div>
-        <div class="about-stat">
-          <div class="as-num">27年</div>
-          <div class="as-label">SABA盘口经验</div>
-        </div>
-      </div>
-
-      <!-- Feature Grid -->
-      <div class="about-features">
-        <div class="about-feat">
-          <div class="af-icon">🎯</div>
-          <div class="af-title">反波膽竞猜</div>
-          <div class="af-desc">18格比分盘 · 猜一个不会发生的比分 · 理论胜率 88.89%</div>
-        </div>
-        <div class="about-feat">
-          <div class="af-icon">🤖</div>
-          <div class="af-title">AI 智投托管</div>
-          <div class="af-desc">凯利公式仓位管理 · 日均收益 3‰~1.2% · 7×24 自动运行</div>
-        </div>
-        <div class="about-feat">
-          <div class="af-icon">🛡️</div>
-          <div class="af-title">智能风控</div>
-          <div class="af-desc">最大回撤 -2.1% · 夏普比率 1.87 · 实时熔断保护</div>
-        </div>
-        <div class="about-feat">
-          <div class="af-icon">💰</div>
-          <div class="af-title">Web3 钱包</div>
-          <div class="af-desc">支持 MetaMask/Trust Wallet · USDT结算 · 链上透明</div>
-        </div>
-        <div class="about-feat">
-          <div class="af-icon">📊</div>
-          <div class="af-title">实时数据</div>
-          <div class="af-desc">SABA盘口实时同步 · 赔率秒级更新 · 多维数据分析</div>
-        </div>
-        <div class="about-feat">
-          <div class="af-icon">🌍</div>
-          <div class="af-title">全球合规</div>
-          <div class="af-desc">Anjouan持牌运营 · 多语言支持 · 全球198国覆盖</div>
-        </div>
-      </div>
-
-      <!-- Platform Description -->
-      <p class="about-desc">19888.com 为 Winsupreme Technology Limitada 旗下旗舰体育预测平台，是 1688 SABA Sports Web3 产品矩阵的核心成员。平台基于 SABA 27 年盘口数据库（5,000 万场历史赛事）与 AI 深度学习模型，提供反波膽（Anti-Score Prediction）、正波膽（Score Prediction）及 AI 智投三大核心品类。首创 18 格比分盘，覆盖日均 35-60 场比赛。</p>
-      <p class="about-desc">我们的核心创新在于"反波膽"玩法——不猜测比赛结果，而是预测一个<em class="inline-em-purple">不会发生</em>的比分。在 18 格比分盘中，仅有 1-2 个比分会真实出现，理论胜率高达 88.89%，为竞猜者提供前所未有的获胜概率。</p>
-
-      <!-- License -->
-      <div class="license license-mb" >
-        <div class="fw7-text-base-mb6">🛡️ 合法持牌运营</div>
-        The Autonomous Island of Anjouan, Union of the Comoros<br>
-        License No. ALSI-202510002-FI1<br>
-        完全遵守 The Computer Gaming Licensing Act 007 of 2005
-      </div>
-    </div>
-  </div>
-
-  <!-- Partners -->
-  <div class="partners">
-    <div class="section-title">官方合作伙伴</div>
-    <div class="partners-grid">
-      <div class="partner-item"><span class="partner-label">SABA</span></div>
-      <div class="partner-item text-3xl" >🏟️</div>
-      <div class="partner-item text-3xl" >⚽</div>
-      <div class="partner-item text-3xl" >🏆</div>
-      <div class="partner-item"><span class="partner-label-sm">1688</span></div>
-    </div>
-  </div>
-
-  <!-- Pull Refresh Indicator -->
-  <div class="pull-indicator" id="pullIndicator">
-    <div class="pull-spinner"></div>
-    <span class="pull-icon">↓</span> <span class="pull-text">下拉刷新</span>
-  </div>
-
-  <!-- Bet Cart -->
-  <div class="bet-cart" id="betCart">
-    <div class="cart-header cart-header-inner" onclick="event.stopPropagation()" >
-      <span class="fw7-text-base">🛒 投注单 (<span class="cart-count" id="cartCount">0</span>)</span>
-      <span class="text-xs-muted">点击下方提交</span>
-    </div>
-    <div class="cart-items cart-items-scroll" id="cartItems" ></div>
-    <div class="cart-summary cart-summary-hidden" id="cartSummary" >
-      <div class="cart-row">
-        <span class="color-text2">投注总额</span>
-        <span class="cart-total text-bold color-text" id="cartTotal" >0 USDT</span>
-      </div>
-      <div class="cart-row-wide">
-        <span class="color-text2">预估收益</span>
-        <span id="cartPotential" class="text-bold color-green">0.00 USDT</span>
-      </div>
-      <button class="btn-submit-cart btn-submit-cart-full" onclick="event.stopPropagation();app.submitCart()" >✓ 一键提交全部投注</button>
-    </div>
-  </div>
-</div>
-
-<!-- ==================== PAGE: MATCHES ==================== -->
-<div class="page" id="page-matches">
-  <div class="page-section">
-    <div class="flex-between-center">
-      <h2 class="page-section-header-h2">全部赛事</h2>
-      <span class="text-sm-muted" id="matches-count">10 场比赛</span>
-    </div>
-  </div>
-  <!-- League Filter for Matches page -->
-  <div class="league-filter">
-    <div class="lf-chip active">全部</div>
-    <div class="lf-chip">🏆 欧冠</div>
-    <div class="lf-chip">🏴󠁧󠁢󠁥󠁮󠁧󠁿 英超</div>
-    <div class="lf-chip">🇪🇸 西甲</div>
-    <div class="lf-chip">🇫🇷 法甲</div>
-    <div class="lf-chip">🇮🇹 意甲</div>
-    <div class="lf-chip">🇩🇪 德甲</div>
-    <div class="lf-chip">🌍 国际赛</div>
-  </div>
-  <div id="matches-page-list"></div>
-</div>
-
-<!-- ==================== PAGE: MATCH DETAIL ==================== -->
-<div class="page" id="page-detail">
-  <div class="match-detail">
-    <!-- Match Header -->
-    <div class="match-detail-header">
-      <div class="md-league" id="md-league">--</div>
-      <div class="vs-row">
-        <div class="vs-team">
-          <div class="vt-logo" id="md-home-logo"></div>
-          <div class="vt-name" id="md-home">--</div>
-        </div>
-        <div class="vs-score">
-          <div class="text-4xl-bold" id="md-time">--</div>
-          <div class="text-sm-muted" id="md-date">--</div>
-        </div>
-        <div class="vs-team">
-          <div class="vt-logo" id="md-away-logo"></div>
-          <div class="vt-name" id="md-away">--</div>
-        </div>
-      </div>
-      <div class="match-info-row">
-        <span id="md-venue">📍 --</span>
-        <span id="md-referee">👨‍⚖️ --</span>
-      </div>
     </div>
 
-    <!-- Detail Tabs - extended with H2H and Recent -->
-    <div class="detail-tabs" id="detail-tabs">
-      <div class="detail-tab active" onclick="app.switchDetailTab(this,'tab-grid-18')">18格反波膽</div>
-      <div class="detail-tab" onclick="app.switchDetailTab(this,'tab-score')">正波膽</div>
-      <div class="detail-tab" onclick="app.switchDetailTab(this,'tab-champion')">冠亚</div>
-      <div class="detail-tab" onclick="app.switchDetailTab(this,'tab-h2h')">📊 历史交锋</div>
-      <div class="detail-tab" onclick="app.switchDetailTab(this,'tab-recent')">📈 近期战绩</div>
-    </div>
+    <!-- MAIN CONTENT -->
+    <div class="main">
+        <div class="wp">
 
-    <!-- Tab: 18-Grid -->
-    <div id="tab-grid-18" class="detail-tab-body active">
-      <div class="grid-18-section-header">
-        <span class="fw7-text-md">18格反波膽</span>
-        <span class="win-rate-badge gold-pulse">🎯 88.89% 理论胜率</span>
-      </div>
-      <div class="grid-18-label">点击格子选择你预测<b>不会发生</b>的比分 ↓</div>
-      <div class="grid-18" id="grid-18"></div>
-    </div>
-
-    <!-- Tab: Score Prediction (正波膽) -->
-    <div id="tab-score" class="detail-tab-body d-none" >
-      <div class="mb-lg-center">
-        <span class="fw7-text-md">⚽ 正波膽</span>
-        <span class="text-xs-muted-ml8">预测精确比分 · 命中即赢</span>
-      </div>
-      <div class="text-xs-muted-center-mb10">点击比分投注 ↓ | <span class="fw6-green">赔率更高</span> | <span class="fw6-red">挑战更大</span></div>
-      <div id="score-grid" class="score-grid">
-        <!-- Dynamically populated by loadScoreGrid() -->
-      </div>
-      <div id="score-bet-info" class="score-bet-panel">
-        <div class="fw7-text-mb6">📝 已选投注</div>
-        <div id="score-bet-selection" class="text-sm-purple-fw6-mb8"></div>
-        <div class="flex-wrap-center">
-          <input type="number" id="score-bet-amount" placeholder="金额(USDT)" min="1" step="1" class="bet-amount-input" oninput="app.updateScoreBetProfit()">
-          <button onclick="app.confirmScoreBet()" class="btn-gradient-sm">确认投注</button>
-          <button onclick="app.clearScoreBet()" class="btn-clear">清除</button>
-        </div>
-        <div class="text-sm-muted2-mt8">
-          赔率: <span id="score-bet-odds" class="fw7-purple">--</span> | 
-          潜在收益: <span id="score-bet-profit" class="fw7-green">0.00</span> USDT
-        </div>
-      </div>
-    </div>
-
-    <!-- Tab: Champion (冠亚预测 - 赛事级) -->
-    <div id="tab-champion" class="detail-tab-body d-none" >
-      <div class="mb-xl-center">
-        <span class="fw7-text-md">👑 冠亚预测</span>
-        <span class="text-xs-muted-ml8">预测本场赛事胜者</span>
-      </div>
-      
-      <!-- Team vs Team selector -->
-      <div class="flex-gap10-mb12">
-        <div id="champion-home-card" class="champion-team-card" onclick="app.selectChampionSide('home')">
-          <div class="text-flag" id="champion-home-flag">🏠</div>
-          <div class="text-md-fw7-mb4" id="champion-home-name">主队</div>
-          <div class="text-xs-muted-mb10">冠军赔率</div>
-          <div class="text-odds-lg" id="champion-home-odds">1.90</div>
-        </div>
-        <div id="champion-away-card" class="champion-team-card" onclick="app.selectChampionSide('away')">
-          <div class="text-flag" id="champion-away-flag">🚩</div>
-          <div class="text-md-fw7-mb4" id="champion-away-name">客队</div>
-          <div class="text-xs-muted-mb10">冠军赔率</div>
-          <div class="text-odds-lg" id="champion-away-odds">2.05</div>
-        </div>
-      </div>
-
-      <!-- 亚军投注区 -->
-      <div class="champion-panel">
-        <div class="fw7-text-base-center-mb10">🥈 亚军投注</div>
-        <div class="flex-gap10">
-          <div id="runnerup-home-card" class="runnerup-team-card" onclick="app.selectChampionRunnerup('home')">
-            <div class="text-sm-fw7-mb4" id="runnerup-home-name">主队</div>
-            <div class="text-odds-md" id="runnerup-home-odds">4.20</div>
-          </div>
-          <div id="runnerup-away-card" class="runnerup-team-card" onclick="app.selectChampionRunnerup('away')">
-            <div class="text-sm-fw7-mb4" id="runnerup-away-name">客队</div>
-            <div class="text-odds-md" id="runnerup-away-odds">4.50</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Selected bet info -->
-      <div id="champion-bet-panel" class="champion-bet-panel-hidden">
-        <div class="fw7-text-mb6">📝 已选投注</div>
-        <div id="champion-bet-selection" class="text-base-purple-fw7-mb10"></div>
-        <div class="flex-wrap-center">
-          <input type="number" id="champion-bet-amount" placeholder="金额(USDT)" min="1" step="1" class="bet-amount-input" oninput="app.updateChampionBetProfit()">
-          <button onclick="app.confirmChampionBet()" class="btn-gradient-sm">确认投注</button>
-          <button onclick="app.clearChampionBet()" class="btn-clear">清除</button>
-        </div>
-        <div class="text-sm-muted2-mt8">
-          赔率: <span id="champion-bet-odds" class="fw7-purple">--</span> | 
-          潜在收益: <span id="champion-bet-profit" class="fw7-green">0.00</span> USDT
-        </div>
-      </div>
-    </div>
-
-    <!-- Tab: H2H History -->
-    <div id="tab-h2h" class="detail-tab-body d-none" >
-      <div class="h2h-block active">
-        <div class="h2h-title">📊 两队历史交锋记录</div>
-        <div class="h2h-match">
-          <div class="h2h-date">2025.11.15</div>
-          <div class="h2h-teams"><b class="ht-home">主队</b> vs <b class="ht-away">客队</b></div>
-          <div class="h2h-score">3 : 1</div>
-        </div>
-        <div class="h2h-match">
-          <div class="h2h-date">2025.03.08</div>
-          <div class="h2h-teams"><b class="ht-home-2">主队</b> vs <b class="ht-away-2">客队</b></div>
-          <div class="h2h-score">2 : 2</div>
-        </div>
-        <div class="h2h-match">
-          <div class="h2h-date">2024.09.22</div>
-          <div class="h2h-teams"><b class="ht-away-3">客队</b> vs <b class="ht-home-3">主队</b></div>
-          <div class="h2h-score">0 : 2</div>
-        </div>
-        <div class="h2h-match">
-          <div class="h2h-date">2024.04.16</div>
-          <div class="h2h-teams"><b class="ht-home-4">主队</b> vs <b class="ht-away-4">客队</b></div>
-          <div class="h2h-score">1 : 0</div>
-        </div>
-        <div class="h2h-match">
-          <div class="h2h-date">2023.12.01</div>
-          <div class="h2h-teams"><b class="ht-away-5">客队</b> vs <b class="ht-home-5">主队</b></div>
-          <div class="h2h-score">1 : 3</div>
-        </div>
-        <div class="h2h-summary">
-          <b>📋 历史交锋总结：</b><br>
-          • 近 5 次交手：<span id="h2h-summary-line">主队 3胜 1平 1负</span><br>
-          • 平均进球数：<span id="h2h-avg-goals">2.8 球/场</span><br>
-          • 主队主场胜率：<span id="h2h-home-rate">75%</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Tab: Recent Form -->
-    <div id="tab-recent" class="detail-tab-body d-none" >
-      <div class="h2h-block active">
-        <div class="h2h-title">📈 双方近期战绩 (近5场)</div>
-        <div class="recent-form-row">
-          <div class="recent-form-col">
-            <div class="rf-team" id="rf-home-name">主队</div>
-            <div class="rf-dots" id="rf-home-dots">
-              <div class="rf-dot w">W</div>
-              <div class="rf-dot w">W</div>
-              <div class="rf-dot d">D</div>
-              <div class="rf-dot w">W</div>
-              <div class="rf-dot l">L</div>
+            <!-- Banner Carousel -->
+            <div class="banner slick-banner">
+                <a class="item" style="background:linear-gradient(135deg,#8b2626,#a63232);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;font-weight:bold;text-decoration:none;">2026世界杯</a>
+                <a class="item" style="background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;font-weight:bold;text-decoration:none;">AI智能托管</a>
+                <a class="item" style="background:linear-gradient(135deg,#10b981,#059669);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;font-weight:bold;text-decoration:none;">冠亚预测</a>
             </div>
-            <div class="rf-stat">
-              近5场: <b id="rf-home-record">3W-1D-1L</b><br>
-              进球/失球: <b id="rf-home-gd">9/4</b><br>
-              场均控球: <b id="rf-home-pos">58%</b>
+
+            <!-- Notice Bar -->
+            <div class="m-notice">
+                <i class="icon"></i>
+                <div class="notice">
+                    <marquee scrollamount="3" onmouseover="this.stop()" onmouseout="this.start()">
+                        2026世界杯即将开幕！冠亚预测火热进行中 | AI智能托管月化收益15% | 新用户首充100%奖励
+                    </marquee>
+                </div>
             </div>
-          </div>
-          <div class="recent-form-col">
-            <div class="rf-team" id="rf-away-name">客队</div>
-            <div class="rf-dots" id="rf-away-dots">
-              <div class="rf-dot w">W</div>
-              <div class="rf-dot l">L</div>
-              <div class="rf-dot w">W</div>
-              <div class="rf-dot w">W</div>
-              <div class="rf-dot d">D</div>
+
+            <!-- Tab Header -->
+            <div class="tab-header-wrapper">
+                <div class="slick_tab_btn">
+                    <ul class="ul-tabs_b1">
+                        <li class="on"><a href="javascript:;">推荐赛事</a></li>
+                        <li><a href="javascript:;">冠亚预测</a></li>
+                    </ul>
+                </div>
+                <a href="/index/saishi/index.html" class="more-link">更多</a>
             </div>
-            <div class="rf-stat">
-              近5场: <b id="rf-away-record">3W-1D-1L</b><br>
-              进球/失球: <b id="rf-away-gd">7/5</b><br>
-              场均控球: <b id="rf-away-pos">52%</b>
+
+            <!-- Slick Tab Content -->
+            <div class="slick_tab">
+                <!-- Tab 1: 推荐赛事 -->
+                <div class="tab_con">
+                    <ul class="ul-info" id="matchList">
+                        <!-- Match Card 1 -->
+                        <li>
+                            <div class="con">
+                                <div class="league-name">
+                                    <p class="p1">英超 第38轮</p>
+                                </div>
+                                <div class="match-content">
+                                    <div class="team-left">
+                                        <div class="team-logo"><img src="img/teams/曼城.png" alt="曼城" onerror="this.style.display='none'"></div>
+                                        <span class="team-name">曼城</span>
+                                    </div>
+                                    <div class="match-time">
+                                        <div class="time">22:00</div>
+                                        <div class="date">06/15</div>
+                                    </div>
+                                    <div class="team-right">
+                                        <div class="team-logo"><img src="img/teams/利物浦.png" alt="利物浦" onerror="this.style.display='none'"></div>
+                                        <span class="team-name">利物浦</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                        <!-- Match Card 2 -->
+                        <li>
+                            <div class="con">
+                                <div class="league-name">
+                                    <p class="p1">西甲 第38轮</p>
+                                </div>
+                                <div class="match-content">
+                                    <div class="team-left">
+                                        <div class="team-logo"><img src="img/teams/皇马.png" alt="皇马" onerror="this.style.display='none'"></div>
+                                        <span class="team-name">皇马</span>
+                                    </div>
+                                    <div class="match-time">
+                                        <div class="time">03:00</div>
+                                        <div class="date">06/16</div>
+                                    </div>
+                                    <div class="team-right">
+                                        <div class="team-logo"><img src="img/teams/巴萨.png" alt="巴萨" onerror="this.style.display='none'"></div>
+                                        <span class="team-name">巴萨</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                        <!-- Match Card 3 -->
+                        <li>
+                            <div class="con">
+                                <div class="league-name">
+                                    <p class="p1">法甲 第38轮</p>
+                                </div>
+                                <div class="match-content">
+                                    <div class="team-left">
+                                        <div class="team-logo"><img src="img/teams/巴黎圣日耳曼.png" alt="巴黎" onerror="this.style.display='none'"></div>
+                                        <span class="team-name">巴黎圣日耳曼</span>
+                                    </div>
+                                    <div class="match-time">
+                                        <div class="time">21:00</div>
+                                        <div class="date">06/14</div>
+                                    </div>
+                                    <div class="team-right">
+                                        <div class="team-logo"><img src="img/teams/马赛.png" alt="马赛" onerror="this.style.display='none'"></div>
+                                        <span class="team-name">马赛</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                        <!-- Match Card 4 -->
+                        <li>
+                            <div class="con">
+                                <div class="league-name">
+                                    <p class="p1">国际友谊赛</p>
+                                </div>
+                                <div class="match-content">
+                                    <div class="team-left">
+                                        <div class="team-logo"><img src="img/teams/巴西.png" alt="巴西" onerror="this.style.display='none'"></div>
+                                        <span class="team-name">巴西</span>
+                                    </div>
+                                    <div class="match-time">
+                                        <div class="time">08:00</div>
+                                        <div class="date">06/17</div>
+                                    </div>
+                                    <div class="team-right">
+                                        <div class="team-logo"><img src="img/teams/阿根廷.png" alt="阿根廷" onerror="this.style.display='none'"></div>
+                                        <span class="team-name">阿根廷</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Tab 2: 冠亚预测 -->
+                <div class="tab_con">
+                    <div class="champion-bet-section">
+                        <div class="panel-header">
+                            <h3>2026 世界杯冠军预测</h3>
+                            <div class="user-stats">
+                                <span>总投注: <em id="totalBetAmount">0.00</em> USDT</span>
+                                <span>潜在收益: <em id="totalPotentialWin">0.00</em> USDT</span>
+                            </div>
+                        </div>
+                        <div class="teams-grid" id="teamsGrid">
+                            <div class="team-card">
+                                <div class="team-logo"><img src="img/teams/巴西.png" alt="巴西" onerror="this.style.display='none'"></div>
+                                <div class="team-name">巴西</div>
+                                <div class="odds-group">
+                                    <div class="odds-item"><span class="odds-label">冠军</span><span class="odds-value">5.50</span></div>
+                                    <div class="odds-item"><span class="odds-label">亚军</span><span class="odds-value">4.00</span></div>
+                                </div>
+                                <div class="bet-buttons">
+                                    <button class="bet-btn bet-champion">投冠军</button>
+                                    <button class="bet-btn bet-runner-up">投亚军</button>
+                                </div>
+                            </div>
+                            <div class="team-card">
+                                <div class="team-logo"><img src="img/teams/法国.png" alt="法国" onerror="this.style.display='none'"></div>
+                                <div class="team-name">法国</div>
+                                <div class="odds-group">
+                                    <div class="odds-item"><span class="odds-label">冠军</span><span class="odds-value">6.00</span></div>
+                                    <div class="odds-item"><span class="odds-label">亚军</span><span class="odds-value">4.50</span></div>
+                                </div>
+                                <div class="bet-buttons">
+                                    <button class="bet-btn bet-champion">投冠军</button>
+                                    <button class="bet-btn bet-runner-up">投亚军</button>
+                                </div>
+                            </div>
+                            <div class="team-card">
+                                <div class="team-logo"><img src="img/teams/阿根廷.png" alt="阿根廷" onerror="this.style.display='none'"></div>
+                                <div class="team-name">阿根廷</div>
+                                <div class="odds-group">
+                                    <div class="odds-item"><span class="odds-label">冠军</span><span class="odds-value">7.00</span></div>
+                                    <div class="odds-item"><span class="odds-label">亚军</span><span class="odds-value">5.00</span></div>
+                                </div>
+                                <div class="bet-buttons">
+                                    <button class="bet-btn bet-champion">投冠军</button>
+                                    <button class="bet-btn bet-runner-up">投亚军</button>
+                                </div>
+                            </div>
+                            <div class="team-card">
+                                <div class="team-logo"><img src="img/teams/英格兰.png" alt="英格兰" onerror="this.style.display='none'"></div>
+                                <div class="team-name">英格兰</div>
+                                <div class="odds-group">
+                                    <div class="odds-item"><span class="odds-label">冠军</span><span class="odds-value">8.00</span></div>
+                                    <div class="odds-item"><span class="odds-label">亚军</span><span class="odds-value">5.50</span></div>
+                                </div>
+                                <div class="bet-buttons">
+                                    <button class="bet-btn bet-champion">投冠军</button>
+                                    <button class="bet-btn bet-runner-up">投亚军</button>
+                                </div>
+                            </div>
+                            <div class="team-card">
+                                <div class="team-logo"><img src="img/teams/西班牙.png" alt="西班牙" onerror="this.style.display='none'"></div>
+                                <div class="team-name">西班牙</div>
+                                <div class="odds-group">
+                                    <div class="odds-item"><span class="odds-label">冠军</span><span class="odds-value">9.00</span></div>
+                                    <div class="odds-item"><span class="odds-label">亚军</span><span class="odds-value">6.00</span></div>
+                                </div>
+                                <div class="bet-buttons">
+                                    <button class="bet-btn bet-champion">投冠军</button>
+                                    <button class="bet-btn bet-runner-up">投亚军</button>
+                                </div>
+                            </div>
+                            <div class="team-card">
+                                <div class="team-logo"><img src="img/teams/德国.png" alt="德国" onerror="this.style.display='none'"></div>
+                                <div class="team-name">德国</div>
+                                <div class="odds-group">
+                                    <div class="odds-item"><span class="odds-label">冠军</span><span class="odds-value">10.00</span></div>
+                                    <div class="odds-item"><span class="odds-label">亚军</span><span class="odds-value">7.00</span></div>
+                                </div>
+                                <div class="bet-buttons">
+                                    <button class="bet-btn bet-champion">投冠军</button>
+                                    <button class="bet-btn bet-runner-up">投亚军</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
-        </div>
-        <div class="recent-ai-summary">
-          <b>🤖 AI 评分对比：</b><br>
-          <div class="pred-bars" id="detail-pred-bars">
-            <div class="pred-bar-row">
-              <div class="pred-bar-label">进攻能力</div>
-              <div class="pred-bar-track"><div class="pred-bar-fill pred-fill-purple" ></div></div>
-              <div class="pred-bar-pct">7.5</div>
+
+            <!-- Platform Intro -->
+            <div class="platform-intro">
+                <div class="section-title">平台介绍</div>
+                <div class="intro-content">
+                    <p>19888 是一家专业的反波胆竞猜平台，致力于为用户提供安全、公平、透明的体育竞猜体验。</p>
+                    <p>平台基于 5000 万场历史数据进行 AI 深度学习训练，反波胆玩法理论胜率高达 88.89%。</p>
+                    <p>平台持有 Anjouan 合法牌照运营，用户资金链上合约托管，定期第三方审计。</p>
+                </div>
             </div>
-            <div class="pred-bar-row">
-              <div class="pred-bar-label">防守能力</div>
-              <div class="pred-bar-track"><div class="pred-bar-fill pred-fill-green" ></div></div>
-              <div class="pred-bar-pct">6.8</div>
+
+            <!-- Official Partners -->
+            <div class="official-partners">
+                <div class="section-title">官方合作伙伴</div>
+                <div class="partners-grid">
+                    <img src="img/partners/dga.png" alt="DGA" loading="lazy">
+                    <img src="img/partners/fga.png" alt="FGA" loading="lazy">
+                    <img src="img/partners/iga.png" alt="IGA" loading="lazy">
+                    <img src="img/partners/xga.png" alt="XGA" loading="lazy">
+                    <img src="img/partners/yga.png" alt="YGA" loading="lazy">
+                    <img src="img/partners/wc26.png" alt="WC26" loading="lazy">
+                </div>
             </div>
-            <div class="pred-bar-row">
-              <div class="pred-bar-label">近期状态</div>
-              <div class="pred-bar-track"><div class="pred-bar-fill pred-fill-orange" ></div></div>
-              <div class="pred-bar-pct">8.2</div>
+
+        </div>
+    </div>
+
+    <!-- FOOTER TABBAR -->
+    <div class="footer">
+        <ul class="ul-tabbar">
+            <li class="on"><a href="/"><i class="i1"></i><span class="txt">首页</span></a></li>
+            <li><a href="/index/ai/index.html"><i class="i2"></i><span class="txt">AI预测</span></a></li>
+            <li><a href="/index/saishi/index.html"><i class="i3"></i><span class="txt">赛事</span></a></li>
+            <li><a href="/index/record/index.html"><i class="i4"></i><span class="txt">记录</span></a></li>
+            <li><a href="/index/user/index.html"><i class="i5"></i><span class="txt">我的</span></a></li>
+        </ul>
+    </div>
+
+    <!-- CUSTOM TOAST -->
+    <div class="custom-toast" id="customToast"></div>
+
+    <!-- CUSTOM CONFIRM DIALOG -->
+    <div class="custom-confirm-overlay" id="customConfirmOverlay"></div>
+    <div class="custom-confirm" id="customConfirm">
+        <div class="custom-confirm-title" id="confirmTitle"></div>
+        <div class="custom-confirm-content" id="confirmContent"></div>
+        <div class="custom-confirm-buttons">
+            <button class="custom-confirm-btn confirm-cancel-btn" id="confirmCancelBtn">取消</button>
+            <button class="custom-confirm-btn confirm-ok-btn" id="confirmOkBtn">确认</button>
+        </div>
+    </div>
+
+    <!-- LANGUAGE MODAL -->
+    <div class="global-lang-modal" id="globalLangModal">
+        <div class="global-lang-modal-mask" id="globalLangModalMask"></div>
+        <div class="global-lang-modal-content">
+            <div class="global-lang-modal-header">选择语言 / Language</div>
+            <div class="global-lang-modal-body">
+                <div class="global-lang-option selected" data-lang="cn">简体中文</div>
+                <div class="global-lang-option" data-lang="cntw">繁體中文</div>
+                <div class="global-lang-option" data-lang="en">English</div>
+                <div class="global-lang-option" data-lang="jp">日本語</div>
+                <div class="global-lang-option" data-lang="kr">한국어</div>
+                <div class="global-lang-option" data-lang="vn">Tieng Viet</div>
             </div>
-          </div>
         </div>
-      </div>
     </div>
 
-    <!-- Match Info Card -->
-    <div class="match-info-card">
-      <div class="fw7-text-mb8">📋 赛事信息</div>
-      <div class="grid-2col-gap8">
-        <span>联赛: <b id="detail-league-name" class="color-text">--</b></span>
-        <span>场地: <b id="detail-venue-name" class="color-text">--</b></span>
-        <span>裁判: <b id="detail-ref-name" class="color-text">--</b></span>
-        <span>天气: <b class="color-text">☀️ 晴 22°C</b></span>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ==================== PAGE: AI ==================== -->
-<div class="page" id="page-ai">
-  <div class="ai-section">
-    <!-- AI Summary Strip -->
-    <div class="ai-summary-strip">
-      <div class="ai-summary-chip">📊 本月收益 +12.8%</div>
-      <div class="ai-summary-chip">✅ 胜率 67.3%</div>
-      <div class="ai-summary-chip">🔥 连赢 8 场</div>
-      <div class="ai-summary-chip">📈 ROI 18.5%</div>
-      <div class="ai-summary-chip">⏱️ 7×24 运行中</div>
-    </div>
-
-    <!-- Card 1: AI Auto Bet -->
-    <div class="ai-card">
-      <div class="ai-icon">🤖</div>
-      <h3>AI 智投托管</h3>
-      <p>5000 万场历史数据训练 · 凯利公式仓位管理<br>日均收益 3‰ ~ 1.2%，月化 ≈ 15%</p>
-      <div class="sparkline" id="sparkline-ai"></div>
-      <div class="ai-stats-row">
-        <div>胜率: <b class="color-green">67.3%</b></div>
-        <div>连赢: <b class="color-purple">8 场</b></div>
-        <div>ROI: <b class="color-green">18.5%</b></div>
-      </div>
-      <div class="text-sm-muted-mt8">
-        本月累计收益 <b class="text-green-2xl">+12.8%</b>
-      </div>
-      <div class="text-xs-muted-mt6">
-        已运行 127 天 · 累计投注 2,483 笔 · 资金利用率 82.5%
-      </div>
-      <button class="ai-btn" onclick="app.connectWallet()">开启 AI 智投</button>
+    <!-- BET AMOUNT DIALOG -->
+    <div class="bet-amount-dialog" id="betAmountDialog">
+        <div class="dialog-overlay"></div>
+        <div class="dialog-box">
+            <div class="dialog-title">投注</div>
+            <div class="dialog-content">
+                <div class="team-display">
+                    <img id="betDialogTeamLogo" src="" alt="" onerror="this.style.display='none'">
+                    <div style="font-size:12px;margin-top:5px;">
+                        <div id="betDialogTeamName"></div>
+                        <div style="color:#fa2933;font-weight:bold;" id="betDialogTypeName"></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>投注金额 (USDT)</label>
+                    <input type="number" id="betAmountInput" placeholder="请输入投注金额" min="1" step="0.01">
+                    <div class="quick-amounts">
+                        <button class="quick-amount" data-amount="100">100</button>
+                        <button class="quick-amount" data-amount="500">500</button>
+                        <button class="quick-amount" data-amount="1000">1000</button>
+                    </div>
+                </div>
+                <div class="odds-display">
+                    <span>赔率: <em id="betDialogOdds">--</em></span>
+                    <span>潜在收益: <em id="betDialogProfit">0</em> USDT</span>
+                </div>
+            </div>
+            <div class="dialog-footer">
+                <button class="btn-cancel" id="betDialogCancel">取消</button>
+                <button class="btn-confirm" id="betDialogConfirm">确认投注</button>
+            </div>
+        </div>
     </div>
 
-    <!-- ===== NEW: AI Investment Panel (deposit/withdraw/settlement) ===== -->
-    <div class="ai-card ai-invest-card glass-card">
-      <div class="ai-icon">💼</div>
-      <h3>AI 智投金库</h3>
-      <p class="text-xs-muted">托管资金 · 自动投注 · 每日结算</p>
-      
-      <!-- Historical Performance Sparkline -->
-      <div class="ai-sparkline-container" id="ai-sparkline"></div>
+    <!-- SCRIPTS -->
+    <script>
+    (function() {
+        // Simple DOM ready
+        function ready(fn) {
+            if (document.readyState !== "loading") fn();
+            else document.addEventListener("DOMContentLoaded", fn);
+        }
+        ready(function() {
 
-      <!-- Daily Return Rates -->
-      <div class="ai-daily-return">
-        <div class="ai-return-item">
-          <div class="ai-return-val" id="ai-daily-rate">0.00%</div>
-          <div class="ai-return-lbl">日收益率</div>
-        </div>
-        <div class="ai-return-item">
-          <div class="ai-return-val" id="ai-monthly-ret">0.00</div>
-          <div class="ai-return-lbl">月化收益 (USDT)</div>
-        </div>
-        <div class="ai-return-item">
-          <div class="ai-return-val" id="ai-annual-ret">0.00</div>
-          <div class="ai-return-lbl">年化收益 (USDT)</div>
-        </div>
-      </div>
-      
-      <div class="ai-invest-stats">
-        <div class="ai-invest-stat">
-          <div class="ais-val" id="ai-invest-balance">0.00</div>
-          <div class="ais-label">托管余额 (USDT)</div>
-        </div>
-        <div class="ai-invest-stat">
-          <div class="ais-val green" id="ai-invest-profit">+0.00</div>
-          <div class="ais-label">累计收益</div>
-        </div>
-        <div class="ai-invest-stat">
-          <div class="ais-val" id="ai-invest-apr">≈15%</div>
-          <div class="ais-label">月化收益率</div>
-        </div>
-      </div>
+            // ============ Banner ============
+            var bannerItems = document.querySelectorAll(".slick-banner .item");
+            var bannerDotsContainer = document.createElement("div");
+            bannerDotsContainer.className = "slick-dots";
+            var currentSlide = 0;
+            var bannerTimer = null;
 
-      <div class="ai-invest-actions">
-        <div class="ai-invest-row">
-          <input type="number" id="ai-deposit-amount" placeholder="存入金额 (USDT)" min="100" step="10" class="ai-invest-input">
-          <button class="ai-invest-btn deposit" onclick="app.aiDeposit()">📥 存入</button>
-        </div>
-        <div class="ai-invest-row">
-          <input type="number" id="ai-withdraw-amount" placeholder="提取金额 (USDT)" min="10" step="10" class="ai-invest-input">
-          <button class="ai-invest-btn withdraw" onclick="app.aiWithdraw()">📤 提取</button>
-        </div>
-      </div>
+            bannerItems.forEach(function(item, i) {
+                if (i > 0) item.style.display = "none";
+                var dot = document.createElement("li");
+                if (i === 0) dot.className = "slick-active";
+                var btn = document.createElement("button");
+                btn.textContent = (i + 1);
+                dot.appendChild(btn);
+                dot.addEventListener("click", function() { goToSlide(i); });
+                bannerDotsContainer.appendChild(dot);
+            });
 
-      <!-- Lock Status -->
-      <div class="ai-lock-status unlocked" id="ai-lock-status">
-        ✅ <span>无锁定 · 可自由存取</span>
-      </div>
+            var banner = document.querySelector(".slick-banner");
+            if (banner) {
+                banner.style.position = "relative";
+                banner.appendChild(bannerDotsContainer);
+            }
 
-      <button class="ai-withdraw-btn" id="ai-withdraw-main-btn" onclick="app.aiWithdraw()">
-        💰 提取全部收益
-      </button>
+            function goToSlide(idx) {
+                bannerItems.forEach(function(item, i) {
+                    item.style.display = (i === idx) ? "flex" : "none";
+                });
+                var dots = bannerDotsContainer.querySelectorAll("li");
+                dots.forEach(function(d, i) {
+                    d.className = (i === idx) ? "slick-active" : "";
+                });
+                currentSlide = idx;
+                resetBannerTimer();
+            }
 
-      <div class="ai-settlement-info">
-        <div class="fw7-text-mb4">⏱️ 结算信息</div>
-        <div class="ai-settle-row">
-          <span>下一结算时间</span>
-          <b id="ai-next-settle">2026-06-08 00:00 UTC+8</b>
-        </div>
-        <div class="ai-settle-row">
-          <span>锁定期剩余</span>
-          <b id="ai-lock-remaining">7 天</b>
-        </div>
-        <div class="ai-settle-row">
-          <span>管理费</span>
-          <b>收益的 20%（仅盈利时）</b>
-        </div>
-      </div>
+            function nextSlide() {
+                var next = (currentSlide + 1) % bannerItems.length;
+                goToSlide(next);
+            }
 
-      <div class="ai-risk-note">
-        ⚠️ 风险提示：AI 智投基于历史数据训练，过往业绩不代表未来表现。最大回撤控制在 -5%，极端行情可能触发熔断保护。
-      </div>
-    </div>
-    <div class="ai-card">
-      <div class="ai-icon">🎯</div>
-      <h3>今日精选推荐</h3>
-      <p class="text-xs-muted">AI 模型实时分析 · 高置信度推荐</p>
-      <div class="ai-picks" id="ai-picks">
-        <div class="ai-pick">
-          <div class="text-left">
-            <div><b>巴黎 vs 马赛</b> <span class="hot-badge">LIVE</span></div>
-            <div class="text-2xs-muted">法甲 第38轮 · 王子公园球场</div>
-          </div>
-          <span class="pick-badge">反波膽 0:3 ⭐5</span>
-        </div>
-        <div class="ai-pick">
-          <div class="text-left">
-            <div><b>曼城 vs 利物浦</b></div>
-            <div class="text-2xs-muted">英超 第38轮 · 伊蒂哈德球场</div>
-          </div>
-          <span class="pick-badge">正波膽 1:1 ⭐4</span>
-        </div>
-        <div class="ai-pick">
-          <div class="text-left">
-            <div><b>皇马 vs 巴萨</b></div>
-            <div class="text-2xs-muted">西甲 第38轮 · 伯纳乌球场</div>
-          </div>
-          <span class="pick-badge">冠亚 皇马 ⭐4</span>
-        </div>
-        <div class="ai-pick">
-          <div class="text-left">
-            <div><b>巴西 vs 阿根廷</b></div>
-            <div class="text-2xs-muted">国际友谊赛 · 马拉卡纳球场</div>
-          </div>
-          <span class="pick-badge">反波膽 2:1 ⭐3</span>
-        </div>
-      </div>
-    </div>
+            function resetBannerTimer() {
+                if (bannerTimer) clearInterval(bannerTimer);
+                bannerTimer = setInterval(nextSlide, 4000);
+            }
+            resetBannerTimer();
 
-    <!-- ===== NEW: AI Visualization - Pie Chart + Heatmap ===== -->
-    <div class="viz-row">
-      <div class="viz-card">
-        <div class="viz-title">📊 投注类型分布</div>
-        <div class="pie-chart pie-chart-conic" ></div>
-        <div class="pie-legend">
-          <div class="pie-legend-item"><span class="pie-legend-dot heat-dot-purple" ></span>反波膽 52%</div>
-          <div class="pie-legend-item"><span class="pie-legend-dot heat-dot-green" ></span>正波膽 26%</div>
-          <div class="pie-legend-item"><span class="pie-legend-dot heat-dot-orange" ></span>冠亚 14%</div>
-          <div class="pie-legend-item"><span class="pie-legend-dot heat-dot-reddish" ></span>其他 8%</div>
-        </div>
-      </div>
-      <div class="viz-card">
-        <div class="viz-title">🔥 比分热度分布</div>
-        <div class="heatmap-grid">
-          <div class="heatmap-cell heat-cell-empty" >0:0</div>
-          <div class="heatmap-cell heat-cell-warm" >1:0</div>
-          <div class="heatmap-cell heat-cell-medium" >2:0</div>
-          <div class="heatmap-cell heat-cell-high" >2:1</div>
-          <div class="heatmap-cell heat-cell-hot" >1:1</div>
-          <div class="heatmap-cell heat-cell-warm" >0:1</div>
-          <div class="heatmap-cell heat-cell-cool" >3:0</div>
-          <div class="heatmap-cell heat-cell-mid" >3:1</div>
-          <div class="heatmap-cell heat-cell-hot2" >3:2</div>
-          <div class="heatmap-cell heat-cell-warm2" >0:2</div>
-          <div class="heatmap-cell heat-cell-lukewarm" >0:3</div>
-          <div class="heatmap-cell heat-cell-max" >2:2</div>
-        </div>
-        <div class="heat-scale">
-          <span>冷门</span><span class="heat-scale-bar"></span><span>热门</span>
-        </div>
-      </div>
-    </div>
+            // ============ Tab Switching ============
+            var tabBtns = document.querySelectorAll(".slick_tab_btn .ul-tabs_b1 li");
+            var tabCons = document.querySelectorAll(".slick_tab .tab_con");
+            var moreLink = document.querySelector(".more-link");
 
-    <!-- ===== NEW: AI Prediction Confidence Bars ===== -->
-    <div class="ai-card">
-      <div class="ai-icon">🧠</div>
-      <h3>AI 模型信心指数</h3>
-      <p class="text-xs-muted">深度学习模型对各品类的预测信心评分</p>
-      <div class="prediction-bars">
-        <div class="pred-bar-row">
-          <div class="pred-bar-label">反波膽</div>
-          <div class="pred-bar-track"><div class="pred-bar-fill pred-fill-purple-89" ></div></div>
-          <div class="pred-bar-pct">89%</div>
-        </div>
-        <div class="pred-bar-row">
-          <div class="pred-bar-label">正波膽</div>
-          <div class="pred-bar-track"><div class="pred-bar-fill pred-fill-green-62" ></div></div>
-          <div class="pred-bar-pct">62%</div>
-        </div>
-        <div class="pred-bar-row">
-          <div class="pred-bar-label">冠亚</div>
-          <div class="pred-bar-track"><div class="pred-bar-fill pred-fill-orange-71" ></div></div>
-          <div class="pred-bar-pct">71%</div>
-        </div>
-        <div class="pred-bar-row">
-          <div class="pred-bar-label">总进球</div>
-          <div class="pred-bar-track"><div class="pred-bar-fill pred-fill-red-55" ></div></div>
-          <div class="pred-bar-pct">55%</div>
-        </div>
-        <div class="pred-bar-row">
-          <div class="pred-bar-label">角球数</div>
-          <div class="pred-bar-track"><div class="pred-bar-fill pred-fill-violet-48" ></div></div>
-          <div class="pred-bar-pct">48%</div>
-        </div>
-      </div>
-      <div class="text-xs-muted-center-mt8">基于 5,000 万场历史数据训练 · 置信度 > 70% 为高置信推荐</div>
-    </div>
+            tabCons.forEach(function(tc, i) {
+                if (i > 0) tc.style.display = "none";
+            });
 
-    <!-- Card 3: Risk Dashboard -->
-    <div class="ai-card">
-      <div class="ai-icon">🛡️</div>
-      <h3>风控仪表盘</h3>
-      <p class="text-xs-muted">实时风险监控 · 自动熔断保护</p>
-      <div class="risk-grid">
-        <div class="risk-item"><span>最大回撤</span><b class="color-green">-2.1%</b></div>
-        <div class="risk-item"><span>凯利仓位</span><b class="color-purple">8.3%</b></div>
-        <div class="risk-item"><span>夏普比率</span><b class="color-green">1.87</b></div>
-        <div class="risk-item"><span>熔断状态</span><b class="color-green">✅ 正常</b></div>
-        <div class="risk-item"><span>波动率</span><b class="color-purple">12.4%</b></div>
-        <div class="risk-item"><span>胜率趋势</span><b class="color-green">↑ 3.2%</b></div>
-      </div>
-      <div class="risk-tips">
-        <div class="fw7-text-mb4">📋 风险提示</div>
-        <div>• 当前市场波动率处于正常区间</div>
-        <div>• 凯利系数建议单笔不超过总仓位 8.3%</div>
-        <div>• 如触发 -5% 最大回撤线，系统将自动熔断</div>
-      </div>
-    </div>
-  </div>
-</div>
+            tabBtns.forEach(function(btn, idx) {
+                btn.addEventListener("click", function(e) {
+                    e.preventDefault();
+                    tabBtns.forEach(function(b) { b.classList.remove("on"); });
+                    btn.classList.add("on");
+                    tabCons.forEach(function(tc, i) {
+                        tc.style.display = (i === idx) ? "" : "none";
+                    });
+                    if (moreLink) {
+                        moreLink.href = idx === 0 ? "/index/saishi/index.html" : "/index/championbet/index.html";
+                    }
+                });
+            });
 
-<!-- ==================== PAGE: RECORDS ==================== -->
-<div class="page" id="page-records">
-  <div class="records-section">
-    <div class="flex-between-mb8">
-      <h2>投注记录</h2>
-      <div class="text-sm-muted">
-        <span id="records-summary">共 0 条</span>
-      </div>
-    </div>
+            // ============ Language Modal ============
+            var langModal = document.getElementById("globalLangModal");
+            var langMask = document.getElementById("globalLangModalMask");
+            var langOptions = document.querySelectorAll(".global-lang-option");
+            var langBtn = document.getElementById("globalLangSwitchBtn");
 
-    <!-- Quick Stats -->
-    <div class="record-filter mb-xs" >
-      <button class="active" onclick="app.filterRecords('all')">全部</button>
-      <button onclick="app.filterRecords('pending')">进行中</button>
-      <button onclick="app.filterRecords('won')">已赢</button>
-      <button onclick="app.filterRecords('lost')">已输</button>
-    </div>
+            if (langBtn) {
+                langBtn.addEventListener("click", function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (langModal) langModal.classList.add("active");
+                });
+            }
 
-    <!-- Records Summary Bar -->
-    <div class="flex-gap10-mb14">
-      <div class="records-stat-card">
-        <div class="text-2xs-muted">总投注</div>
-        <div class="text-lg-fw7-text" id="records-total-bet">0</div>
-      </div>
-      <div class="records-stat-card">
-        <div class="text-2xs-muted">总收益</div>
-        <div class="text-lg-fw7-green" id="records-total-profit">+0</div>
-      </div>
-      <div class="records-stat-card">
-        <div class="text-2xs-muted">胜率</div>
-        <div class="text-lg-fw7-purple" id="records-winrate">0%</div>
-      </div>
-    </div>
+            if (langMask) {
+                langMask.addEventListener("click", function() {
+                    if (langModal) langModal.classList.remove("active");
+                });
+            }
 
-    <div id="records-list"></div>
-  </div>
-</div>
+            langOptions.forEach(function(opt) {
+                opt.addEventListener("click", function() {
+                    var lang = this.getAttribute("data-lang");
+                    langOptions.forEach(function(o) { o.classList.remove("selected"); });
+                    this.classList.add("selected");
+                    if (langModal) langModal.classList.remove("active");
+                    try { localStorage.setItem("current_lang", lang); } catch(e) {}
+                });
+            });
 
-<!-- ==================== PAGE: PROFILE ==================== -->
-<div class="page" id="page-profile">
-  <div class="profile-section">
+            // ============ Toast ============
+            function showToast(msg, duration) {
+                duration = duration || 2000;
+                var el = document.getElementById("customToast");
+                if (!el) return;
+                el.textContent = msg;
+                el.classList.add("show");
+                clearTimeout(el._timer);
+                el._timer = setTimeout(function() {
+                    el.classList.remove("show");
+                }, duration);
+            }
 
-    <!-- VIP Status Card -->
-    <div class="vip-status-card gradient-border" id="vip-status-card">
-      <div class="vsc-header">
-        <div class="vsc-level-icon" id="vip-level-icon">👑</div>
-        <div class="vsc-level-info">
-          <div class="vsc-level-name" id="vip-level-name">VIP 1</div>
-          <div class="vsc-level-title" id="vip-level-title">新晋会员</div>
-        </div>
-        <span class="vip-tier-badge vip-tier-1 gold-pulse" id="vip-tier-badge">VIP 1</span>
-      </div>
-      <div class="vsc-rebates" id="vip-rebates">
-        <div class="vsc-rebate">
-          <div class="vsc-r-val" id="vip-anti-rebate">0.2%</div>
-          <div class="vsc-r-label">反波膽返佣</div>
-        </div>
-        <div class="vsc-rebate">
-          <div class="vsc-r-val" id="vip-score-rebate">1.0%</div>
-          <div class="vsc-r-label">正波膽返佣</div>
-        </div>
-        <div class="vsc-rebate">
-          <div class="vsc-r-val" id="vip-ai-rebate">0.1%</div>
-          <div class="vsc-r-label">AI 返佣</div>
-        </div>
-      </div>
-    </div>
+            // ============ Confirm Dialog ============
+            function showConfirm(title, content, onOk) {
+                document.getElementById("confirmTitle").textContent = title;
+                document.getElementById("confirmContent").textContent = content;
+                document.getElementById("customConfirmOverlay").style.display = "block";
+                document.getElementById("customConfirm").style.display = "block";
 
-    <!-- Profile Card -->
-    <div class="profile-card glass-card glass-card-hover">
-      <div class="profile-avatar profile-avatar-alt" >👤</div>
-      <div class="profile-name" id="profile-name">请连接钱包</div>
-      <div class="profile-addr" id="profile-addr">未连接</div>
-      <div class="profile-balance count-up">💰 <strong id="profile-balance">0.00</strong> USDT</div>
-      <div class="flex-center-gap8-mt10">
-        <button class="profile-btn-primary gold-glow" onclick="app.showDepositModal()">💳 充值</button>
-        <button class="profile-btn-outline" onclick="app.showWithdrawModal()">📤 提现</button>
-      </div>
-    </div>
+                function hide() {
+                    document.getElementById("customConfirmOverlay").style.display = "none";
+                    document.getElementById("customConfirm").style.display = "none";
+                }
 
-    <!-- VIP Progress Bar -->
-    <div class="vip-progress vip-progress-enhanced" id="vip-progress-section">
-      <div class="vip-header"><span>累计流水</span><b id="vip-turnover">$0</b></div>
-      <div class="vip-header"><span>距下一级还需</span><b id="vip-next-needed">$20,000</b></div>
-      <div class="vip-bar"><div class="vip-fill" id="vip-progress-fill" style="width:0%"></div></div>
-      <div class="vip-labels" id="vip-labels">
-        <span>VIP 1<br>$20K</span><span>VIP 2<br>$100K</span>
-        <span>VIP 3<br>$1M</span><span>VIP 4<br>$10M</span>
-        <span>VIP 5<br>$50M</span>
-      </div>
-    </div>
+                var okBtn = document.getElementById("confirmOkBtn");
+                var cancelBtn = document.getElementById("confirmCancelBtn");
+                var overlay = document.getElementById("customConfirmOverlay");
 
-    <!-- ===== NEW: My Team Section ===== -->
-    <div class="team-section">
-      <div class="team-header">
-        <h3>👥 我的团队</h3>
-        <span class="team-level">Lv.1 初级代理</span>
-      </div>
-      <div class="team-stats-grid">
-        <div class="team-stat-box">
-          <div class="ts-val">12</div>
-          <div class="ts-lbl">团队成员</div>
-        </div>
-        <div class="team-stat-box">
-          <div class="ts-val">$1,250</div>
-          <div class="ts-lbl">本月佣金</div>
-        </div>
-        <div class="team-stat-box">
-          <div class="ts-val">28.5%</div>
-          <div class="ts-lbl">分成比例</div>
-        </div>
-      </div>
-      <div class="text-xs-muted-mb8">团队成员</div>
-      <div class="team-members">
-        <div class="team-member-avatar">👤</div>
-        <div class="team-member-avatar">👩</div>
-        <div class="team-member-avatar">👨</div>
-        <div class="team-member-avatar">👩‍🦰</div>
-        <div class="team-member-avatar">👨‍🦱</div>
-        <div class="team-member-avatar">👩‍🦳</div>
-        <div class="team-member-avatar team-avatar-more" >+6</div>
-      </div>
-    </div>
+                var newOk = okBtn.cloneNode(true);
+                var newCancel = cancelBtn.cloneNode(true);
+                var newOverlay = overlay.cloneNode(true);
 
-    <!-- ===== NEW: Invite Friends Section ===== -->
-    <div class="invite-section">
-      <div class="invite-title">🤝 邀请好友 · 双向返佣</div>
-      <div class="invite-desc">分享你的专属邀请码，好友注册即享 10 USDT 奖励<br>你可获得好友投注流水的 <b class="color-purple">20% 永久分红</b></div>
-      <div class="invite-code-box">
-        <span class="text-2xs-muted">你的邀请码</span><br>
-        <span class="invite-code">19888X7K2</span>
-      </div>
-      <div class="invite-btn-row">
-        <button class="invite-btn" onclick="app.copyInviteCode()">📋 复制邀请码</button>
-        <button class="invite-btn-outline" onclick="app.shareInviteLink()">🔗 分享链接</button>
-      </div>
-      <div class="invite-rewards">
-        <div class="invite-reward-chip">👤 好友得 <b>10 USDT</b></div>
-        <div class="invite-reward-chip">💰 你得 <b>20% 分红</b></div>
-        <div class="invite-reward-chip">🎁 累计 <b>10人</b> 升级代理</div>
-      </div>
-    </div>
+                okBtn.parentNode.replaceChild(newOk, okBtn);
+                cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
+                overlay.parentNode.replaceChild(newOverlay, overlay);
 
-    <!-- Menu List -->
-    <div class="menu-list mt-xxl" >
-      <div class="menu-item" id="wallet-status" onclick="app.toggleWallet()">
-        <div class="m-left"><span class="m-icon">👛</span>钱包连接</div>
-        <div class="m-arrow">›</div>
-      </div>
-      <div class="menu-item" onclick="app.navigateTo('ai')">
-        <div class="m-left"><span class="m-icon">🤖</span>AI 智投</div>
-        <div class="m-arrow">›</div>
-      </div>
-      <div class="menu-item" onclick="app.navigateTo('records')">
-        <div class="m-left"><span class="m-icon">📋</span>投注记录</div>
-        <div class="m-arrow">›</div>
-      </div>
-      <div class="menu-item">
-        <div class="m-left"><span class="m-icon">👑</span>VIP 等级</div>
-        <span class="menu-badge">VIP 1</span>
-        <div class="m-arrow">›</div>
-      </div>
-      <div class="menu-item">
-        <div class="m-left"><span class="m-icon">💰</span>流水分红</div>
-        <span class="menu-badge-green">$0.00</span>
-        <div class="m-arrow">›</div>
-      </div>
-      <div class="menu-item">
-        <div class="m-left"><span class="m-icon">📊</span>数据统计</div>
-        <div class="m-arrow">›</div>
-      </div>
-      <div class="menu-item" onclick="document.querySelector('#page-profile .team-section').scrollIntoView({behavior:'smooth'})">
-        <div class="m-left"><span class="m-icon">👥</span>团队代理</div>
-        <span class="text-2xs-muted">成员 12 · Lv.1</span>
-        <div class="m-arrow">›</div>
-      </div>
-      <div class="menu-item" onclick="app.openPromoModal()">
-        <div class="m-left"><span class="m-icon">🎁</span>活动中心</div>
-        <span class="menu-badge-red">4个进行中</span>
-        <div class="m-arrow">›</div>
-      </div>
-      <div class="menu-item" onclick="app.toggleNotifications()">
-        <div class="m-left"><span class="m-icon">🔔</span>消息通知</div>
-        <span class="notify-badge-inline">5</span>
-        <div class="m-arrow">›</div>
-      </div>
-      <div class="menu-item" onclick="app.openLangModal()">
-        <div class="m-left"><span class="m-icon">🌐</span>语言切换</div>
-        <span class="text-2xs-muted">简体中文</span>
-        <div class="m-arrow">›</div>
-      </div>
-      <div class="menu-item">
-        <div class="m-left"><span class="m-icon">❓</span>帮助中心</div>
-        <div class="m-arrow">›</div>
-      </div>
-      <div class="menu-item">
-        <div class="m-left"><span class="m-icon">🛡️</span>牌照信息</div>
-        <span class="text-2xs-muted">ALSI-202510002-FI1</span>
-        <div class="m-arrow">›</div>
-      </div>
-      <div class="menu-item">
-        <div class="m-left"><span class="m-icon">📄</span>用户协议</div>
-        <div class="m-arrow">›</div>
-      </div>
-    </div>
+                document.getElementById("confirmOkBtn").addEventListener("click", function() {
+                    hide();
+                    if (onOk) onOk();
+                });
 
-    <!-- Footer -->
-    <div class="profile-footer">
-      19888 v1.0 · Winsupreme Technology Limitada<br>
-      License ALSI-202510002-FI1 · Anjouan, Comoros<br>
-      <span class="text-xs">© 2026 19888.com All Rights Reserved</span>
-    </div>
-  </div>
-</div>
+                document.getElementById("confirmCancelBtn").addEventListener("click", hide);
+                document.getElementById("customConfirmOverlay").addEventListener("click", hide);
+            }
 
-<!-- ==================== PAGE: RULES ==================== -->
-<div class="page" id="page-rules">
-  <div class="rules-section">
-    <!-- Hero -->
-    <div class="about-hero">
-      <div class="text-center rules-hero-icon" >📖</div>
-      <h2 class="rules-hero-title">19888 游戏规则</h2>
-      <p class="text-sm rule-intro" >了解所有竞猜玩法与平台机制，掌握盈利之道<br>最终解释权归 19888 所有</p>
-    </div>
+            // ============ Wallet Connect ============
+            var walletAddress = null;
+            var walletBtn = document.getElementById("walletBtn");
 
-    <!-- Rule: 反波膽 (Anti-Score) -->
-    <div class="rule-card">
-      <h3 class="rule-heading">🎯 1. 反波膽 · 核心玩法</h3>
-      <div class="rule-note">
-        <b>玩法说明：</b>在 18 格比分盘中，<b class="text-purple">选择你预测<u>不会发生</u>的比分</b>（可多选）。<br>
-        比赛结束后，如果实际比分 ≠ 你所选的比分，即为获胜！<br>
-        18 格中仅 1-2 个比分会真实出现 → <b class="text-green">理论胜率高达 88.89%</b>
-      </div>
+            if (walletBtn) {
+                walletBtn.addEventListener("click", function() {
+                    if (walletAddress) {
+                        showConfirm("断开钱包连接",
+                            "当前钱包: " + walletAddress.substring(0, 6) + "..." + walletAddress.substring(walletAddress.length - 4) + "\n\n是否断开连接？",
+                            function() {
+                                walletAddress = null;
+                                document.getElementById("walletAddress").textContent = "";
+                                walletBtn.classList.remove("connected");
+                                showToast("已断开连接");
+                            });
+                    } else {
+                        connectWallet();
+                    }
+                });
+            }
 
-      <div class="fw7-text-base-mb8">📊 18格比分盘 (4×4 + 2 极端格)</div>
-      <div class="rule-grid-mini">
-        <div class="rule-grid-cell">0:0</div><div class="rule-grid-cell">0:1</div><div class="rule-grid-cell">0:2</div><div class="rule-grid-cell">0:3</div>
-        <div class="rule-grid-cell">1:0</div><div class="rule-grid-cell">1:1</div><div class="rule-grid-cell">1:2</div><div class="rule-grid-cell">1:3</div>
-        <div class="rule-grid-cell">2:0</div><div class="rule-grid-cell">2:1</div><div class="rule-grid-cell">2:2</div><div class="rule-grid-cell">2:3</div>
-        <div class="rule-grid-cell">3:0</div><div class="rule-grid-cell">3:1</div><div class="rule-grid-cell">3:2</div><div class="rule-grid-cell">3:3</div>
-        <div class="rule-grid-cell-highlight">主4+</div><div class="rule-grid-cell-highlight">客4+</div>
-      </div>
+            async function connectWallet() {
+                try {
+                    var accounts = [];
+                    if (typeof window.ethereum !== "undefined") {
+                        accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+                    }
+                    if (accounts && accounts.length > 0) {
+                        walletAddress = accounts[0];
+                        var short = walletAddress.substring(walletAddress.length - 4);
+                        document.getElementById("walletAddress").textContent = short;
+                        walletBtn.classList.add("connected");
+                        showToast("钱包连接成功");
+                    } else {
+                        showToast("请先安装 MetaMask 或其他钱包插件");
+                    }
+                } catch (error) {
+                    showToast("钱包连接失败: " + error.message);
+                }
+            }
 
-      <div class="fw7-text-base-mb8">💰 反波膽赔率说明</div>
-      <div class="rule-table-wrap">
-        <table class="table-collapse">
-          <thead><tr class="table-head-purple"><th class="table-th-left">比分类型</th><th class="table-th-right">示例</th><th class="table-th-right">赔率范围</th><th class="table-th-right">出现概率</th></tr></thead>
-          <tbody>
-            <tr class="border-b"><td class="table-td">常见比分</td><td class="table-th-right">1:1, 2:1, 1:0</td><td class="table-td-green">~2x - 8x</td><td class="table-th-right">高</td></tr>
-            <tr class="border-b"><td class="table-td">普通比分</td><td class="table-th-right">2:0, 2:2, 3:1</td><td class="table-td-purple">~10x - 25x</td><td class="table-th-right">中</td></tr>
-            <tr class="border-b"><td class="table-td">冷门比分</td><td class="table-th-right">3:3, 0:3</td><td class="table-td-accent">~35x - 80x</td><td class="table-th-right">低</td></tr>
-            <tr><td class="table-td">极端比分</td><td class="table-th-right">主4+, 客4+</td><td class="table-td-red">~150x - 425x</td><td class="table-th-right">极低</td></tr>
-          </tbody>
-        </table>
-      </div>
+            // ============ Bet Dialog ============
+            var selectedTeamData = null;
+            var selectedBetType = null;
 
-      <div class="rule-note rule-note-gold">
-        <b>⚠️ 赔付上限：</b>单格赔付上限为奖池的 10%。多格投注互不影响，每格独立计算。
-      </div>
-      <div class="text-sm text-muted rule-text" >
-        <b>📝 投注示例：</b>若你选择"0:3"不会发生，投注 100 USDT，赔率 15.00。<br>
-        最终比分 2:1 → 你赢！获得 100 × 15.00 = 1,500 USDT<br>
-        最终比分 0:3 → 你输。对手真打了 0:3。
-      </div>
-    </div>
+            document.querySelectorAll(".team-card .bet-btn").forEach(function(btn) {
+                btn.addEventListener("click", function(e) {
+                    e.preventDefault();
+                    var card = this.closest(".team-card");
+                    selectedTeamData = {
+                        name: card.querySelector(".team-name").textContent,
+                        logo: card.querySelector(".team-logo img").getAttribute("src")
+                    };
+                    selectedBetType = this.classList.contains("bet-champion") ? 1 : 2;
 
-    <!-- Rule: 正波膽 (Score) -->
-    <div class="rule-card rule-card-border-green">
-      <h3 class="rule-heading">⚽ 2. 正波膽 · 精确比分预测</h3>
-      <div class="rule-note rule-note-green">
-        <b>玩法说明：</b>预测比赛的<b class="text-green">精确最终比分</b>（含伤停补时，不含加时/点球）。<br>
-        必须完全命中比分才能获胜。难度较高，赔率也更丰厚！
-      </div>
-      <div class="fw7-text-base-mb8">💰 正波膽赔率范围</div>
-      <div class="rule-table-wrap">
-        <table class="table-collapse">
-          <thead><tr class="table-head-green"><th class="table-th-left">比分类型</th><th class="table-th-right">示例</th><th class="table-th-right">赔率范围</th></tr></thead>
-          <tbody>
-            <tr class="border-b"><td class="table-td">常规比分</td><td class="table-th-right">1:0, 1:1, 2:1</td><td class="table-td-green">5x - 8x</td></tr>
-            <tr class="border-b"><td class="table-td">中等比分</td><td class="table-th-right">2:0, 3:1, 0:0</td><td class="table-td-purple">8x - 15x</td></tr>
-            <tr><td class="table-td">冷门比分</td><td class="table-th-right">3:2, 3:3, 4:1</td><td class="table-td-accent">15x - 50x</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="rule-note rule-note-red">
-        <b>⚠️ 注意：</b>正波膽难度较高，但单注赔率远高于反波膽。适合追求高回报的玩家。不可与反波膽混合投注。
-      </div>
-      <div class="text-sm text-muted rule-text">
-        <b>📝 投注示例：</b>预测 巴黎 vs 马赛 比分 1:1，投注 100 USDT @ 赔率 6.50。<br>
-        最终比分 1:1 → 赢！获得 100 × 6.50 = 650 USDT<br>
-        最终比分 2:1 → 输。未命中精确比分。
-      </div>
-    </div>
+                    var oddsEls = card.querySelectorAll(".odds-value");
+                    var odds = selectedBetType === 1 ? oddsEls[0].textContent : oddsEls[1].textContent;
+                    var typeName = selectedBetType === 1 ? "冠军" : "亚军";
 
-    <!-- Rule: 冠亚预测 -->
-    <div class="rule-card rule-card-border-gold">
-      <h3 class="rule-heading">👑 3. 冠亚预测 · 赛事冠军/亚军</h3>
-      <div class="rule-note rule-note-gold">
-        <b>玩法说明：</b>预测<b class="color-gold">冠军</b>或<b class="text-muted">亚军</b>归属（适用于世界杯、欧冠等杯赛）。<br>
-        赛事结束后统一结算。可同时投冠军和亚军。
-      </div>
-      <div class="fw7-text-base-mb8">💰 赔率范围</div>
-      <div class="rule-table-wrap">
-        <table class="table-collapse">
-          <thead><tr class="table-head-gold"><th class="table-th-left">投注类型</th><th class="table-th-right">强队赔率</th><th class="table-th-right">中等赔率</th><th class="table-th-right">弱队赔率</th></tr></thead>
-          <tbody>
-            <tr class="border-b"><td class="table-td">🏆 冠军</td><td class="table-td-green">5x - 6x</td><td class="table-td-purple">7x - 10x</td><td class="table-td-accent">12x - 30x</td></tr>
-            <tr><td class="table-td">🥈 亚军</td><td class="table-td-green">4x - 4.5x</td><td class="table-td-purple">5x - 7x</td><td class="table-td-accent">8x - 16x</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="text-sm text-muted rule-text-mb8" >
-        <b>📝 投注示例：</b>投巴西 冠军 100 USDT @ 赔率 5.50 → 如果巴西夺冠，获得 550 USDT
-      </div>
-    </div>
+                    document.getElementById("betDialogTeamLogo").setAttribute("src", selectedTeamData.logo);
+                    document.getElementById("betDialogTeamName").textContent = selectedTeamData.name;
+                    document.getElementById("betDialogTypeName").textContent = typeName;
+                    document.getElementById("betDialogOdds").textContent = odds;
+                    document.getElementById("betAmountInput").value = "100";
+                    document.getElementById("betDialogProfit").textContent = ((100 * parseFloat(odds)) - 100).toFixed(2);
+                    document.getElementById("betAmountDialog").classList.add("show");
+                });
+            });
 
-    <!-- Rule: AI 智投 -->
-    <div class="rule-card rule-card-border-ai">
-      <h3 class="rule-heading">🤖 4. AI 智投 · 智能托管</h3>
-      <div class="rule-note rule-note-ai">
-        <b>玩法说明：</b>将 USDT 存入 AI 托管金库，由深度学习模型自动执行反波膽投注策略。<br>
-        基于 5000 万场历史数据训练，凯利公式仓位管理，7×24 小时自动运行。
-      </div>
-      
-      <div class="ai-rule-stats">
-        <div class="ai-rule-stat">
-          <div class="ars-val">67.3%</div>
-          <div class="ars-label">AI实战胜率</div>
-        </div>
-        <div class="ai-rule-stat">
-          <div class="ars-val">≈15%</div>
-          <div class="ars-label">月化收益</div>
-        </div>
-        <div class="ai-rule-stat">
-          <div class="ars-val">1.87</div>
-          <div class="ars-label">夏普比率</div>
-        </div>
-        <div class="ai-rule-stat">
-          <div class="ars-val">-2.1%</div>
-          <div class="ars-label">最大回撤</div>
-        </div>
-      </div>
+            var betInput = document.getElementById("betAmountInput");
+            if (betInput) {
+                betInput.addEventListener("input", function() {
+                    var amount = parseFloat(this.value) || 0;
+                    var odds = parseFloat(document.getElementById("betDialogOdds").textContent) || 0;
+                    var profit = amount > 0 ? (amount * odds - amount).toFixed(2) : "0";
+                    document.getElementById("betDialogProfit").textContent = profit;
+                });
+            }
 
-      <div class="fw7-text-base-mb8">📋 操作流程</div>
-      <div class="rule-dense">
-        <div>1️⃣ <b>存入 USDT</b> → 将资金转入 AI 托管金库</div>
-        <div>2️⃣ <b>AI 自动投注</b> → 系统 7×24 自动分析比赛，执行反波膽策略</div>
-        <div>3️⃣ <b>收益累积</b> → 每日结算，收益自动复投（可设置）</div>
-        <div>4️⃣ <b>提取收益</b> → 随时提取本金和收益（需在结算窗口）</div>
-      </div>
+            document.querySelectorAll(".quick-amount").forEach(function(btn) {
+                btn.addEventListener("click", function(e) {
+                    e.preventDefault();
+                    var amount = this.getAttribute("data-amount");
+                    document.getElementById("betAmountInput").value = amount;
+                    document.getElementById("betAmountInput").dispatchEvent(new Event("input"));
+                });
+            });
 
-      <div class="fw7-text-base-mb8">⏱️ 锁定期与费率</div>
-      <div class="rule-table-wrap">
-        <table class="table-collapse">
-          <thead><tr class="table-head-ai"><th class="table-th-left">项目</th><th class="table-th-right">说明</th></tr></thead>
-          <tbody>
-            <tr class="border-b"><td class="table-td">最低存入</td><td class="table-th-right">100 USDT</td></tr>
-            <tr class="border-b"><td class="table-td">锁定期</td><td class="table-th-right">7 天（提前赎回扣除 5% 手续费）</td></tr>
-            <tr class="border-b"><td class="table-td">管理费</td><td class="table-th-right">收益的 20%（仅在盈利时收取）</td></tr>
-            <tr class="border-b"><td class="table-td">结算周期</td><td class="table-th-right">每日 00:00 UTC+8 结算</td></tr>
-            <tr><td class="table-td">风控机制</td><td class="table-th-right">凯利公式仓位管理 · 最大回撤 -5% 自动熔断</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+            function closeBetDialog() {
+                document.getElementById("betAmountDialog").classList.remove("show");
+            }
 
-    <!-- Rule: VIP 系统 -->
-    <div class="rule-card rule-card-border-vip">
-      <h3 class="rule-heading">👑 5. VIP 系统 · 5级会员体系</h3>
-      <div class="rule-note rule-note-vip">
-        <b>规则说明：</b>VIP 等级基于<b>累计流水（Turnover）</b>自动升级。<br>
-        等级越高，返佣比例越高。代理押金在升级时自动返还。
-      </div>
+            var betCancel = document.getElementById("betDialogCancel");
+            var betOverlay = document.querySelector("#betAmountDialog .dialog-overlay");
+            if (betCancel) betCancel.addEventListener("click", function(e) { e.preventDefault(); closeBetDialog(); });
+            if (betOverlay) betOverlay.addEventListener("click", function(e) { e.preventDefault(); closeBetDialog(); });
 
-      <div class="rule-table-wrap">
-        <table class="table-collapse vip-table">
-          <thead><tr class="table-head-vip">
-            <th class="table-th-center">VIP 等级</th>
-            <th class="table-th-right">累计流水</th>
-            <th class="table-th-right">反波膽返佣</th>
-            <th class="table-th-right">正波膽返佣</th>
-            <th class="table-th-right">AI 返佣</th>
-          </tr></thead>
-          <tbody>
-            <tr class="border-b vip-row-1">
-              <td class="table-td-center">👑 VIP 1</td>
-              <td class="table-th-right">$20,000</td>
-              <td class="table-td-green">0.2%</td>
-              <td class="table-td-green">1.0%</td>
-              <td class="table-td-green">0.1%</td>
-            </tr>
-            <tr class="border-b vip-row-2">
-              <td class="table-td-center">👑 VIP 2</td>
-              <td class="table-th-right">$100,000</td>
-              <td class="table-td-purple">0.4%</td>
-              <td class="table-td-purple">2.0%</td>
-              <td class="table-td-purple">0.2%</td>
-            </tr>
-            <tr class="border-b vip-row-3">
-              <td class="table-td-center">💎 VIP 3</td>
-              <td class="table-th-right">$1,000,000</td>
-              <td class="table-td-accent">0.6%</td>
-              <td class="table-td-accent">2.5%</td>
-              <td class="table-td-accent">0.3%</td>
-            </tr>
-            <tr class="border-b vip-row-4">
-              <td class="table-td-center">💎 VIP 4</td>
-              <td class="table-th-right">$10,000,000</td>
-              <td class="table-td-red">0.7%</td>
-              <td class="table-td-red">3.0%</td>
-              <td class="table-td-red">0.4%</td>
-            </tr>
-            <tr>
-              <td class="table-td-center">👑💎 VIP 5</td>
-              <td class="table-th-right">$50,000,000</td>
-              <td class="table-td-gold">0.8%</td>
-              <td class="table-td-gold">3.5%</td>
-              <td class="table-td-gold">0.5%</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+            var betConfirm = document.getElementById("betDialogConfirm");
+            if (betConfirm) {
+                betConfirm.addEventListener("click", function(e) {
+                    e.preventDefault();
+                    var amount = parseFloat(document.getElementById("betAmountInput").value);
+                    if (!amount || amount < 1 || isNaN(amount)) {
+                        showToast("请输入正确的投注金额", 2000);
+                        return;
+                    }
+                    showToast("投注成功！" + selectedTeamData.name + " " + (selectedBetType === 1 ? "冠军" : "亚军") + " " + amount + " USDT", 2000);
+                    closeBetDialog();
+                });
+            }
 
-      <div class="rule-note rule-note-gold">
-        <b>💡 代理押金返还：</b>升级到 VIP 1 时需缴纳押金，此后每升一级自动返还押金。<br>
-        累计流水达到更高级别门槛后，自动升级并即时享受更高返佣比例。
-      </div>
-    </div>
+            // ============ Expose functions ============
+            window.showToast = showToast;
+            window.showConfirm = showConfirm;
 
-    <!-- Rule: 财富再分配 -->
-    <div class="rule-card rule-card-border-revenue">
-      <h3 class="rule-heading">💰 6. 财富再分配 · 收益共享机制</h3>
-      <div class="rule-note rule-note-revenue">
-        <b>机制说明：</b>平台所有手续费收入的 70% 将回馈社区。<br>
-        通过流水分红 + VIP返佣 + 团队代理等多层机制实现财富再分配。
-      </div>
-
-      <div class="fw7-text-base-mb8">📊 收入分配结构</div>
-      <div class="rule-table-wrap">
-        <table class="table-collapse">
-          <thead><tr class="table-head-revenue"><th class="table-th-left">分配对象</th><th class="table-th-right">比例</th><th class="table-th-right">说明</th></tr></thead>
-          <tbody>
-            <tr class="border-b"><td class="table-td">👥 团队代理</td><td class="table-td-purple">30%</td><td class="table-th-right">代理佣金 + 流水分红</td></tr>
-            <tr class="border-b"><td class="table-td">💰 国库基金</td><td class="table-td-green">30%</td><td class="table-th-right">平台运营 + 风险储备</td></tr>
-            <tr class="border-b"><td class="table-td">🎁 质押者分红</td><td class="table-td-accent">30%</td><td class="table-th-right">VIP 用户额外分红</td></tr>
-            <tr><td class="table-td">🏢 团队运营</td><td class="table-td-red">10%</td><td class="table-th-right">技术研发 + 合规</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="rule-dense-mt8">
-        <div>✅ <b>流水分红：</b>邀请好友注册，好友每笔投注你获得 20% 流水分红</div>
-        <div>✅ <b>VIP 返佣：</b>按 VIP 等级的返佣比例，每笔投注自动返佣</div>
-        <div>✅ <b>连胜加奖：</b>连续猜对 3 场奖金翻倍，5 场 3x，10 场 10x</div>
-        <div>✅ <b>首充翻倍：</b>新用户首次充值即享 100% 奖励，最高赠送 500 USDT</div>
-      </div>
-    </div>
-
-    <!-- Rule: 风控 -->
-    <div class="rule-card rule-card-border-risk">
-      <h3 class="rule-heading">🛡️ 7. 风控体系 · 资金安全保障</h3>
-      <div class="rule-note rule-note-risk">
-        <b>多层防护：</b>19888 采用多层风控机制确保奖池安全和用户资金保障。
-      </div>
-
-      <div class="risk-rule-grid">
-        <div class="risk-rule-item">
-          <div class="rri-icon">🛡️</div>
-          <div class="rri-title">奖池保护</div>
-          <div class="rri-desc">单格赔付上限 = 奖池 10%<br>单场总赔付 ≤ 奖池 50%</div>
-        </div>
-        <div class="risk-rule-item">
-          <div class="rri-icon">⚡</div>
-          <div class="rri-title">自动熔断</div>
-          <div class="rri-desc">日回撤超 3% 自动暂停<br>最大回撤 -5% 硬熔断</div>
-        </div>
-        <div class="risk-rule-item">
-          <div class="rri-icon">🔗</div>
-          <div class="rri-title">链上透明</div>
-          <div class="rri-desc">所有投注记录 BSC 链上可查<br>USDT 结算，无需信任</div>
-        </div>
-        <div class="risk-rule-item">
-          <div class="rri-icon">📊</div>
-          <div class="rri-title">凯利仓位</div>
-          <div class="rri-desc">AI 模型动态仓位管理<br>单笔 ≤ 总仓位 8.3%</div>
-        </div>
-      </div>
-
-      <div class="rule-dense-mt8">
-        <div>✅ <b>平台角色：</b>19888 不参与对赌，仅收取服务费（反波膽 15%，正波膽 20%），确保平台中立</div>
-        <div>✅ <b>资金隔离：</b>用户资金与平台运营资金完全分离，链上合约托管</div>
-        <div>✅ <b>合规持牌：</b>Anjouan 合法持牌运营，License ALSI-202510002-FI1</div>
-        <div>✅ <b>审计机制：</b>定期第三方合约审计，确保代码安全无后门</div>
-      </div>
-    </div>
-
-    <!-- Rule: 通用规则 -->
-    <div class="rule-card rule-card-border-muted">
-      <h3 class="rule-heading">📋 8. 通用规则与合规声明</h3>
-      <div class="text-sm text-muted rule-dense" >
-        <div>✅ <b>投注流程：</b>连接钱包 → USDT充值 → 选择玩法 → 点击格子/比分 → 确认金额 → 提交投注</div>
-        <div>✅ <b>结算时效：</b>赛事结束后 5-30 分钟内管理员结算，赢款自动到账</div>
-        <div>✅ <b>撤销规则：</b>开赛前可撤销投注（需申请）；开赛后不可撤销</div>
-        <div>✅ <b>赛事延期：</b>延期赛事投注保留，新赛程确定后继续有效</div>
-        <div>✅ <b>赛事取消：</b>已取消赛事全额退款至账户余额</div>
-        <div>✅ <b>异常比分：</b>以官方结果为准（含伤停补时，不含加时/点球大战）</div>
-        <div>✅ <b>多格投注：</b>反波膽支持同时选多个格子，每格独立计算</div>
-        <div>✅ <b>最低投注：</b>单格最低 1 USDT，无上限（受奖池10%赔付上限约束）</div>
-        <div class="rule-compliance">
-          🛡️ <b>合规声明：</b>19888 由 Winsupreme Technology Limitada 持牌运营<br>
-          License ALSI-202510002-FI1 · Anjouan, Comoros<br>
-          严格遵守 The Computer Gaming Licensing Act 007 of 2005
-        </div>
-      </div>
-    </div>
-
-    <!-- Back to home -->
-    <div class="text-center-p20-40">
-      <button onclick="app.navigateTo('home')" class="btn-home-return">🏠 返回首页</button>
-    </div>
-  </div>
-</div>
-
-<!-- ==================== BOTTOM TAB BAR ==================== -->
-<nav class="tabbar">
-  <div class="tabbar-item active" onclick="app.navigateTo('home')">
-    <span class="tb-icon">🏠</span>
-    <span class="tb-label">首页</span>
-  </div>
-  <div class="tabbar-item" onclick="app.navigateTo('matches')">
-    <span class="tb-icon">⚽</span>
-    <span class="tb-label">赛事</span>
-  </div>
-  <div class="tabbar-item" onclick="app.navigateTo('ai')">
-    <span class="tb-icon">🤖</span>
-    <span class="tb-label">AI预测</span>
-  </div>
-  
-    <div class="tabbar-item" onclick="app.navigateTo('rules')">
-      <span class="tb-icon">📖</span>
-      <span class="tb-label">规则</span>
-    </div>
-    <div class="tabbar-item" onclick="app.navigateTo('records')">
-    <span class="tb-icon">📋</span>
-    <span class="tb-label">投注记录</span>
-    <span class="tabbar-badge" id="badge-records">0</span>
-  </div>
-  <div class="tabbar-item" onclick="app.navigateTo('profile')">
-    <span class="tb-icon">👤</span>
-    <span class="tb-label">我的</span>
-  </div>
-  <div class="tabbar-item" onclick="app.navigateTo('rules')">
-    <span class="tb-icon">📖</span>
-    <span class="tb-label">规则</span>
-  </div>
-</nav>
-
-<!-- ===== BRANDED LOADING SPINNER OVERLAY ===== -->
-<div class="loading-overlay" id="loading-overlay">
-  <div class="text-center">
-    <div class="loading-spinner"></div>
-    <div class="loading-spinner-text" id="loading-text">加载中...</div>
-  </div>
-</div>
-
-<script src="js/app.js"></script>
+            console.log("19888 platform initialized");
+        });
+    })();
+    </script>
 </body>
 </html>

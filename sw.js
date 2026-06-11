@@ -1,14 +1,21 @@
-// 19888 Service Worker — Cache-First with version hash for update detection
-const CACHE_NAME = '19888-v2-4a7b9c';
+// 19888 Service Worker — Network-First for HTML, Cache-First for assets
+// v10: Fix stale cache + offline fallback + 404 handling
+const CACHE_NAME = "19888-v12-ux-ultimate";
 const CACHE_ASSETS = [
   '/',
   '/index.html',
-  '/css/style.css',
+  '/offline.html',
+  '/404.html',
+  '/css/lucky944.css',
   '/js/app.js',
-  '/manifest.json'
+  '/js/vendor/ethers-6.13.umd.min.js',
+  '/manifest.json',
+  '/robots.txt'
 ];
 
-// Install: pre-cache critical assets
+// Team logo cache name (separate, long-lived)
+const LOGO_CACHE = '19888-logos-v1';
+
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
@@ -20,57 +27,27 @@ self.addEventListener('install', e => {
   self.skipWaiting();
 });
 
-// Activate: clean old caches
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys => {
       return Promise.all(
-        keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
+        keys.filter(function(key) {
+          return key !== CACHE_NAME && key !== LOGO_CACHE;
+        }).map(function(key) {
+          return caches.delete(key);
+        })
       );
     })
   );
   self.clients.claim();
 });
 
-// Fetch: Cache-First for CSS/JS/images/HTML, Network-First for API
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
-
-  // Skip non-GET requests
   if (e.request.method !== 'GET') return;
 
-  // Cache-First for static assets
-  if (
-    url.pathname.match(/\.(css|js|png|webp|jpg|jpeg|gif|svg|ico|woff2?)$/i) ||
-    url.pathname === '/' ||
-    url.pathname.endsWith('.html') ||
-    url.pathname === '/manifest.json'
-  ) {
-    e.respondWith(
-      caches.match(e.request).then(cached => {
-        if (cached) {
-          // Refresh cache in background (stale-while-revalidate)
-          fetch(e.request).then(res => {
-            if (res.ok) {
-              caches.open(CACHE_NAME).then(cache => cache.put(e.request, res));
-            }
-          }).catch(() => {});
-          return cached;
-        }
-        return fetch(e.request).then(res => {
-          if (res.ok) {
-            const clone = res.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
-          }
-          return res;
-        });
-      })
-    );
-    return;
-  }
-
-  // Network-First for API calls
-  if (url.pathname.startsWith('/api/')) {
+  // HTML pages: Network-First (always get fresh version) with offline fallback
+  if (url.pathname === '/' || url.pathname.endsWith('.html')) {
     e.respondWith(
       fetch(e.request).then(res => {
         if (res.ok) {
@@ -79,20 +56,66 @@ self.addEventListener('fetch', e => {
         }
         return res;
       }).catch(() => {
-        return caches.match(e.request);
+        return caches.match(e.request).then(cached => {
+          return cached || caches.match('/offline.html');
+        });
       })
     );
     return;
   }
 
-  // Default: network with cache fallback
+  // Team logos: aggressive cache (Cache-First, long-lived)
+  if (url.pathname.startsWith('/img/teams/')) {
+    e.respondWith(
+      caches.open(LOGO_CACHE).then(function(cache) {
+        return cache.match(e.request).then(function(cached) {
+          var fetched = fetch(e.request).then(function(res) {
+            if (res.ok) {
+              cache.put(e.request, res.clone());
+            }
+            return res;
+          });
+          return cached || fetched;
+        });
+      })
+    );
+    return;
+  }
+
+  // Static assets: Cache-First with background refresh
+  if (url.pathname.match(/\.(css|js|png|webp|jpg|jpeg|gif|svg|ico|woff2?)$/i) ||
+      url.pathname === '/manifest.json' ||
+      url.pathname === '/robots.txt' ||
+      url.pathname === '/sitemap.xml') {
+    e.respondWith(
+      caches.match(e.request).then(cached => {
+        const fetched = fetch(e.request).then(res => {
+          if (res.ok) {
+            caches.open(CACHE_NAME).then(cache => cache.put(e.request, res.clone()));
+          }
+          return res;
+        }).catch(() => cached);
+        return cached || fetched;
+      })
+    );
+    return;
+  }
+
+  // API: Network-First with offline fallback
+  if (url.pathname.startsWith('/api/')) {
+    e.respondWith(
+      fetch(e.request).then(res => {
+        if (res.ok) caches.open(CACHE_NAME).then(c => c.put(e.request, res.clone()));
+        return res;
+      }).catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
+  // Default: network with cache fallback, then offline page
   e.respondWith(
-    fetch(e.request).then(res => {
-      if (res.ok) {
-        const clone = res.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
-      }
-      return res;
-    }).catch(() => caches.match(e.request))
+    fetch(e.request).catch(() => {
+      return caches.match(e.request);
+    })
   );
 });

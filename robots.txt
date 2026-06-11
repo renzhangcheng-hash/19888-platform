@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin.html
+Disallow: /backend/
+Disallow: /contracts/
+Disallow: /node_modules/
+Disallow: /scripts/
+
+Sitemap: https://19888.com/sitemap.xml

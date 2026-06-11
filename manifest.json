@@ -1,45 +1,61 @@
 {
-  "name": "19888 - 反波膽竞猜平台",
+  "name": "19888 - Anti-Score Betting Platform",
   "short_name": "19888",
-  "description": "不猜结果，反猜意外。专业的反波膽竞猜平台。",
+  "description": "Professional anti-score betting platform powered by AI deep learning and 50M historical match training data.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0B0E11",
-  "theme_color": "#DC143C",
+  "background_color": "#F0F2F5",
+  "theme_color": "#667eea",
   "orientation": "portrait",
-  "categories": ["sports", "entertainment", "finance"],
+  "categories": ["sports", "entertainment"],
   "lang": "zh-CN",
   "dir": "ltr",
   "scope": "/",
   "id": "/",
-  "related_applications": [{
-    "platform": "webapp",
-    "url": "https://19888.com/manifest.json"
-  }],
+  "iarc_rating_id": "",
   "prefer_related_applications": false,
   "screenshots": [
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 390 844'><rect width='390' height='844' fill='%230B0E11'/><rect x='16' y='60' width='358' height='200' rx='16' fill='%231A1D2E'/><text x='195' y='120' text-anchor='middle' font-size='28' font-weight='900' fill='%23DAA520' font-family='Arial'>19888</text><text x='195' y='160' text-anchor='middle' font-size='14' fill='%23999' font-family='Arial'>无惧未来 赛事无忧</text><rect x='16' y='280' width='110' height='80' rx='12' fill='%2322283A'/><rect x='140' y='280' width='110' height='80' rx='12' fill='%2322283A'/><rect x='264' y='280' width='110' height='80' rx='12' fill='%2322283A'/><rect x='16' y='380' width='358' height='60' rx='12' fill='%231A1D2E'/><rect x='16' y='460' width='358' height='120' rx='12' fill='%231A1D2E'/><rect x='16' y='720' width='358' height='64' rx='16' fill='%231A1D2E'/></svg>",
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 390 844'><rect width='390' height='844' fill='%23F0F2F5'/><rect x='16' y='60' width='358' height='200' rx='16' fill='%23fff'/><text x='195' y='120' text-anchor='middle' font-size='28' font-weight='900' fill='%23667eea' font-family='Arial'>19888</text><text x='195' y='160' text-anchor='middle' font-size='14' fill='%23555770' font-family='Arial'>No Fear, No Worry</text></svg>",
       "sizes": "390x844",
       "type": "image/svg+xml",
-      "form_factor": "narrow",
-      "label": "19888 首页 - 赛事列表"
+      "form_factor": "narrow"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1280x720'><rect width='1280' height='720' fill='%23F0F2F5'/><rect x='40' y='40' width='1200' height='640' rx='20' fill='%23fff'/><text x='640' y='200' text-anchor='middle' font-size='60' font-weight='900' fill='%23667eea' font-family='Arial'>19888</text></svg>",
+      "sizes": "1280x720",
+      "type": "image/svg+xml",
+      "form_factor": "wide"
     }
   ],
   "icons": [{
-    "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230B0E11'/><text x='50' y='62' text-anchor='middle' font-size='42' font-weight='900' fill='%23DAA520' font-family='Arial'>19888</text></svg>",
+    "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23667eea'/><text x='50' y='62' text-anchor='middle' font-size='42' font-weight='900' fill='white' font-family='Arial'>19888</text></svg>",
     "sizes": "any",
     "type": "image/svg+xml",
     "purpose": "any maskable"
   }, {
-    "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='80' fill='%230B0E11'/><text x='256' y='300' text-anchor='middle' font-size='200' font-weight='900' fill='%23DAA520' font-family='Arial'>19888</text></svg>",
+    "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='80' fill='%23667eea'/><text x='256' y='300' text-anchor='middle' font-size='200' font-weight='900' fill='white' font-family='Arial'>19888</text></svg>",
     "sizes": "512x512",
     "type": "image/svg+xml",
     "purpose": "any"
   }, {
-    "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='32' fill='%230B0E11'/><text x='96' y='115' text-anchor='middle' font-size='72' font-weight='900' fill='%23DAA520' font-family='Arial'>19888</text></svg>",
+    "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='32' fill='%23667eea'/><text x='96' y='115' text-anchor='middle' font-size='72' font-weight='900' fill='white' font-family='Arial'>19888</text></svg>",
     "sizes": "192x192",
     "type": "image/svg+xml",
     "purpose": "any"
-  }]
+  }],
+  "shortcuts": [
+    {
+      "name": "AI Predictions",
+      "short_name": "AI Predict",
+      "description": "View AI-powered match predictions",
+      "url": "/?page=ai-predict"
+    },
+    {
+      "name": "Betting Records",
+      "short_name": "Records",
+      "description": "View your betting history",
+      "url": "/?page=records"
+    }
+  ]
 }

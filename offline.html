@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>离线 - 19888</title>
+  <meta name="description" content="您当前处于离线状态，请检查网络连接。">
+  <meta name="theme-color" content="#667eea">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23F0F2F5'/><text x='50' y='65' text-anchor='middle' font-size='44' font-weight='900' fill='%23764ba2' font-family='Arial'>19888</text></svg>">
+  <style>
+    :root {
+      --accent: #667eea;
+      --accent-deep: #764ba2;
+      --accent-grad: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --bg: #F0F2F5;
+      --surface: #FFFFFF;
+      --text: #1A1A2E;
+      --text2: #555770;
+      --text3: #8E90A6;
+      --radius: 14px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --accent: #8B9CF7;
+        --accent-deep: #A78BFA;
+        --accent-grad: linear-gradient(135deg, #8B9CF7 0%, #A78BFA 100%);
+        --bg: #0F0F1A;
+        --surface: #1A1A2E;
+        --text: #E8E8F0;
+        --text2: #9A9AB0;
+        --text3: #6A6A80;
+      }
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      min-height: 100vh;
+      text-align: center;
+      padding: 24px;
+      -webkit-font-smoothing: antialiased;
+    }
+    .offline-icon {
+      font-size: clamp(56px, 14vw, 80px);
+      margin-bottom: 16px;
+      opacity: 0.9;
+    }
+    .offline-title {
+      font-size: clamp(18px, 5vw, 24px);
+      font-weight: 800;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+    .offline-desc {
+      font-size: clamp(13px, 3.5vw, 15px);
+      color: var(--text2);
+      max-width: 360px;
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+    .offline-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text3);
+      margin-bottom: 24px;
+    }
+    .offline-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #FA2933;
+      animation: pulse-dot 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.3); }
+    }
+    .btn-retry {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--accent-grad);
+      color: #fff;
+      padding: 14px 32px;
+      border-radius: 28px;
+      font-size: 15px;
+      font-weight: 700;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(102,126,234,0.3);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .btn-retry:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 28px rgba(102,126,234,0.4);
+    }
+    .btn-retry:active {
+      transform: scale(0.96);
+    }
+    .btn-retry:focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 3px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="offline-icon">📡</div>
+  <div class="offline-title">当前处于离线状态</div>
+  <div class="offline-desc">
+    请检查您的网络连接后重试。<br>
+    恢复连接后将自动刷新页面。
+  </div>
+  <div class="offline-status">
+    <span class="offline-dot" aria-hidden="true"></span>
+    <span id="status-text">检测网络中...</span>
+  </div>
+  <button class="btn-retry" onclick="location.reload()" aria-label="重试连接">
+    🔄 重新连接
+  </button>
+
+  <script>
+    // Auto-retry when online
+    function checkOnline() {
+      if (navigator.onLine) {
+        document.getElementById('status-text').textContent = '已恢复连接！正在刷新...';
+        document.querySelector('.offline-dot').style.background = '#03A66D';
+        setTimeout(function() { location.reload(); }, 800);
+      } else {
+        document.getElementById('status-text').textContent = '网络不可用';
+      }
+    }
+    window.addEventListener('online', checkOnline);
+    setInterval(checkOnline, 3000);
+    checkOnline();
+  </script>
+</body>
+</html>
