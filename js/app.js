@@ -2,9 +2,26 @@
   'use strict';
 
   // ===== CONFIG =====
-  const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? '/api'
-    : 'https://assisted-lab-newly-deaths.trycloudflare.com/api';
+  const DEFAULT_API_BASE = 'https://assisted-lab-newly-deaths.trycloudflare.com/api';
+  function resolveApiBase() {
+    // Priority: localStorage override → same-domain api → default tunnel
+    const stored = localStorage.getItem('19888_api_base');
+    if (stored) return stored;
+    // On localhost, use relative path
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return '/api';
+    }
+    // On 19888.asia, try same-domain first, fallback to tunnel
+    // We store the working URL in localStorage after discovery
+    return DEFAULT_API_BASE;
+  }
+  const API_BASE = resolveApiBase();
+  let API_BASE_FALLBACKS = [
+    window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' ? window.location.origin + '/api' : null,
+    DEFAULT_API_BASE,
+  ].filter(Boolean);
+  // Remove duplicate fallbacks
+  API_BASE_FALLBACKS = [...new Set(API_BASE_FALLBACKS.filter(u => u !== API_BASE))];
   const API_TIMEOUT = 8000;
 
   // ===== STATE =====
@@ -46,18 +63,37 @@
     opts = opts || {};
     let ctrl = new AbortController();
     let timer = setTimeout(function() { ctrl.abort(); }, API_TIMEOUT);
-    return fetch(API_BASE + endpoint, {
-      method: opts.method || 'GET',
-      headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-      body: opts.body || undefined,
-      signal: ctrl.signal
-    }).then(function(r) { return r.json(); }).then(function(d) {
-      apiAvailable = true;
-      return d;
-    }).catch(function() {
-      apiAvailable = false;
-      return null;
-    }).finally(function() {
+
+    // Try to fetch from current API_BASE, with fallback chain
+    var urlsToTry = [API_BASE].concat(API_BASE_FALLBACKS);
+    var triedIdx = 0;
+
+    function tryFetch(idx) {
+      if (idx >= urlsToTry.length) {
+        apiAvailable = false;
+        clearTimeout(timer);
+        return null;
+      }
+      var base = urlsToTry[idx];
+      return fetch(base + endpoint, {
+        method: opts.method || 'GET',
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        body: opts.body || undefined,
+        signal: ctrl.signal
+      }).then(function(r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        apiAvailable = true;
+        // Store working URL for future use
+        if (base !== resolveApiBase()) {
+          try { localStorage.setItem('19888_api_base', base); } catch(e) {}
+        }
+        return r.json();
+      }).catch(function() {
+        return tryFetch(idx + 1);
+      });
+    }
+
+    return tryFetch(0).finally(function() {
       clearTimeout(timer);
     });
   }

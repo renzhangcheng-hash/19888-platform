@@ -24,10 +24,47 @@ const crypto = require('crypto');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const jwt = require('jsonwebtoken');
+const { ethers } = require('ethers');
 
 const app = express();
 const PORT = process.env.PORT || 3088;
 const DATA_DIR = path.join(__dirname, 'data');
+
+// ── JWT Config ──────────────────────────────────
+const JWT_SECRET = process.env.JWT_SECRET || require('crypto').randomBytes(32).toString('hex');
+const JWT_EXPIRY = process.env.JWT_EXPIRY || '24h';
+
+// ── Sepolia RPC for on-chain verification ───────
+const RPC_URL = process.env.RPC_URL || 'https://ethereum-sepolia-rpc.publicnode.com';
+const LUCKY_POOL_ADDRESS = (process.env.LUCKY_POOL_ADDRESS || '0x02fda9c22d6f8733bA507Ed1019d67571626e9DA').toLowerCase();
+const CHAMPION_BET_ADDRESS = (process.env.CHAMPION_BET_ADDRESS || '0x938246dee823cEFe5574E4d195EfAD0467b2ED71').toLowerCase();
+const ANTI_SCORE_BET_ADDRESS = (process.env.ANTI_SCORE_BET_ADDRESS || '0x865C5C27c75eFE75a18EBC0B51F2CA0aEb6597aD').toLowerCase();
+
+// Lazy ethers provider (created on first use)
+let _provider = null;
+function getProvider() {
+  if (!_provider) _provider = new ethers.JsonRpcProvider(RPC_URL);
+  return _provider;
+}
+
+// ── Verify a transaction on-chain ───────────────
+async function verifyOnChainTx(txHash, expectedFrom, expectedTo, expectedAmountWei) {
+  try {
+    const provider = getProvider();
+    const tx = await provider.getTransaction(txHash);
+    if (!tx) return { valid: false, reason: '交易不存在' };
+    const receipt = await provider.getTransactionReceipt(txHash);
+    if (!receipt || receipt.status === 0) return { valid: false, reason: '交易失败或未确认' };
+    if (tx.from.toLowerCase() !== expectedFrom.toLowerCase()) return { valid: false, reason: '发送方不匹配' };
+    if (tx.to && tx.to.toLowerCase() !== expectedTo.toLowerCase()) return { valid: false, reason: '接收合约不匹配' };
+    if (expectedAmountWei && tx.value < expectedAmountWei) return { valid: false, reason: '金额不匹配' };
+    return { valid: true, blockNumber: receipt.blockNumber, confirmations: receipt.confirmations || 1 };
+  } catch (err) {
+    console.error('[OnChainVerify] Error:', err.message);
+    return { valid: false, reason: '链上验证服务暂不可用: ' + err.message };
+  }
+}
 
 // ═══════════════════════════════════════════════════
 //  MIDDLEWARE STACK
@@ -149,14 +186,15 @@ function isValidPageSize(val) {
   return Number.isInteger(n) && n >= 1 && n <= 100;
 }
 
-// ── Error-handling wrapper ────────────────────────
+// ── Error-handling wrapper (supports async/await) ──
 function asyncHandler(fn) {
   return (req, res, next) => {
-    try {
-      fn(req, res, next);
-    } catch (err) {
-      console.error(`[ERROR] ${req.method} ${req.originalUrl}:`, err.message);
-      res.status(500).json({ code: 99, msg: '服务器内部错误' });
+    const result = fn(req, res, next);
+    if (result && typeof result.then === 'function') {
+      result.catch(function(err) {
+        console.error(`[API Error] ${req.method} ${req.originalUrl}:`, err.message);
+        res.status(500).json({ code: 99, msg: '服务器内部错误' });
+      });
     }
   };
 }
@@ -916,8 +954,8 @@ app.get('/api/champion-bet/odds', asyncHandler((req, res) => {
   res.json({ code:0, data: { odds: teams, total_bet: totalBet, total_potential_win: +totalWin.toFixed(2) } });
 }));
 
-app.post('/api/champion-bet/place', asyncHandler((req, res) => {
-  const { team_id, bet_type, amount, wallet_address } = req.body;
+app.post('/api/champion-bet/place', asyncHandler(async (req, res) => {
+  const { team_id, bet_type, amount, wallet_address, tx_hash } = req.body;
 
   if (!wallet_address || !isValidWallet(wallet_address)) {
     return res.status(400).json({ code:1, msg:'无效的钱包地址（需要0x开头的42位十六进制地址）' });
@@ -944,6 +982,20 @@ app.post('/api/champion-bet/place', asyncHandler((req, res) => {
   const team = teams.find(t => t.id === tid);
   if (!team) return res.status(404).json({ code:1, msg:'球队不存在' });
 
+  // If tx_hash provided, verify on-chain before deducting (two-phase)
+  if (tx_hash && typeof tx_hash === 'string' && tx_hash.trim().length > 0) {
+    const txHash = tx_hash.trim();
+    const amountWei = ethers.parseUnits(amt.toFixed(18), 18);
+    const verification = await verifyOnChainTx(txHash, addr, CHAMPION_BET_ADDRESS, amountWei);
+    if (!verification.valid) {
+      console.error(`[ChampionBet] On-chain verify failed: addr=${addr} tx=${txHash}`, verification.reason);
+      return res.status(400).json({ code:1, msg:`链上交易验证失败: ${verification.reason}` });
+    }
+    console.log(`[ChampionBet] On-chain verified: block=${verification.blockNumber} tx=${txHash.slice(0,10)}...`);
+  } else {
+    console.warn(`[ChampionBet] No tx_hash provided - deducting immediately (two-phase recommended for security)`);
+  }
+
   // Check user balance
   const users = read('users');
   const user = users.find(u => u.address.toLowerCase() === addr);
@@ -966,6 +1018,7 @@ app.post('/api/champion-bet/place', asyncHandler((req, res) => {
     odds,
     potential_win: +(amt * odds).toFixed(2),
     status: 'pending',
+    tx_hash: tx_hash ? tx_hash.trim() : undefined,
     created_at: new Date().toISOString(),
   };
   bets.push(bet);
@@ -977,6 +1030,82 @@ app.post('/api/champion-bet/place', asyncHandler((req, res) => {
   write('users', users);
 
   res.json({ code:0, msg:'投注成功！', data: { bet_id: bet.id, potential_win: bet.potential_win } });
+}));
+
+// ═══════════════════════════════════════════════════
+//  TWO-PHASE BET CONFIRMATION
+// ═══════════════════════════════════════════════════
+
+// POST /api/bet/confirm — confirm a bet with on-chain tx hash
+// Used when frontend first creates bet via blockchain tx, then confirms here
+app.post('/api/bet/confirm', asyncHandler(async (req, res) => {
+  const { bet_id, wallet_address, tx_hash, amount, game_type, match_id, cell_score, team_id, bet_type } = req.body;
+
+  if (!wallet_address || !isValidWallet(wallet_address)) {
+    return res.status(400).json({ code:1, msg:'无效的钱包地址' });
+  }
+  if (!bet_id || !Number.isInteger(Number(bet_id))) {
+    return res.status(400).json({ code:1, msg:'无效的投注ID' });
+  }
+  if (!tx_hash || typeof tx_hash !== 'string' || tx_hash.trim().length === 0) {
+    return res.status(400).json({ code:1, msg:'请提供交易哈希' });
+  }
+
+  const addr = wallet_address.toLowerCase().trim();
+  const txHash = tx_hash.trim();
+  const bid = Number(bet_id);
+
+  // Check if bet already exists
+  const bets = read('bets');
+  if (bets.some(b => b.id === bid)) {
+    return res.status(400).json({ code:1, msg:'该投注已存在' });
+  }
+
+  // Verify the tx_hash on-chain
+  const amtNum = Number(amount || 0);
+  const amountWei = ethers.parseUnits(amtNum.toFixed(18), 18);
+  const expectedTo = game_type === 'champion' ? CHAMPION_BET_ADDRESS : ANTI_SCORE_BET_ADDRESS;
+  const verification = await verifyOnChainTx(txHash, addr, expectedTo, amountWei);
+  if (!verification.valid) {
+    return res.status(400).json({ code:1, msg:`链上交易验证失败: ${verification.reason}` });
+  }
+
+  console.log(`[BetConfirm] On-chain verified: bet_id=${bid} block=${verification.blockNumber} tx=${txHash.slice(0,10)}...`);
+
+  // Check user balance
+  const users = read('users');
+  const user = users.find(u => u.address.toLowerCase() === addr);
+  if (!user) return res.status(404).json({ code:1, msg:'用户不存在' });
+  const balance = computeBalance(user);
+  const amt = Number(amount || 0);
+  if (amt > balance.available) {
+    return res.status(400).json({ code:1, msg:`余额不足，可用: ${balance.available.toFixed(2)} USDT` });
+  }
+
+  // Create the bet record
+  const bet = {
+    id: bid,
+    address: addr,
+    tx_hash: txHash,
+    block_number: verification.blockNumber,
+    amount: amt,
+    status: 'pending',
+    game_type: game_type || 'champion',
+    match_id: match_id || null,
+    cell_score: cell_score || null,
+    team_id: team_id || null,
+    bet_type: bet_type || null,
+    created_at: new Date().toISOString(),
+  };
+  bets.push(bet);
+  write('bets', bets);
+
+  // Deduct from available balance
+  user.balance = (user.balance || 0) - amt;
+  user.frozen_bet = (user.frozen_bet || 0) + amt;
+  write('users', users);
+
+  res.json({ code:0, msg:'投注确认成功！', data: { bet_id: bid, tx_hash: txHash } });
 }));
 
 // ═══════════════════════════════════════════════════
@@ -1135,20 +1264,28 @@ app.get('/api/bets', asyncHandler((req, res) => {
 }));
 
 // ═══════════════════════════════════════════════════
-//  ADMIN API (protected by simple token)
+//  ADMIN API (protected by JWT)
 // ═══════════════════════════════════════════════════
 
-const ADMIN_SECRET = '19888-admin-secret-token';
-
 function adminAuth(req, res, next) {
-  const token = req.headers.authorization?.replace('Bearer ', '') || '';
-  if (token !== ADMIN_SECRET) {
-    return res.status(401).json({ code:1, msg:'未授权' });
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.replace('Bearer ', '');
+  if (!token) {
+    return res.status(401).json({ code:1, msg:'未授权，请先登录' });
   }
-  next();
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.admin = decoded;
+    next();
+  } catch (err) {
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({ code:1, msg:'登录已过期，请重新登录' });
+    }
+    return res.status(401).json({ code:1, msg:'无效的凭据' });
+  }
 }
 
-// Admin login
+// Admin login → returns JWT
 app.post('/api/admin/login', asyncHandler((req, res) => {
   const { username, password } = req.body;
 
@@ -1161,7 +1298,19 @@ app.post('/api/admin/login', asyncHandler((req, res) => {
   if (!admin || !verifyPassword(password, admin.password)) {
     return res.status(401).json({ code:1, msg:'用户名或密码错误' });
   }
-  res.json({ code:0, msg:'登录成功', data: { token: ADMIN_SECRET } });
+
+  const token = jwt.sign(
+    { username: admin.username, role: 'admin' },
+    JWT_SECRET,
+    { expiresIn: JWT_EXPIRY }
+  );
+
+  res.json({ code:0, msg:'登录成功', data: { token, expiresIn: JWT_EXPIRY } });
+}));
+
+// GET /api/admin/verify — verify current token is valid
+app.get('/api/admin/verify', adminAuth, asyncHandler((req, res) => {
+  res.json({ code:0, msg:'凭据有效', data: { username: req.admin.username } });
 }));
 
 // ── Admin: Matches CRUD ───────────────────────────
@@ -1678,7 +1827,8 @@ app.post('/api/invite/claim-reward', asyncHandler((req, res) => {
 // ═══════════════════════════════════════════════════
 
 // POST /api/deposit — record a deposit and credit user balance
-app.post('/api/deposit', asyncHandler((req, res) => {
+// Uses on-chain tx verification before crediting
+app.post('/api/deposit', asyncHandler(async (req, res) => {
   const { wallet_address, tx_hash, amount } = req.body;
 
   if (!wallet_address || !isValidWallet(wallet_address)) {
@@ -1688,7 +1838,7 @@ app.post('/api/deposit', asyncHandler((req, res) => {
     return res.status(400).json({ code: 1, msg: '请提供交易哈希' });
   }
   if (!isValidAmount(amount)) {
-    return res.status(400).json({ code: 1, msg: '充值金额必须是正数' });
+    return res.status(400).json({ code: 1, msg: '充值金额必须是正数（不超过10000）' });
   }
   if (Number(amount) < 0.01) {
     return res.status(400).json({ code: 1, msg: '最小充值金额 0.01 USDT' });
@@ -1704,16 +1854,40 @@ app.post('/api/deposit', asyncHandler((req, res) => {
     return res.status(400).json({ code: 1, msg: '该交易已处理' });
   }
 
+  // --- On-chain verification ---
+  // Verify the tx_hash is a real Sepolia transaction to LuckyPool contract
+  const amountWei = ethers.parseUnits(amt.toFixed(18), 18);
+  const verification = await verifyOnChainTx(txHash, addr, LUCKY_POOL_ADDRESS, amountWei);
+  if (!verification.valid) {
+    console.error(`[Deposit] On-chain verify failed: addr=${addr} tx=${txHash}`, verification.reason);
+    // Record failed attempt for audit
+    const failedDep = {
+      id: (deposits[deposits.length - 1]?.id || 0) + 1,
+      address: addr,
+      tx_hash: txHash,
+      amount: amt,
+      status: 'failed',
+      reason: verification.reason,
+      created_at: new Date().toISOString(),
+    };
+    deposits.push(failedDep);
+    write('deposits', deposits);
+    return res.status(400).json({ code: 1, msg: `充值验证失败: ${verification.reason}` });
+  }
+
+  console.log(`[Deposit] On-chain verified: block=${verification.blockNumber} tx=${txHash.slice(0,10)}...`);
+
   // Create or get user
   const user = getOrCreateUser(addr);
 
-  // Record deposit
+  // Record deposit as confirmed
   const deposit = {
     id: (deposits[deposits.length - 1]?.id || 0) + 1,
     address: addr,
     tx_hash: txHash,
     amount: amt,
     status: 'confirmed',
+    block_number: verification.blockNumber,
     created_at: new Date().toISOString(),
   };
   deposits.push(deposit);
@@ -1734,6 +1908,7 @@ app.post('/api/deposit', asyncHandler((req, res) => {
       deposit_id: deposit.id,
       amount: amt,
       tx_hash: txHash,
+      block_number: verification.blockNumber,
       new_balance: computeBalance(u || user),
     }
   });
