@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="750" height="170" viewBox="0 0 750 170">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#8b2626"/>
+      <stop offset="100%" stop-color="#a63232"/>
+    </linearGradient>
+  </defs>
+  <rect width="750" height="170" rx="15" fill="url(#bg)"/>
+  <text x="375" y="75" text-anchor="middle" font-size="28" font-weight="bold" fill="#ffd700" font-family="Arial">世界杯竞猜 · 19888</text>
+  <text x="375" y="110" text-anchor="middle" font-size="16" fill="rgba(255,255,255,0.8)" font-family="Arial">专业反波胆平台</text>
+</svg>
