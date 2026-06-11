@@ -3,4 +3,4 @@ services:
     name: 19888-platform
     env: node
     buildCommand: npm install
-    startCommand: node server.js
+    startCommand: node backend/server.js
