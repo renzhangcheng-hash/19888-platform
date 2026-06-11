@@ -4,7 +4,7 @@
   // ===== CONFIG =====
   const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? '/api'
-    : 'https://serve-philosophy-bow-likelihood.trycloudflare.com/api';
+    : 'https://resulted-kind-replication-tutorial.trycloudflare.com/api';
   const API_TIMEOUT = 8000;
 
   // ===== STATE =====
