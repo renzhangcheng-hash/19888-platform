@@ -18,7 +18,7 @@
 
   const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? '/api'
-    : 'https://19888-platform.onrender.com/api';
+    : 'https://one9888-platform.onrender.com/api';
   let apiAvailable = false;
   let walletAddress = null;
   let walletProvider = null;
