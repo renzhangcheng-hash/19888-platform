@@ -2,7 +2,7 @@
   'use strict';
 
   // ===== CONFIG =====
-  const DEFAULT_API_BASE = 'https://assisted-lab-newly-deaths.trycloudflare.com/api';
+  const DEFAULT_API_BASE = 'https://novelty-snow-closure-article.trycloudflare.com/api';
   function resolveApiBase() {
     // Priority: localStorage override → same-domain api → default tunnel
     const stored = localStorage.getItem('19888_api_base');
