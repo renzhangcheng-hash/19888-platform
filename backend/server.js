@@ -95,7 +95,7 @@ app.use('/api/admin', adminLimiter);
 
 // ── Body Parsing ──────────────────────────────────
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, parameterLimit: 1000 }));
 
 // ── Static Frontend ───────────────────────────────
 app.use(express.static(path.join(__dirname, '..')));
@@ -126,7 +126,7 @@ function isValidWallet(addr) {
 
 function isValidAmount(val) {
   const n = Number(val);
-  return Number.isFinite(n) && n > 0;
+  return Number.isFinite(n) && n > 0 && n <= 10000;
 }
 
 function isValidTeamId(val) {
@@ -156,7 +156,7 @@ function asyncHandler(fn) {
       fn(req, res, next);
     } catch (err) {
       console.error(`[ERROR] ${req.method} ${req.originalUrl}:`, err.message);
-      res.status(500).json({ code: 99, msg: '服务器内部错误', error: err.message });
+      res.status(500).json({ code: 99, msg: '服务器内部错误' });
     }
   };
 }
@@ -1141,7 +1141,7 @@ app.get('/api/bets', asyncHandler((req, res) => {
 const ADMIN_SECRET = '19888-admin-secret-token';
 
 function adminAuth(req, res, next) {
-  const token = req.headers.authorization?.replace('Bearer ', '') || req.query.token || '';
+  const token = req.headers.authorization?.replace('Bearer ', '') || '';
   if (token !== ADMIN_SECRET) {
     return res.status(401).json({ code:1, msg:'未授权' });
   }
@@ -1534,7 +1534,7 @@ app.post('/api/invite/generate-code', asyncHandler((req, res) => {
   if (!user.invite_code) {
     let code;
     do {
-      code = '19888_' + crypto.randomBytes(4).toString('hex').toUpperCase();
+      code = '19888_' + crypto.randomBytes(6).toString('hex').toUpperCase();
     } while (users.some(u => u.invite_code === code));
     user.invite_code = code;
   }

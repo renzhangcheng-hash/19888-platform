@@ -4,7 +4,7 @@
   // ===== CONFIG =====
   const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? '/api'
-    : 'https://resulted-kind-replication-tutorial.trycloudflare.com/api';
+    : 'https://assisted-lab-newly-deaths.trycloudflare.com/api';
   const API_TIMEOUT = 8000;
 
   // ===== STATE =====
@@ -153,7 +153,7 @@
   async function loadPnLData() {
     if (!walletAddress) return;
     try {
-      var res = await apiFetch('/user/pnl?address=' + encodeURIComponent(walletAddress));
+      var res = await apiFetch('/user/pnl?wallet=' + encodeURIComponent(walletAddress));
       if (res && res.code === 0 && res.data) {
         pnlData = {
           total_wagered: parseFloat(res.data.total_wagered) || 0,
@@ -716,17 +716,18 @@
   async function loadInviteData() {
     if (!walletAddress) return;
     try {
-      var res = await apiFetch('/invite/generate-code?address=' + encodeURIComponent(walletAddress));
-      if (res && res.code === 0 && res.data) {
-        inviteCode = res.data.invite_code || res.data.code || '';
-        inviteData.count = parseInt(res.data.invite_count || res.data.count || 0);
-        inviteData.rewards = parseFloat(res.data.total_rewards || res.data.rewards || 0);
+      // First try GET stats (non-404 friendly fallback if no user yet)
+      var statsRes = await apiFetch('/invite/stats?wallet=' + encodeURIComponent(walletAddress));
+      if (statsRes && statsRes.code === 0 && statsRes.data) {
+        inviteCode = statsRes.data.code || '';
+        inviteData.count = parseInt(statsRes.data.invite_count || 0);
+        inviteData.rewards = parseFloat(statsRes.data.rewards || 0);
       }
-      // If no code yet, generate one
+      // If no code yet, generate one via POST
       if (!inviteCode) {
         var genRes = await apiFetch('/invite/generate-code', {
           method: 'POST',
-          body: JSON.stringify({ address: walletAddress })
+          body: JSON.stringify({ wallet_address: walletAddress })
         });
         if (genRes && genRes.code === 0 && genRes.data) {
           inviteCode = genRes.data.invite_code || genRes.data.code || '';
