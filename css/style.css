@@ -6,14 +6,14 @@ html{
 }
 body{
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei","Helvetica Neue",sans-serif;
-  background:var(--bg-gradient);
+  background:#f0f2f5;
   color:var(--text);line-height:1.5;
   -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
   overflow-x:hidden;min-height:100vh;
   padding-bottom:clamp(60px, 16vw, 75px);
   letter-spacing:-0.01em;
   transition:background .4s ease,color .3s ease;
-  max-width:480px;margin:0 auto;
+  max-width:750px;margin:0 auto;
   padding-left:env(safe-area-inset-left);
   padding-right:env(safe-area-inset-right);
 }
