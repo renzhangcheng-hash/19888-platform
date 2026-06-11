@@ -4,7 +4,7 @@
   // ===== CONFIG =====
   const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? '/api'
-    : 'https://one9888-platform.onrender.com/api';
+    : 'https://resulted-kind-replication-tutorial.trycloudflare.com/api';
   const API_TIMEOUT = 8000;
 
   // ===== STATE =====
@@ -107,68 +107,62 @@
     return null;
   }
 
-  async function connectWalletWithRetry(maxRetries) {
-    maxRetries = maxRetries || 3;
-    for (var i = 0; i < maxRetries; i++) {
-      var w = detectWallet();
-      if (w) return w;
-      if (i < maxRetries - 1) await new Promise(function(r) { setTimeout(r, 500); });
-    }
-    return null;
-  }
-
+  // ===== WALLET (DApp via web3.js) =====
   async function connectWallet() {
-    try {
-      var detected = await connectWalletWithRetry(3);
-      if (!detected) { showToast('未检测到钱包插件，请安装 MetaMask 或 TP Wallet'); return; }
-      var accounts = await detected.provider.request({ method: 'eth_requestAccounts' });
-      if (accounts && accounts.length > 0) {
-        walletAddress = accounts[0];
-        walletProvider = detected.provider;
-        updateWalletUI();
-        showToast('钱包已连接: ' + walletAddress.substring(0, 6) + '...' + walletAddress.substring(walletAddress.length - 4));
-        apiFetch('/wallet/connect', { method: 'POST', body: JSON.stringify({ wallet_address: walletAddress }) });
-        if (walletProvider && walletProvider.on) {
-          walletProvider.on('accountsChanged', function(newAcc) {
-            if (newAcc.length === 0) { disconnectWallet(); }
-            else { walletAddress = newAcc[0]; updateWalletUI(); }
-          });
-        }
+    if (typeof dapp === 'undefined') { showToast('Web3模块未加载'); return; }
+    var result = await dapp.connect();
+    if (result.success) {
+      walletAddress = result.address;
+
+      // Check if on Sepolia, if not — switch
+      var chainOk = await dapp.switchChain();
+      if (!chainOk) {
+        showToast('请切换到Sepolia测试网');
         return;
       }
-      showToast('未获取到钱包账户');
-    } catch(e) {
-      showToast('连接失败: ' + (e.message || '请重试'));
+
+      showToast('钱包已连接: ' + walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4));
+
+      // Sync with backend
+      apiFetch('/wallet/connect', { method: 'POST', body: JSON.stringify({ wallet_address: walletAddress }) });
+
+      // Load pool balance
+      loadPoolBalance();
+    } else {
+      showToast(result.error || '连接失败');
     }
+  }
+
+  async function loadPoolBalance() {
+    if (typeof dapp === 'undefined') return;
+    try {
+      var bal = await dapp.getPoolBalance();
+      var usdtBal = await dapp.getUSDTBalance();
+      userBalance = parseFloat(bal);
+      // Update UI if profile page visible
+      var balEl = document.getElementById('profileBalance');
+      if (balEl) balEl.textContent = bal + ' USDT';
+      var usdtEl = document.getElementById('walletUSDT');
+      if (usdtEl) usdtEl.textContent = usdtBal + ' USDT';
+    } catch(e) {}
   }
 
   function disconnectWallet() {
+    if (typeof dapp !== 'undefined') dapp.disconnect();
     walletAddress = null;
     walletProvider = null;
-    updateWalletUI();
     showToast('已断开钱包连接');
-  }
-
-  function updateWalletUI() {
-    var btn = document.getElementById('walletBtn');
-    var addrEl = document.getElementById('walletAddress');
-    if (walletAddress && addrEl) {
-      var short = walletAddress.substring(walletAddress.length - 6);
-      addrEl.textContent = '...' + short;
-      if (btn) btn.classList.add('connected');
-    } else {
-      if (addrEl) addrEl.textContent = '';
-      if (btn) btn.classList.remove('connected');
-    }
   }
 
   function handleWalletBtnClick() {
     if (walletAddress) {
-      showConfirm('断开钱包连接', '当前钱包: ...' + walletAddress.substring(walletAddress.length - 6) + '\n\n是否断开连接？', disconnectWallet);
+      showConfirm('断开钱包连接', '当前: ...' + walletAddress.slice(-6) + '\n断开？', disconnectWallet);
     } else {
       connectWallet();
     }
   }
+
+  function updateWalletUI() { /* handled by web3.js */ }
 
   // ===== WORLD CUP COUNTDOWN =====
   function startWorldCupCountdown() {
@@ -555,27 +549,35 @@
     document.getElementById('betDialogProfit').textContent = profit.toFixed(2);
   }
 
-  function confirmBet() {
+  async function confirmBet() {
     if (!walletAddress) { showToast('请先连接钱包'); return; }
     var amount = parseFloat(document.getElementById('betAmountInput').value);
     if (!amount || amount < 1 || isNaN(amount)) { showToast('请输入正确的投注金额'); return; }
     var d = betDialogData;
     if (!d) return;
 
-    var record = {
-      id: Date.now(),
-      team: d.home + ' vs ' + d.away,
-      type: '比分投注',
-      amount: amount,
-      odds: parseFloat(document.getElementById('betDialogOdds').textContent) || 0,
-      potentialWin: parseFloat(document.getElementById('betDialogProfit').textContent) || 0,
-      time: new Date().toLocaleString('zh-CN'),
-      status: 'pending'
-    };
-    betRecords.unshift(record);
-    saveData();
     closeBetDialog();
-    showToast('投注成功！' + amount + ' USDT');
+    showToast('交易提交中...');
+
+    try {
+      var tx;
+      if (d.teamId !== undefined) {
+        // Champion bet
+        var betTypeIdx = d.betType === 'champion' ? 0 : 1;
+        tx = await dapp.placeChampionBet(d.teamId, betTypeIdx, amount + '');
+      } else if (d.matchId !== undefined) {
+        // Score bet — cellIndex from dialog
+        var cellIdx = d.cellIndex || 0;
+        tx = await dapp.placeBet(d.matchId, cellIdx, amount + '');
+      } else {
+        showToast('无效的投注数据'); return;
+      }
+
+      showToast('✅ 投注成功! Tx: ' + tx.hash.slice(0, 10) + '...');
+    } catch(e) {
+      showToast('❌ 交易失败: ' + (e.reason || e.message || '未知错误'));
+      console.error('Bet error:', e);
+    }
   }
 
   // Champion bet
