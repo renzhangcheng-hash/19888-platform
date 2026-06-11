@@ -19,6 +19,7 @@
     "function allowance(address owner, address spender) view returns (uint256)",
     "function balanceOf(address account) view returns (uint256)",
     "function decimals() view returns (uint8)",
+    "function transfer(address to, uint256 amount) returns (bool)",
   ];
 
   const LuckyPool_ABI = [
@@ -49,12 +50,16 @@
   let walletAddress = null;
   let currentChainId = null;
   let contracts = {};
+  let depositInProgress = false;
+  let withdrawInProgress = false;
 
   // ===== PUBLIC API =====
   window.dapp = {
     get walletAddress() { return walletAddress; },
     get contracts() { return contracts; },
     get CONTRACTS() { return CONTRACTS; },
+
+    // ===== WALLET CONNECTION =====
 
     // Connect wallet
     async connect() {
@@ -67,7 +72,7 @@
         const accounts = await walletProvider.request({ method: 'eth_requestAccounts' });
         walletAddress = accounts[0];
         currentChainId = parseInt(await walletProvider.request({ method: 'eth_chainId' }), 16);
-        
+
         // Setup contract instances
         const signer = await getSigner();
         contracts.usdt = new ethers.Contract(CONTRACTS.MockUSDT, ERC20_ABI, signer);
@@ -79,6 +84,8 @@
         walletProvider.on('accountsChanged', function(acc) {
           walletAddress = acc[0] || null;
           updateWalletUI();
+          // Dispatch custom event for app.js to pick up
+          window.dispatchEvent(new CustomEvent('dapp:accountChanged', { detail: { address: walletAddress } }));
         });
         walletProvider.on('chainChanged', function() { window.location.reload(); });
 
@@ -119,6 +126,17 @@
       }
     },
 
+    // Disconnect
+    disconnect() {
+      walletProvider = null;
+      walletAddress = null;
+      contracts = {};
+      updateWalletUI();
+      window.dispatchEvent(new CustomEvent('dapp:accountChanged', { detail: { address: null } }));
+    },
+
+    // ===== BALANCE QUERIES =====
+
     // Get USDT balance
     async getUSDTBalance() {
       if (!walletAddress || !contracts.usdt) return '0';
@@ -130,12 +148,24 @@
 
     // Get pool balance
     async getPoolBalance() {
-      if (!contracts.pool) return '0';
+      if (!contracts.pool || !walletAddress) return '0';
       try {
         const bal = await contracts.pool.userBalance(walletAddress);
         return ethers.formatUnits(bal, 18);
       } catch { return '0'; }
     },
+
+    // Refresh all balances and fire event
+    async refreshBalances() {
+      const usdtBal = await this.getUSDTBalance();
+      const poolBal = await this.getPoolBalance();
+      window.dispatchEvent(new CustomEvent('dapp:balancesUpdated', {
+        detail: { usdt: usdtBal, pool: poolBal }
+      }));
+      return { usdt: usdtBal, pool: poolBal };
+    },
+
+    // ===== ALLOWANCE & APPROVAL =====
 
     // Approve USDT
     async approveUSDT(amount) {
@@ -155,6 +185,8 @@
       } catch { return '0'; }
     },
 
+    // ===== DEPOSIT / WITHDRAW =====
+
     // Deposit USDT to LuckyPool
     async deposit(amount) {
       if (!contracts.pool) throw new Error('请先连接钱包');
@@ -170,8 +202,125 @@
 
       const tx = await contracts.pool.deposit(amountWei);
       await tx.wait();
+      await this.refreshBalances();
       return tx;
     },
+
+    // Withdraw from LuckyPool
+    async withdraw(amount) {
+      if (!contracts.pool) throw new Error('请先连接钱包');
+      const amountWei = ethers.parseUnits(amount, 18);
+      const tx = await contracts.pool.withdraw(amountWei);
+      await tx.wait();
+      await this.refreshBalances();
+      return tx;
+    },
+
+    // ===== DEPOSIT FLOW (UI helpers) =====
+
+    // Show deposit modal
+    showDepositModal() {
+      const modal = document.getElementById('depositModal');
+      if (!modal) return;
+      const input = document.getElementById('depositAmount');
+      if (input) input.value = '100';
+      modal.style.display = 'flex';
+
+      // Wire up quick amount buttons
+      const quickBtns = modal.querySelectorAll('.quick-amt');
+      quickBtns.forEach(function(btn) {
+        btn.onclick = function() {
+          const amt = this.getAttribute('data-amt');
+          if (input) input.value = amt;
+        };
+      });
+    },
+
+    // Hide deposit modal
+    hideDepositModal() {
+      const modal = document.getElementById('depositModal');
+      if (modal) modal.style.display = 'none';
+    },
+
+    // Execute full deposit flow: approve → deposit
+    async executeDeposit(amount) {
+      if (!walletAddress) throw new Error('请先连接钱包');
+      if (!amount || isNaN(amount) || amount <= 0) throw new Error('请输入有效金额');
+      if (depositInProgress) throw new Error('充值进行中，请稍候');
+
+      depositInProgress = true;
+      try {
+        // Step 1: Approve USDT
+        window.dispatchEvent(new CustomEvent('dapp:txStatus', { detail: { status: 'approving', message: '正在授权 USDT...' } }));
+        const appTx = await this.approveUSDT(amount + '');
+
+        // Step 2: Deposit
+        window.dispatchEvent(new CustomEvent('dapp:txStatus', { detail: { status: 'depositing', message: '正在充值...' } }));
+        const depTx = await this.deposit(amount + '');
+
+        depositInProgress = false;
+        window.dispatchEvent(new CustomEvent('dapp:txStatus', { detail: {
+          status: 'success',
+          message: '充值成功',
+          txHash: depTx.hash
+        }}));
+        await this.refreshBalances();
+        return { success: true, txHash: depTx.hash };
+      } catch (e) {
+        depositInProgress = false;
+        window.dispatchEvent(new CustomEvent('dapp:txStatus', { detail: {
+          status: 'error',
+          message: e.reason || e.message || '充值失败'
+        }}));
+        throw e;
+      }
+    },
+
+    // Show withdraw modal
+    showWithdrawModal() {
+      const modal = document.getElementById('withdrawModal');
+      if (!modal) return;
+      const input = document.getElementById('withdrawAmount');
+      if (input) input.value = '';
+      modal.style.display = 'flex';
+    },
+
+    // Hide withdraw modal
+    hideWithdrawModal() {
+      const modal = document.getElementById('withdrawModal');
+      if (modal) modal.style.display = 'none';
+    },
+
+    // Execute withdraw
+    async executeWithdraw(amount) {
+      if (!walletAddress) throw new Error('请先连接钱包');
+      if (!amount || isNaN(amount) || amount <= 0) throw new Error('请输入有效金额');
+      if (withdrawInProgress) throw new Error('提现进行中，请稍候');
+
+      withdrawInProgress = true;
+      try {
+        window.dispatchEvent(new CustomEvent('dapp:txStatus', { detail: { status: 'withdrawing', message: '正在提现...' } }));
+        const tx = await this.withdraw(amount + '');
+        withdrawInProgress = false;
+        window.dispatchEvent(new CustomEvent('dapp:txStatus', { detail: {
+          status: 'success',
+          message: '提现成功',
+          txHash: tx.hash
+        }}));
+        await this.refreshBalances();
+        this.hideWithdrawModal();
+        return { success: true, txHash: tx.hash };
+      } catch (e) {
+        withdrawInProgress = false;
+        window.dispatchEvent(new CustomEvent('dapp:txStatus', { detail: {
+          status: 'error',
+          message: e.reason || e.message || '提现失败'
+        }}));
+        throw e;
+      }
+    },
+
+    // ===== BETTING =====
 
     // Place anti-score bet (18-grid)
     async placeBet(matchId, cellIndex, amount) {
@@ -245,14 +394,6 @@
         return bets;
       } catch { return []; }
     },
-
-    // Disconnect
-    disconnect() {
-      walletProvider = null;
-      walletAddress = null;
-      contracts = {};
-      updateWalletUI();
-    },
   };
 
   // ===== HELPERS =====
@@ -282,5 +423,44 @@
       btn.classList.remove('connected');
     }
   }
+
+  // ===== DEPOSIT MODAL CLOSE (global listener) =====
+  document.addEventListener('DOMContentLoaded', function() {
+    // Deposit modal cancel button
+    const depositCancel = document.getElementById('depositCancel');
+    if (depositCancel) {
+      depositCancel.addEventListener('click', function() {
+        window.dapp.hideDepositModal();
+      });
+    }
+
+    // Deposit modal: close on overlay click
+    const depositModal = document.getElementById('depositModal');
+    if (depositModal) {
+      depositModal.addEventListener('click', function(e) {
+        if (e.target === depositModal) {
+          window.dapp.hideDepositModal();
+        }
+      });
+    }
+
+    // Withdraw modal cancel
+    const withdrawCancel = document.getElementById('withdrawCancel');
+    if (withdrawCancel) {
+      withdrawCancel.addEventListener('click', function() {
+        window.dapp.hideWithdrawModal();
+      });
+    }
+
+    // Withdraw modal: close on overlay click
+    const withdrawModal = document.getElementById('withdrawModal');
+    if (withdrawModal) {
+      withdrawModal.addEventListener('click', function(e) {
+        if (e.target === withdrawModal) {
+          window.dapp.hideWithdrawModal();
+        }
+      });
+    }
+  });
 
 })();

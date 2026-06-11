@@ -45,6 +45,64 @@
     </div>
 </div>
 
+<!-- 充值弹窗 -->
+<div id="depositModal" class="dialog-overlay" style="display:none">
+  <div class="dialog-box">
+    <h3>充值 USDT</h3>
+    <input id="depositAmount" type="number" placeholder="金额" min="10">
+    <div class="quick-amounts">
+      <button class="quick-amt" data-amt="100">100</button>
+      <button class="quick-amt" data-amt="500">500</button>
+      <button class="quick-amt" data-amt="1000">1000</button>
+    </div>
+    <button id="depositConfirm">确认充值</button>
+    <button id="depositCancel">取消</button>
+  </div>
+</div>
+
+<!-- 提现弹窗 -->
+<div id="withdrawModal" class="dialog-overlay" style="display:none">
+  <div class="dialog-box">
+    <h3>提现 USDT</h3>
+    <input id="withdrawAmount" type="number" placeholder="金额" min="10">
+    <input id="withdrawAddress" type="text" placeholder="提现地址">
+    <button id="withdrawConfirm">确认提现</button>
+    <button id="withdrawCancel">取消</button>
+  </div>
+</div>
+
+<!-- 邀请弹窗 -->
+<div id="inviteModal" class="dialog-overlay" style="display:none">
+  <div class="dialog-box">
+    <h3>邀请好友</h3>
+    <p style="font-size:12px;color:#999;margin-bottom:8px">您的专属邀请码</p>
+    <div id="inviteCode" style="font-size:20px;font-weight:700;color:#667eea;text-align:center;padding:10px;background:#f5f5ff;border-radius:8px;margin-bottom:8px">加载中...</div>
+    <button onclick="app.copyInviteCode()" style="background:#667eea;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;width:100%;margin-bottom:8px">📋 复制邀请码</button>
+    <div id="inviteStats" style="font-size:13px;color:#666;text-align:center;padding:8px;background:#f9f9f9;border-radius:6px;margin-bottom:8px">加载中...</div>
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <button onclick="app.shareInvite()" style="flex:1;background:#03A66D;color:#fff;border:none;padding:8px;border-radius:6px;font-size:13px;cursor:pointer">📤 分享</button>
+      <button onclick="app.claimInviteRewards()" style="flex:1;background:#DAA520;color:#fff;border:none;padding:8px;border-radius:6px;font-size:13px;cursor:pointer">🎁 领取返佣</button>
+    </div>
+    <button id="inviteClose" style="background:#f0f0f0;color:#666;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;width:100%">关闭</button>
+  </div>
+</div>
+
+<!-- 管理面板弹窗 -->
+<div id="adminModal" class="dialog-overlay" style="display:none">
+  <div class="dialog-box admin-panel">
+    <h3>管理面板</h3>
+    <div class="admin-tabs">
+      <button class="admin-tab active" data-tab="admin-users">用户管理</button>
+      <button class="admin-tab" data-tab="admin-matches">赛事管理</button>
+      <button class="admin-tab" data-tab="admin-settings">系统设置</button>
+    </div>
+    <div class="admin-content" id="adminContent">
+      <!-- JS-populated admin content -->
+    </div>
+    <button id="adminClose">关闭</button>
+  </div>
+</div>
+
 <!-- 头部 -->
 <div class="header">
     <div class="wp">
@@ -151,6 +209,7 @@
             <!-- Page 6: 我的 -->
             <div class="tab_con page" id="page-profile">
                 <div class="profile-page">
+                    <!-- 用户头部 -->
                     <div class="profile-header">
                         <div class="avatar">
                             <img src="img/default-avatar.png" alt="avatar" id="profileAvatar">
@@ -160,6 +219,55 @@
                             <div class="wallet-addr" id="profileWalletAddr"></div>
                         </div>
                     </div>
+
+                    <!-- 余额卡片 -->
+                    <div class="balance-cards">
+                        <div class="balance-card">
+                            <div class="card-label">USDT 钱包余额</div>
+                            <div class="card-value" id="profileUSDTBalance">0.00</div>
+                        </div>
+                        <div class="balance-card">
+                            <div class="card-label">资金池余额</div>
+                            <div class="card-value" id="profilePoolBalance">0.00</div>
+                        </div>
+                    </div>
+
+                    <!-- PnL 面板 -->
+                    <div class="pnl-panel">
+                        <div class="pnl-item">
+                            <span class="pnl-label">总投注</span>
+                            <span class="pnl-value" id="pnlWagered">0</span>
+                        </div>
+                        <div class="pnl-item">
+                            <span class="pnl-label">总赢利</span>
+                            <span class="pnl-value" id="pnlWon">0</span>
+                        </div>
+                        <div class="pnl-item">
+                            <span class="pnl-label">净收益</span>
+                            <span class="pnl-value" id="pnlNet" style="color:#03A66D">0</span>
+                        </div>
+                        <div class="pnl-item">
+                            <span class="pnl-label">ROI</span>
+                            <span class="pnl-value" id="pnlROI">0%</span>
+                        </div>
+                    </div>
+
+                    <!-- 操作按钮 -->
+                    <div class="profile-actions">
+                        <button class="action-btn deposit-btn" onclick="app.showDeposit()">充值</button>
+                        <button class="action-btn withdraw-btn" onclick="app.showWithdraw()">提现</button>
+                        <button class="action-btn invite-btn" onclick="app.showInvite()">邀请好友</button>
+                    </div>
+
+                    <!-- 最近投注 -->
+                    <div class="recent-bets-section">
+                        <div class="section-title">最近投注</div>
+                        <div class="recent-bets-list" id="recentBetsList">
+                            <div class="empty-state">暂无投注记录</div>
+                        </div>
+                    </div>
+
+                    <!-- 菜单 -->
                     <div class="profile-menu">
                         <div class="menu-item" onclick="app.navigateTo('records')">
                             <i class="menu-icon icon-record"></i>
@@ -176,6 +284,51 @@
                             <span>关于我们</span>
                             <i class="arrow"></i>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page 7: 赛事详情 -->
+            <div class="tab_con page" id="page-detail">
+                <div class="detail-page">
+                    <!-- 赛事信息 -->
+                    <div class="match-header">
+                        <div class="match-teams">
+                            <span class="team home-team" id="detailHomeTeam">主队</span>
+                            <span class="vs">VS</span>
+                            <span class="team away-team" id="detailAwayTeam">客队</span>
+                        </div>
+                        <div class="match-meta">
+                            <span class="match-time" id="detailMatchTime">时间</span>
+                            <span class="match-venue" id="detailMatchVenue">地点</span>
+                        </div>
+                    </div>
+
+                    <!-- 18格反波胆投注选择 -->
+                    <div class="bet-grid-section">
+                        <div class="section-title">反波胆投注 - 18格选择</div>
+                        <div class="score-grid" id="scoreGrid">
+                            <!-- JS-populated 18-grid bet options -->
+                        </div>
+                    </div>
+
+                    <!-- 赔率显示 -->
+                    <div class="odds-section">
+                        <div class="odds-row">
+                            <span class="odds-label">当前赔率</span>
+                            <span class="odds-value" id="detailOdds">1.12</span>
+                        </div>
+                    </div>
+
+                    <!-- 快捷投注 -->
+                    <div class="quick-bet-section">
+                        <div class="quick-bet-amounts">
+                            <button class="quick-bet-amt" data-amt="10">10</button>
+                            <button class="quick-bet-amt" data-amt="50">50</button>
+                            <button class="quick-bet-amt" data-amt="100">100</button>
+                            <button class="quick-bet-amt" data-amt="500">500</button>
+                        </div>
+                        <button class="place-bet-btn" id="placeBetBtn">确认投注</button>
                     </div>
                 </div>
             </div>

@@ -140,11 +140,29 @@
       var usdtBal = await dapp.getUSDTBalance();
       userBalance = parseFloat(bal);
       // Update UI if profile page visible
-      var balEl = document.getElementById('profileBalance');
-      if (balEl) balEl.textContent = bal + ' USDT';
-      var usdtEl = document.getElementById('walletUSDT');
-      if (usdtEl) usdtEl.textContent = usdtBal + ' USDT';
+      var balEl = document.getElementById('profilePoolBalance');
+      if (balEl) balEl.textContent = Number(bal).toFixed(2) + ' USDT';
+      var usdtEl = document.getElementById('profileUSDTBalance');
+      if (usdtEl) usdtEl.textContent = Number(usdtBal).toFixed(2) + ' USDT';
     } catch(e) {}
+  }
+
+  // ===== PNl DATA =====
+  let pnlData = { total_wagered: 0, total_won: 0, net_pnl: 0, roi: 0 };
+
+  async function loadPnLData() {
+    if (!walletAddress) return;
+    try {
+      var res = await apiFetch('/user/pnl?address=' + encodeURIComponent(walletAddress));
+      if (res && res.code === 0 && res.data) {
+        pnlData = {
+          total_wagered: parseFloat(res.data.total_wagered) || 0,
+          total_won: parseFloat(res.data.total_won) || 0,
+          net_pnl: parseFloat(res.data.net_pnl) || 0,
+          roi: parseFloat(res.data.roi) || 0
+        };
+      }
+    } catch(e) { pnlData = { total_wagered: 0, total_won: 0, net_pnl: 0, roi: 0 }; }
   }
 
   function disconnectWallet() {
@@ -456,13 +474,382 @@
     renderRecords(filter);
   }
 
-  // ===== PAGE: PROFILE =====
-  function renderProfile() {
-    if (walletAddress) {
-      var short = walletAddress.substring(0, 6) + '...' + walletAddress.substring(walletAddress.length - 4);
-      var addrEl = document.getElementById('profileAddr');
-      if (addrEl) addrEl.textContent = short;
+  // ===== PAGE: PROFILE (User Center) =====
+  async function renderProfile() {
+    // Create profile page if not exists
+    var profilePage = document.getElementById('page-profile');
+    if (!profilePage) {
+      var mainEl = document.querySelector('.main .wp');
+      if (!mainEl) return;
+      profilePage = document.createElement('div');
+      profilePage.id = 'page-profile';
+      profilePage.className = 'tab_con page';
+      mainEl.querySelector('.slick_tab').appendChild(profilePage);
     }
+
+    if (!walletAddress) {
+      profilePage.innerHTML = '<div class="profile-page" style="padding:40px 20px;text-align:center">' +
+        '<div style="font-size:48px;margin-bottom:16px">🔒</div>' +
+        '<p style="font-size:16px;font-weight:600;margin-bottom:8px">请先连接钱包</p>' +
+        '<p style="color:#999;font-size:13px;margin-bottom:20px">连接钱包以查看您的账户信息</p>' +
+        '<button onclick="app.connectWallet()" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;padding:12px 32px;border-radius:24px;font-size:15px;cursor:pointer">连接钱包</button>' +
+        '</div>';
+      return;
+    }
+
+    // Load data
+    await loadPoolBalance();
+    await loadPnLData();
+
+    var shortAddr = walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
+    var pnlClass = pnlData.net_pnl >= 0 ? 'pnl-positive' : 'pnl-negative';
+    var pnlSign = pnlData.net_pnl >= 0 ? '+' : '';
+    var roiClass = pnlData.roi >= 0 ? 'pnl-positive' : 'pnl-negative';
+
+    profilePage.innerHTML =
+      '<div class="profile-page" style="padding:16px">' +
+
+      // ---- User Header ----
+      '<div class="profile-header" style="display:flex;align-items:center;gap:14px;padding:16px;background:#fff;border-radius:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05)">' +
+        '<div class="avatar" style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;flex-shrink:0">' + walletAddress.slice(2,4).toUpperCase() + '</div>' +
+        '<div class="user-info" style="flex:1;min-width:0">' +
+          '<div class="nickname" style="font-size:16px;font-weight:700;color:#1a1a2e">我的钱包</div>' +
+          '<div class="wallet-addr" style="font-size:12px;color:#999;font-family:monospace;overflow:hidden;text-overflow:ellipsis">' + shortAddr + '</div>' +
+        '</div>' +
+        '<button onclick="app.showInviteModal()" style="background:#F0F0FF;color:#667eea;border:none;padding:8px 14px;border-radius:18px;font-size:13px;font-weight:600;cursor:pointer">📨 邀请</button>' +
+      '</div>' +
+
+      // ---- Balance Cards ----
+      '<div style="display:flex;gap:10px;margin-bottom:12px">' +
+        '<div style="flex:1;background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,0.05)">' +
+          '<div style="font-size:11px;color:#999;margin-bottom:6px">💰 钱包余额</div>' +
+          '<div id="profileUSDTBalance" style="font-size:18px;font-weight:700;color:#1a1a2e">0.00 USDT</div>' +
+        '</div>' +
+        '<div style="flex:1;background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,0.05)">' +
+          '<div style="font-size:11px;color:#999;margin-bottom:6px">🏊 平台余额</div>' +
+          '<div id="profilePoolBalance" style="font-size:18px;font-weight:700;color:#1a1a2e">0.00 USDT</div>' +
+        '</div>' +
+      '</div>' +
+
+      // ---- Action Buttons ----
+      '<div style="display:flex;gap:10px;margin-bottom:14px">' +
+        '<button onclick="app.showDepositModal()" style="flex:1;background:linear-gradient(135deg,#03A66D,#02C076);color:#fff;border:none;padding:12px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer">📥 充值</button>' +
+        '<button onclick="app.showWithdrawModal()" style="flex:1;background:#fff;color:#e53935;border:1px solid #e53935;padding:12px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer">📤 提现</button>' +
+      '</div>' +
+
+      // ---- PnL Panel ----
+      '<div style="background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.05);margin-bottom:14px">' +
+        '<div style="font-size:14px;font-weight:700;color:#1a1a2e;margin-bottom:12px">📊 盈亏分析</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">' +
+          '<div>' +
+            '<div style="font-size:11px;color:#999;margin-bottom:4px">总投注额</div>' +
+            '<div style="font-size:15px;font-weight:600">' + pnlData.total_wagered.toFixed(2) + ' USDT</div>' +
+          '</div>' +
+          '<div>' +
+            '<div style="font-size:11px;color:#999;margin-bottom:4px">总赢额</div>' +
+            '<div style="font-size:15px;font-weight:600;color:#03A66D">' + pnlData.total_won.toFixed(2) + ' USDT</div>' +
+          '</div>' +
+          '<div>' +
+            '<div style="font-size:11px;color:#999;margin-bottom:4px">净盈亏</div>' +
+            '<div style="font-size:15px;font-weight:600;color:' + (pnlData.net_pnl >= 0 ? '#03A66D' : '#e53935') + '">' + pnlSign + pnlData.net_pnl.toFixed(2) + ' USDT</div>' +
+          '</div>' +
+          '<div>' +
+            '<div style="font-size:11px;color:#999;margin-bottom:4px">ROI</div>' +
+            '<div style="font-size:15px;font-weight:600;color:' + (pnlData.roi >= 0 ? '#03A66D' : '#e53935') + '">' + (pnlData.roi >= 0 ? '+' : '') + pnlData.roi.toFixed(1) + '%</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+
+      // ---- Recent Bet History ----
+      '<div style="background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.05)">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
+          '<span style="font-size:14px;font-weight:700;color:#1a1a2e">📋 近期投注</span>' +
+          '<a href="javascript:;" onclick="app.navigateTo(\'records\')" style="font-size:12px;color:#667eea;text-decoration:none">查看全部 →</a>' +
+        '</div>' +
+        '<div id="profileRecentBets" style="font-size:13px;color:#999;text-align:center;padding:10px">加载中...</div>' +
+      '</div>' +
+
+      '</div>';
+
+    // Load USDT + pool balances
+    loadPoolBalance();
+
+    // Load recent bets
+    loadRecentBets();
+  }
+
+  async function loadRecentBets() {
+    var container = document.getElementById('profileRecentBets');
+    if (!container) return;
+
+    var records = [];
+
+    // Try from blockchain
+    if (typeof dapp !== 'undefined' && walletAddress) {
+      try {
+        var onChainBets = await dapp.getUserBets();
+        if (onChainBets && onChainBets.length > 0) {
+          records = onChainBets.slice(0, 5).map(function(b) {
+            return {
+              id: b.id,
+              type: '反波胆 #' + b.matchId,
+              team: '格子 ' + b.cell,
+              amount: parseFloat(b.amount),
+              odds: b.odds,
+              status: b.settled ? (b.won ? 'won' : 'lost') : 'pending',
+              time: b.timestamp ? new Date(b.timestamp * 1000).toLocaleString('zh-CN') : ''
+            };
+          });
+        }
+      } catch(e) {}
+    }
+
+    // Fallback: try API
+    if (records.length === 0 && apiAvailable && walletAddress) {
+      try {
+        var res = await apiFetch('/bets?address=' + encodeURIComponent(walletAddress) + '&limit=5');
+        if (res && res.code === 0 && res.data) {
+          records = res.data.map(function(r) {
+            return {
+              id: r.id,
+              type: r.bet_type_name || '投注',
+              team: r.team_name || r.team || '',
+              amount: parseFloat(r.amount) || 0,
+              odds: parseFloat(r.odds) || 0,
+              status: r.status || 'pending',
+              time: r.created_at ? new Date(r.created_at).toLocaleString('zh-CN') : (r.time || '')
+            };
+          });
+        }
+      } catch(e) {}
+    }
+
+    if (records.length === 0) {
+      container.innerHTML = '<div style="text-align:center;color:#ccc;padding:16px">暂无投注记录</div>';
+      return;
+    }
+
+    container.innerHTML = records.map(function(r) {
+      var cls = r.status === 'won' ? 'won' : r.status === 'lost' ? 'lost' : 'pending';
+      var txt = r.status === 'won' ? '✅ 已赢' : r.status === 'lost' ? '❌ 已输' : '⏳ 进行中';
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f0f0f0">' +
+        '<div style="flex:1;min-width:0">' +
+          '<div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (r.type || '') + '</div>' +
+          '<div style="font-size:11px;color:#999">' + (r.time || '') + '</div>' +
+        '</div>' +
+        '<div style="text-align:right;margin-left:12px;flex-shrink:0">' +
+          '<div style="font-size:13px;font-weight:600">' + (r.amount || 0).toFixed(2) + ' USDT</div>' +
+          '<div style="font-size:11px;font-weight:600;color:' + (r.status === 'won' ? '#03A66D' : r.status === 'lost' ? '#e53935' : '#DAA520') + '">' + txt + '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  // ===== DEPOSIT / WITHDRAW HANDLERS =====
+  function showDepositModal() {
+    if (!walletAddress) { showToast('请先连接钱包'); return; }
+    if (typeof dapp !== 'undefined') {
+      dapp.showDepositModal();
+    } else {
+      var modal = document.getElementById('depositModal');
+      if (modal) modal.style.display = 'flex';
+    }
+  }
+
+  function hideDepositModal() {
+    if (typeof dapp !== 'undefined') {
+      dapp.hideDepositModal();
+    } else {
+      var modal = document.getElementById('depositModal');
+      if (modal) modal.style.display = 'none';
+    }
+  }
+
+  async function confirmDeposit() {
+    var amountInput = document.getElementById('depositAmount');
+    var amount = parseFloat(amountInput ? amountInput.value : 0);
+    if (!amount || isNaN(amount) || amount < 1) {
+      showToast('请输入有效充值金额（最低1 USDT）');
+      return;
+    }
+
+    if (typeof dapp === 'undefined') { showToast('Web3模块未加载'); return; }
+
+    try {
+      await dapp.executeDeposit(amount);
+    } catch(e) {
+      showToast('❌ ' + (e.reason || e.message || '充值失败'));
+    }
+  }
+
+  function showWithdrawModal() {
+    if (!walletAddress) { showToast('请先连接钱包'); return; }
+    if (typeof dapp !== 'undefined') {
+      dapp.showWithdrawModal();
+    } else {
+      var modal = document.getElementById('withdrawModal');
+      if (modal) modal.style.display = 'flex';
+    }
+  }
+
+  async function confirmWithdraw() {
+    var amountInput = document.getElementById('withdrawAmount');
+    var amount = parseFloat(amountInput ? amountInput.value : 0);
+    if (!amount || isNaN(amount) || amount < 1) {
+      showToast('请输入有效提现金额');
+      return;
+    }
+
+    if (typeof dapp === 'undefined') { showToast('Web3模块未加载'); return; }
+
+    try {
+      await dapp.executeWithdraw(amount);
+    } catch(e) {
+      showToast('❌ ' + (e.reason || e.message || '提现失败'));
+    }
+  }
+
+  // ===== INVITE SYSTEM =====
+  let inviteCode = '';
+  let inviteData = { count: 0, rewards: 0 };
+
+  async function loadInviteData() {
+    if (!walletAddress) return;
+    try {
+      var res = await apiFetch('/invite/generate-code?address=' + encodeURIComponent(walletAddress));
+      if (res && res.code === 0 && res.data) {
+        inviteCode = res.data.invite_code || res.data.code || '';
+        inviteData.count = parseInt(res.data.invite_count || res.data.count || 0);
+        inviteData.rewards = parseFloat(res.data.total_rewards || res.data.rewards || 0);
+      }
+      // If no code yet, generate one
+      if (!inviteCode) {
+        var genRes = await apiFetch('/invite/generate-code', {
+          method: 'POST',
+          body: JSON.stringify({ address: walletAddress })
+        });
+        if (genRes && genRes.code === 0 && genRes.data) {
+          inviteCode = genRes.data.invite_code || genRes.data.code || '';
+        }
+      }
+    } catch(e) {}
+  }
+
+  function showInviteModal() {
+    if (!walletAddress) { showToast('请先连接钱包'); return; }
+
+    var modal = document.getElementById('inviteModal');
+    if (!modal) return;
+
+    // Show loading state
+    var codeEl = document.getElementById('inviteCode');
+    var statsEl = document.getElementById('inviteStats');
+    if (codeEl) codeEl.textContent = '加载中...';
+    if (statsEl) statsEl.textContent = '';
+
+    modal.style.display = 'flex';
+
+    // Load invite data
+    loadInviteData().then(function() {
+      if (codeEl) codeEl.textContent = inviteCode || '生成失败，请重试';
+      if (statsEl) statsEl.textContent = '已邀请: ' + inviteData.count + '人 | 返佣: ' + inviteData.rewards.toFixed(2) + ' USDT';
+    });
+  }
+
+  function hideInviteModal() {
+    var modal = document.getElementById('inviteModal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  function copyInviteCode() {
+    if (!inviteCode) { showToast('邀请码未生成'); return; }
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(inviteCode).then(function() {
+          showToast('✅ 邀请码已复制: ' + inviteCode);
+        }).catch(function() {
+          fallbackCopy(inviteCode);
+        });
+      } else {
+        fallbackCopy(inviteCode);
+      }
+    } catch(e) {
+      fallbackCopy(inviteCode);
+    }
+  }
+
+  function fallbackCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); showToast('✅ 邀请码已复制: ' + text); } catch(e) { showToast('复制失败，请手动复制'); }
+    document.body.removeChild(ta);
+  }
+
+  async function claimInviteRewards() {
+    if (!walletAddress) { showToast('请先连接钱包'); return; }
+    try {
+      var res = await apiFetch('/invite/claim', {
+        method: 'POST',
+        body: JSON.stringify({ address: walletAddress })
+      });
+      if (res && res.code === 0) {
+        showToast('✅ 返佣奖励已领取');
+        loadInviteData();
+      } else {
+        showToast(res && res.message ? res.message : '领取失败');
+      }
+    } catch(e) { showToast('领取失败，请重试'); }
+  }
+
+  function shareInvite() {
+    if (!inviteCode) { showToast('邀请码未生成'); return; }
+    var shareText = '🎯 快来加入19888反波胆竞猜平台！使用我的邀请码注册: ' + inviteCode;
+    if (navigator.share) {
+      navigator.share({ title: '19888邀请', text: shareText }).catch(function() {});
+    } else {
+      copyInviteCode();
+      showToast('邀请码已复制，请分享给好友');
+    }
+  }
+
+  // ===== DAPP EVENT LISTENERS =====
+  function setupDappListeners() {
+    // Listen for tx status updates from dapp
+    window.addEventListener('dapp:txStatus', function(e) {
+      var d = e.detail;
+      if (!d) return;
+      if (d.status === 'approving' || d.status === 'depositing' || d.status === 'withdrawing') {
+        showToast(d.message, 5000);
+      } else if (d.status === 'success') {
+        hideDepositModal();
+        showToast('✅ ' + d.message + (d.txHash ? ' Tx: ' + d.txHash.slice(0, 10) + '...' : ''), 4000);
+        renderProfile();
+      } else if (d.status === 'error') {
+        showToast('❌ ' + d.message, 3000);
+      }
+    });
+
+    // Listen for balance updates
+    window.addEventListener('dapp:balancesUpdated', function(e) {
+      var d = e.detail;
+      if (!d) return;
+      var usdtEl = document.getElementById('profileUSDTBalance');
+      if (usdtEl) usdtEl.textContent = Number(d.usdt || 0).toFixed(2) + ' USDT';
+      var poolEl = document.getElementById('profilePoolBalance');
+      if (poolEl) poolEl.textContent = Number(d.pool || 0).toFixed(2) + ' USDT';
+    });
+
+    // Listen for account changes
+    window.addEventListener('dapp:accountChanged', function(e) {
+      if (!e.detail || !e.detail.address) {
+        walletAddress = null;
+        if (currentPage === 'profile') renderProfile();
+      }
+    });
   }
 
   // ===== PAGE: AI =====
@@ -704,6 +1091,18 @@
     renderMatchCards: renderMatchCards,
     renderChampionBet: renderChampionBet,
     openBetDialog: showBetDialog,
+    // Deposit / Withdraw
+    showDepositModal: showDepositModal,
+    hideDepositModal: hideDepositModal,
+    confirmDeposit: confirmDeposit,
+    showWithdrawModal: showWithdrawModal,
+    confirmWithdraw: confirmWithdraw,
+    // Invite
+    showInviteModal: showInviteModal,
+    hideInviteModal: hideInviteModal,
+    copyInviteCode: copyInviteCode,
+    claimInviteRewards: claimInviteRewards,
+    shareInvite: shareInvite,
   };
 
   // ===== INIT =====
@@ -712,10 +1111,33 @@
     setupTouchFeedback();
     setupBanner();
     startWorldCupCountdown();
+    setupDappListeners();
 
     // Wallet button listener
     var walletBtn = document.getElementById('walletBtn');
     if (walletBtn) walletBtn.addEventListener('click', handleWalletBtnClick);
+
+    // Deposit modal confirm
+    var depositConfirm = document.getElementById('depositConfirm');
+    if (depositConfirm) depositConfirm.addEventListener('click', function(e) { e.preventDefault(); confirmDeposit(); });
+
+    // Deposit modal cancel — handled by web3.js DOMContentLoaded
+
+    // Withdraw modal confirm
+    var withdrawConfirm = document.getElementById('withdrawConfirm');
+    if (withdrawConfirm) withdrawConfirm.addEventListener('click', function(e) { e.preventDefault(); confirmWithdraw(); });
+
+    // Invite modal close
+    var inviteClose = document.getElementById('inviteClose');
+    if (inviteClose) inviteClose.addEventListener('click', function(e) { e.preventDefault(); hideInviteModal(); });
+
+    // Invite modal: close on overlay click
+    var inviteModal = document.getElementById('inviteModal');
+    if (inviteModal) {
+      inviteModal.addEventListener('click', function(e) {
+        if (e.target === inviteModal) hideInviteModal();
+      });
+    }
 
     // Language modal
     var langBtn = document.getElementById('globalLangSwitchBtn');
