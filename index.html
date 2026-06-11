@@ -7,622 +7,231 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no" />
     <meta name="format-detection" content="telephone=no" />
     <title>19888|首页</title>
-    <meta name="description" content="19888 - 专业的反波胆竞猜平台" />
-    <meta name="keywords" content="反波胆竞猜,体育投注,足球竞猜,19888" />
+    <meta name="description" content="19888 - 专业的反波胆竞猜平台，提供实时赛事投注、AI智能分析、安全便捷的钱包连接服务。立即加入开始您的体育竞猜之旅！" />
+    <meta name="keywords" content="反波胆竞猜,体育投注,足球竞猜,19888,在线投注" />
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="css/lucky944.css" />
+    <link rel="stylesheet" href="css/style.css" />
+    <script src="js/vendor/ethers-6.13.umd.min.js"></script>
 </head>
 <body class="index">
 
-    <!-- HEADER -->
-    <div class="header">
-        <div class="global-lang-switch-btn" id="globalLangSwitchBtn">
-            <span style="font-size:18px;line-height:22px;">🌐</span>
+<!-- 语言切换弹窗 -->
+<div class="global-lang-modal" id="globalLangModal">
+    <div class="global-lang-modal-mask" id="globalLangModalMask"></div>
+    <div class="global-lang-modal-content">
+        <div class="global-lang-modal-header">Language</div>
+        <div class="global-lang-modal-body">
+            <div class="global-lang-option" data-lang="en">English</div>
+            <div class="global-lang-option" data-lang="vn">Tiếng Việt</div>
+            <div class="global-lang-option" data-lang="kr">한국어</div>
+            <div class="global-lang-option" data-lang="jp">日本語</div>
+            <div class="global-lang-option" data-lang="cntw">繁体中文</div>
+            <div class="global-lang-option" data-lang="cn">简体中文</div>
         </div>
-        <div class="menuBtn"></div>
-        <div class="back"></div>
+    </div>
+</div>
+
+<!-- 自定义确认对话框 -->
+<div class="custom-confirm-overlay" id="confirmOverlay"></div>
+<div class="custom-confirm" id="confirmDialog">
+    <div class="custom-confirm-title" id="confirmTitle">确认操作</div>
+    <div class="custom-confirm-content" id="confirmContent"></div>
+    <div class="custom-confirm-buttons">
+        <button class="custom-confirm-btn confirm-cancel-btn" id="confirmCancelBtn">取消</button>
+        <button class="custom-confirm-btn confirm-ok-btn" id="confirmOkBtn">确定</button>
+    </div>
+</div>
+
+<!-- 头部 -->
+<div class="header">
+    <div class="wp">
+        <span class="global-lang-switch-btn"><img src="img/lang.png" alt="Language"></span>
         <div class="logo">
-            <span style="display:inline-block;vertical-align:middle;height:30px;line-height:30px;font-size:16px;font-weight:bold;color:#e53935;">19888</span>
+            <img src="img/logo.png" alt="19888">
         </div>
-        <div class="tit">19888</div>
+        <h3 class="tit"></h3>
         <div class="wallet-connect" id="walletBtn">
-            <span class="wallet-icon"></span>
+            <i class="wallet-icon"></i>
             <span class="wallet-address" id="walletAddress"></span>
         </div>
     </div>
+</div>
+<!-- 头部 -->
 
-    <!-- MAIN CONTENT -->
-    <div class="main">
-        <div class="wp">
+<!-- 内容 -->
+<div class="main">
+    <!-- 轮播 -->
+    <div class="banner">
+        <a href="javascript:;" class="item" style="background-image: url(img/banner.png)"></a>
+    </div>
+    <div class="wp">
+        <div class="m-notice">
+            <i class="icon"></i>
+            <div class="notice">
+                <span id="worldCupCountdown">距离世界杯开幕还有...</span>
+            </div>
+        </div>
 
-            <!-- Banner Carousel -->
-            <div class="banner slick-banner">
-                <a class="item" style="background:linear-gradient(135deg,#8b2626,#a63232);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;font-weight:bold;text-decoration:none;">2026世界杯</a>
-                <a class="item" style="background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;font-weight:bold;text-decoration:none;">AI智能托管</a>
-                <a class="item" style="background:linear-gradient(135deg,#10b981,#059669);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;font-weight:bold;text-decoration:none;">冠亚预测</a>
+        <div class="tab-header-wrapper">
+            <ul class="ul-tabs_b1 slick_tab_btn">
+                <li class="on"><a href="javascript:;">推荐赛事</a></li>
+                <li><a href="javascript:;">冠亚预测</a></li>
+                <li><a href="javascript:;">关于我们</a></li>
+            </ul>
+            <a href="javascript:;" class="more-link" onclick="app.navigateTo('matches')">更多</a>
+        </div>
+
+        <div class="slick_tab">
+            <!-- Page 1: 推荐赛事 (Home) -->
+            <div class="tab_con page active" id="page-home">
+                <ul class="ul-info" id="matchList">
+                    <!-- JS-populated match cards -->
+                </ul>
             </div>
 
-            <!-- Notice Bar -->
-            <div class="m-notice">
-                <i class="icon"></i>
-                <div class="notice">
-                    <marquee scrollamount="3" onmouseover="this.stop()" onmouseout="this.start()">
-                        2026世界杯即将开幕！冠亚预测火热进行中 | AI智能托管月化收益15% | 新用户首充100%奖励
-                    </marquee>
-                </div>
-            </div>
-
-            <!-- Tab Header -->
-            <div class="tab-header-wrapper">
-                <div class="slick_tab_btn">
-                    <ul class="ul-tabs_b1">
-                        <li class="on"><a href="javascript:;">推荐赛事</a></li>
-                        <li><a href="javascript:;">冠亚预测</a></li>
-                    </ul>
-                </div>
-                <a href="/index/saishi/index.html" class="more-link">更多</a>
-            </div>
-
-            <!-- Slick Tab Content -->
-            <div class="slick_tab">
-                <!-- Tab 1: 推荐赛事 -->
-                <div class="tab_con">
-                    <ul class="ul-info" id="matchList">
-                        <!-- Match Card 1 -->
-                        <li>
-                            <div class="con">
-                                <div class="league-name">
-                                    <p class="p1">英超 第38轮</p>
-                                </div>
-                                <div class="match-content">
-                                    <div class="team-left">
-                                        <div class="team-logo"><img src="img/teams/曼城.png" alt="曼城" onerror="this.style.display='none'"></div>
-                                        <span class="team-name">曼城</span>
-                                    </div>
-                                    <div class="match-time">
-                                        <div class="time">22:00</div>
-                                        <div class="date">06/15</div>
-                                    </div>
-                                    <div class="team-right">
-                                        <div class="team-logo"><img src="img/teams/利物浦.png" alt="利物浦" onerror="this.style.display='none'"></div>
-                                        <span class="team-name">利物浦</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </li>
-                        <!-- Match Card 2 -->
-                        <li>
-                            <div class="con">
-                                <div class="league-name">
-                                    <p class="p1">西甲 第38轮</p>
-                                </div>
-                                <div class="match-content">
-                                    <div class="team-left">
-                                        <div class="team-logo"><img src="img/teams/皇马.png" alt="皇马" onerror="this.style.display='none'"></div>
-                                        <span class="team-name">皇马</span>
-                                    </div>
-                                    <div class="match-time">
-                                        <div class="time">03:00</div>
-                                        <div class="date">06/16</div>
-                                    </div>
-                                    <div class="team-right">
-                                        <div class="team-logo"><img src="img/teams/巴萨.png" alt="巴萨" onerror="this.style.display='none'"></div>
-                                        <span class="team-name">巴萨</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </li>
-                        <!-- Match Card 3 -->
-                        <li>
-                            <div class="con">
-                                <div class="league-name">
-                                    <p class="p1">法甲 第38轮</p>
-                                </div>
-                                <div class="match-content">
-                                    <div class="team-left">
-                                        <div class="team-logo"><img src="img/teams/巴黎圣日耳曼.png" alt="巴黎" onerror="this.style.display='none'"></div>
-                                        <span class="team-name">巴黎圣日耳曼</span>
-                                    </div>
-                                    <div class="match-time">
-                                        <div class="time">21:00</div>
-                                        <div class="date">06/14</div>
-                                    </div>
-                                    <div class="team-right">
-                                        <div class="team-logo"><img src="img/teams/马赛.png" alt="马赛" onerror="this.style.display='none'"></div>
-                                        <span class="team-name">马赛</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </li>
-                        <!-- Match Card 4 -->
-                        <li>
-                            <div class="con">
-                                <div class="league-name">
-                                    <p class="p1">国际友谊赛</p>
-                                </div>
-                                <div class="match-content">
-                                    <div class="team-left">
-                                        <div class="team-logo"><img src="img/teams/巴西.png" alt="巴西" onerror="this.style.display='none'"></div>
-                                        <span class="team-name">巴西</span>
-                                    </div>
-                                    <div class="match-time">
-                                        <div class="time">08:00</div>
-                                        <div class="date">06/17</div>
-                                    </div>
-                                    <div class="team-right">
-                                        <div class="team-logo"><img src="img/teams/阿根廷.png" alt="阿根廷" onerror="this.style.display='none'"></div>
-                                        <span class="team-name">阿根廷</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </li>
-                    </ul>
-                </div>
-
-                <!-- Tab 2: 冠亚预测 -->
-                <div class="tab_con">
-                    <div class="champion-bet-section">
+            <!-- Page 2: 冠亚预测 -->
+            <div class="tab_con page" id="page-champion">
+                <div class="champion-bet-section">
+                    <div class="bet-panel">
                         <div class="panel-header">
-                            <h3>2026 世界杯冠军预测</h3>
-                            <div class="user-stats">
-                                <span>总投注: <em id="totalBetAmount">0.00</em> USDT</span>
-                                <span>潜在收益: <em id="totalPotentialWin">0.00</em> USDT</span>
+                            <h3 style="margin: 0;">冠亚预测投注</h3>
+                            <div class="user-stats" style="font-size: 12px;">
+                                <span>总投注额: <em id="totalBetAmount">0</em></span>
+                                <span>潜在收益: <em id="totalPotentialWin">0</em></span>
                             </div>
                         </div>
                         <div class="teams-grid" id="teamsGrid">
-                            <div class="team-card">
-                                <div class="team-logo"><img src="img/teams/巴西.png" alt="巴西" onerror="this.style.display='none'"></div>
-                                <div class="team-name">巴西</div>
-                                <div class="odds-group">
-                                    <div class="odds-item"><span class="odds-label">冠军</span><span class="odds-value">5.50</span></div>
-                                    <div class="odds-item"><span class="odds-label">亚军</span><span class="odds-value">4.00</span></div>
-                                </div>
-                                <div class="bet-buttons">
-                                    <button class="bet-btn bet-champion">投冠军</button>
-                                    <button class="bet-btn bet-runner-up">投亚军</button>
-                                </div>
-                            </div>
-                            <div class="team-card">
-                                <div class="team-logo"><img src="img/teams/法国.png" alt="法国" onerror="this.style.display='none'"></div>
-                                <div class="team-name">法国</div>
-                                <div class="odds-group">
-                                    <div class="odds-item"><span class="odds-label">冠军</span><span class="odds-value">6.00</span></div>
-                                    <div class="odds-item"><span class="odds-label">亚军</span><span class="odds-value">4.50</span></div>
-                                </div>
-                                <div class="bet-buttons">
-                                    <button class="bet-btn bet-champion">投冠军</button>
-                                    <button class="bet-btn bet-runner-up">投亚军</button>
-                                </div>
-                            </div>
-                            <div class="team-card">
-                                <div class="team-logo"><img src="img/teams/阿根廷.png" alt="阿根廷" onerror="this.style.display='none'"></div>
-                                <div class="team-name">阿根廷</div>
-                                <div class="odds-group">
-                                    <div class="odds-item"><span class="odds-label">冠军</span><span class="odds-value">7.00</span></div>
-                                    <div class="odds-item"><span class="odds-label">亚军</span><span class="odds-value">5.00</span></div>
-                                </div>
-                                <div class="bet-buttons">
-                                    <button class="bet-btn bet-champion">投冠军</button>
-                                    <button class="bet-btn bet-runner-up">投亚军</button>
-                                </div>
-                            </div>
-                            <div class="team-card">
-                                <div class="team-logo"><img src="img/teams/英格兰.png" alt="英格兰" onerror="this.style.display='none'"></div>
-                                <div class="team-name">英格兰</div>
-                                <div class="odds-group">
-                                    <div class="odds-item"><span class="odds-label">冠军</span><span class="odds-value">8.00</span></div>
-                                    <div class="odds-item"><span class="odds-label">亚军</span><span class="odds-value">5.50</span></div>
-                                </div>
-                                <div class="bet-buttons">
-                                    <button class="bet-btn bet-champion">投冠军</button>
-                                    <button class="bet-btn bet-runner-up">投亚军</button>
-                                </div>
-                            </div>
-                            <div class="team-card">
-                                <div class="team-logo"><img src="img/teams/西班牙.png" alt="西班牙" onerror="this.style.display='none'"></div>
-                                <div class="team-name">西班牙</div>
-                                <div class="odds-group">
-                                    <div class="odds-item"><span class="odds-label">冠军</span><span class="odds-value">9.00</span></div>
-                                    <div class="odds-item"><span class="odds-label">亚军</span><span class="odds-value">6.00</span></div>
-                                </div>
-                                <div class="bet-buttons">
-                                    <button class="bet-btn bet-champion">投冠军</button>
-                                    <button class="bet-btn bet-runner-up">投亚军</button>
-                                </div>
-                            </div>
-                            <div class="team-card">
-                                <div class="team-logo"><img src="img/teams/德国.png" alt="德国" onerror="this.style.display='none'"></div>
-                                <div class="team-name">德国</div>
-                                <div class="odds-group">
-                                    <div class="odds-item"><span class="odds-label">冠军</span><span class="odds-value">10.00</span></div>
-                                    <div class="odds-item"><span class="odds-label">亚军</span><span class="odds-value">7.00</span></div>
-                                </div>
-                                <div class="bet-buttons">
-                                    <button class="bet-btn bet-champion">投冠军</button>
-                                    <button class="bet-btn bet-runner-up">投亚军</button>
-                                </div>
-                            </div>
+                            <!-- JS-populated team cards -->
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Platform Intro -->
-            <div class="platform-intro">
-                <div class="section-title">平台介绍</div>
-                <div class="intro-content">
-                    <p>19888 是一家专业的反波胆竞猜平台，致力于为用户提供安全、公平、透明的体育竞猜体验。</p>
-                    <p>平台基于 5000 万场历史数据进行 AI 深度学习训练，反波胆玩法理论胜率高达 88.89%。</p>
-                    <p>平台持有 Anjouan 合法牌照运营，用户资金链上合约托管，定期第三方审计。</p>
-                </div>
-            </div>
-
-            <!-- Official Partners -->
-            <div class="official-partners">
-                <div class="section-title">官方合作伙伴</div>
-                <div class="partners-grid">
-                    <img src="img/partners/dga.png" alt="DGA" loading="lazy">
-                    <img src="img/partners/fga.png" alt="FGA" loading="lazy">
-                    <img src="img/partners/iga.png" alt="IGA" loading="lazy">
-                    <img src="img/partners/xga.png" alt="XGA" loading="lazy">
-                    <img src="img/partners/yga.png" alt="YGA" loading="lazy">
-                    <img src="img/partners/wc26.png" alt="WC26" loading="lazy">
-                </div>
-            </div>
-
-        </div>
-    </div>
-
-    <!-- FOOTER TABBAR -->
-    <div class="footer">
-        <ul class="ul-tabbar">
-            <li class="on"><a href="/"><i class="i1"></i><span class="txt">首页</span></a></li>
-            <li><a href="/index/ai/index.html"><i class="i2"></i><span class="txt">AI预测</span></a></li>
-            <li><a href="/index/saishi/index.html"><i class="i3"></i><span class="txt">赛事</span></a></li>
-            <li><a href="/index/record/index.html"><i class="i4"></i><span class="txt">记录</span></a></li>
-            <li><a href="/index/user/index.html"><i class="i5"></i><span class="txt">我的</span></a></li>
-        </ul>
-    </div>
-
-    <!-- CUSTOM TOAST -->
-    <div class="custom-toast" id="customToast"></div>
-
-    <!-- CUSTOM CONFIRM DIALOG -->
-    <div class="custom-confirm-overlay" id="customConfirmOverlay"></div>
-    <div class="custom-confirm" id="customConfirm">
-        <div class="custom-confirm-title" id="confirmTitle"></div>
-        <div class="custom-confirm-content" id="confirmContent"></div>
-        <div class="custom-confirm-buttons">
-            <button class="custom-confirm-btn confirm-cancel-btn" id="confirmCancelBtn">取消</button>
-            <button class="custom-confirm-btn confirm-ok-btn" id="confirmOkBtn">确认</button>
-        </div>
-    </div>
-
-    <!-- LANGUAGE MODAL -->
-    <div class="global-lang-modal" id="globalLangModal">
-        <div class="global-lang-modal-mask" id="globalLangModalMask"></div>
-        <div class="global-lang-modal-content">
-            <div class="global-lang-modal-header">选择语言 / Language</div>
-            <div class="global-lang-modal-body">
-                <div class="global-lang-option selected" data-lang="cn">简体中文</div>
-                <div class="global-lang-option" data-lang="cntw">繁體中文</div>
-                <div class="global-lang-option" data-lang="en">English</div>
-                <div class="global-lang-option" data-lang="jp">日本語</div>
-                <div class="global-lang-option" data-lang="kr">한국어</div>
-                <div class="global-lang-option" data-lang="vn">Tieng Viet</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- BET AMOUNT DIALOG -->
-    <div class="bet-amount-dialog" id="betAmountDialog">
-        <div class="dialog-overlay"></div>
-        <div class="dialog-box">
-            <div class="dialog-title">投注</div>
-            <div class="dialog-content">
-                <div class="team-display">
-                    <img id="betDialogTeamLogo" src="" alt="" onerror="this.style.display='none'">
-                    <div style="font-size:12px;margin-top:5px;">
-                        <div id="betDialogTeamName"></div>
-                        <div style="color:#fa2933;font-weight:bold;" id="betDialogTypeName"></div>
+            <!-- Page 3: 关于我们 -->
+            <div class="tab_con page" id="page-about">
+                <div class="platform-intro">
+                    <div class="section-title">平台介绍</div>
+                    <div class="intro-content">
+                        <p>19888 是一家专业的反波胆竞猜平台，致力于为用户提供安全、公平、透明的体育竞猜体验。平台由 Winsupreme Technology Limitada 拥有并营运，依据哥斯大黎加法律设立，为有限责任公司。</p>
+                        <p>平台基于 5000 万场历史数据进行 AI 深度学习训练，反波胆玩法理论胜率高达 88.89%。平台持有 Anjouan 合法牌照运营，用户资金链上合约托管，定期第三方审计。</p>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>投注金额 (USDT)</label>
-                    <input type="number" id="betAmountInput" placeholder="请输入投注金额" min="1" step="0.01">
-                    <div class="quick-amounts">
-                        <button class="quick-amount" data-amount="100">100</button>
-                        <button class="quick-amount" data-amount="500">500</button>
-                        <button class="quick-amount" data-amount="1000">1000</button>
+            </div>
+
+            <!-- Page 4: 赛事列表 -->
+            <div class="tab_con page" id="page-matches">
+                <div class="match-list-page">
+                    <ul class="ul-info" id="fullMatchList">
+                        <!-- JS-populated full match list -->
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Page 5: 投注记录 -->
+            <div class="tab_con page" id="page-records">
+                <div class="records-page">
+                    <div class="section-header">
+                        <h4>我的投注</h4>
+                        <div class="filter-tabs">
+                            <button class="filter-btn active" data-filter="all">全部</button>
+                            <button class="filter-btn" data-filter="pending">进行中</button>
+                            <button class="filter-btn" data-filter="won">已赢</button>
+                            <button class="filter-btn" data-filter="lost">已输</button>
+                        </div>
+                    </div>
+                    <div class="bets-list" id="betsList">
+                        <!-- JS-populated bet records -->
                     </div>
                 </div>
-                <div class="odds-display">
-                    <span>赔率: <em id="betDialogOdds">--</em></span>
-                    <span>潜在收益: <em id="betDialogProfit">0</em> USDT</span>
+            </div>
+
+            <!-- Page 6: 我的 -->
+            <div class="tab_con page" id="page-profile">
+                <div class="profile-page">
+                    <div class="profile-header">
+                        <div class="avatar">
+                            <img src="img/default-avatar.png" alt="avatar" id="profileAvatar">
+                        </div>
+                        <div class="user-info">
+                            <div class="nickname" id="profileNickname">未连接钱包</div>
+                            <div class="wallet-addr" id="profileWalletAddr"></div>
+                        </div>
+                    </div>
+                    <div class="profile-menu">
+                        <div class="menu-item" onclick="app.navigateTo('records')">
+                            <i class="menu-icon icon-record"></i>
+                            <span>投注记录</span>
+                            <i class="arrow"></i>
+                        </div>
+                        <div class="menu-item" onclick="app.showLanguageModal()">
+                            <i class="menu-icon icon-lang"></i>
+                            <span>语言设置</span>
+                            <i class="arrow"></i>
+                        </div>
+                        <div class="menu-item" onclick="app.navigateTo('about')">
+                            <i class="menu-icon icon-about"></i>
+                            <span>关于我们</span>
+                            <i class="arrow"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="dialog-footer">
-                <button class="btn-cancel" id="betDialogCancel">取消</button>
-                <button class="btn-confirm" id="betDialogConfirm">确认投注</button>
-            </div>
+        </div>
+
+        <!-- 官方合作伙伴 -->
+        <div class="partners-grid-dark">
+            <div class="partner-item"><img src="img/partners/dga.png" alt="DGA"></div>
+            <div class="partner-item"><img src="img/partners/fga.png" alt="FGA"></div>
+            <div class="partner-item"><img src="img/partners/iga.png" alt="IGA"></div>
+            <div class="partner-item"><img src="img/partners/xga.png" alt="XGA"></div>
+            <div class="partner-item"><img src="img/partners/yga.png" alt="YGA"></div>
         </div>
     </div>
+</div>
+<!-- 内容 -->
 
-    <!-- SCRIPTS -->
-    <script>
-    (function() {
-        // Simple DOM ready
-        function ready(fn) {
-            if (document.readyState !== "loading") fn();
-            else document.addEventListener("DOMContentLoaded", fn);
-        }
-        ready(function() {
+<!-- 底部导航栏 -->
+<div class="footer">
+    <ul class="ul-tabbar">
+        <li class="on">
+            <a href="javascript:;" onclick="app.navigateTo('home')">
+                <i class="icon_home"></i>
+                <p>首页</p>
+            </a>
+        </li>
+        <li>
+            <a href="javascript:;" onclick="app.navigateTo('ai')">
+                <i class="icon_ai"></i>
+                <p>AI预测</p>
+            </a>
+        </li>
+        <li>
+            <a href="javascript:;" onclick="app.navigateTo('matches')">
+                <i class="icon_match"></i>
+                <p>赛事</p>
+            </a>
+        </li>
+        <li>
+            <a href="javascript:;" onclick="app.navigateTo('records')">
+                <i class="icon_record"></i>
+                <p>投注记录</p>
+            </a>
+        </li>
+        <li>
+            <a href="javascript:;" onclick="app.navigateTo('profile')">
+                <i class="icon_user"></i>
+                <p>我的</p>
+            </a>
+        </li>
+    </ul>
+</div>
+<!-- 底部 -->
 
-            // ============ Banner ============
-            var bannerItems = document.querySelectorAll(".slick-banner .item");
-            var bannerDotsContainer = document.createElement("div");
-            bannerDotsContainer.className = "slick-dots";
-            var currentSlide = 0;
-            var bannerTimer = null;
+<!-- 自定义Toast -->
+<div class="custom-toast" id="customToast"></div>
 
-            bannerItems.forEach(function(item, i) {
-                if (i > 0) item.style.display = "none";
-                var dot = document.createElement("li");
-                if (i === 0) dot.className = "slick-active";
-                var btn = document.createElement("button");
-                btn.textContent = (i + 1);
-                dot.appendChild(btn);
-                dot.addEventListener("click", function() { goToSlide(i); });
-                bannerDotsContainer.appendChild(dot);
-            });
-
-            var banner = document.querySelector(".slick-banner");
-            if (banner) {
-                banner.style.position = "relative";
-                banner.appendChild(bannerDotsContainer);
-            }
-
-            function goToSlide(idx) {
-                bannerItems.forEach(function(item, i) {
-                    item.style.display = (i === idx) ? "flex" : "none";
-                });
-                var dots = bannerDotsContainer.querySelectorAll("li");
-                dots.forEach(function(d, i) {
-                    d.className = (i === idx) ? "slick-active" : "";
-                });
-                currentSlide = idx;
-                resetBannerTimer();
-            }
-
-            function nextSlide() {
-                var next = (currentSlide + 1) % bannerItems.length;
-                goToSlide(next);
-            }
-
-            function resetBannerTimer() {
-                if (bannerTimer) clearInterval(bannerTimer);
-                bannerTimer = setInterval(nextSlide, 4000);
-            }
-            resetBannerTimer();
-
-            // ============ Tab Switching ============
-            var tabBtns = document.querySelectorAll(".slick_tab_btn .ul-tabs_b1 li");
-            var tabCons = document.querySelectorAll(".slick_tab .tab_con");
-            var moreLink = document.querySelector(".more-link");
-
-            tabCons.forEach(function(tc, i) {
-                if (i > 0) tc.style.display = "none";
-            });
-
-            tabBtns.forEach(function(btn, idx) {
-                btn.addEventListener("click", function(e) {
-                    e.preventDefault();
-                    tabBtns.forEach(function(b) { b.classList.remove("on"); });
-                    btn.classList.add("on");
-                    tabCons.forEach(function(tc, i) {
-                        tc.style.display = (i === idx) ? "" : "none";
-                    });
-                    if (moreLink) {
-                        moreLink.href = idx === 0 ? "/index/saishi/index.html" : "/index/championbet/index.html";
-                    }
-                });
-            });
-
-            // ============ Language Modal ============
-            var langModal = document.getElementById("globalLangModal");
-            var langMask = document.getElementById("globalLangModalMask");
-            var langOptions = document.querySelectorAll(".global-lang-option");
-            var langBtn = document.getElementById("globalLangSwitchBtn");
-
-            if (langBtn) {
-                langBtn.addEventListener("click", function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (langModal) langModal.classList.add("active");
-                });
-            }
-
-            if (langMask) {
-                langMask.addEventListener("click", function() {
-                    if (langModal) langModal.classList.remove("active");
-                });
-            }
-
-            langOptions.forEach(function(opt) {
-                opt.addEventListener("click", function() {
-                    var lang = this.getAttribute("data-lang");
-                    langOptions.forEach(function(o) { o.classList.remove("selected"); });
-                    this.classList.add("selected");
-                    if (langModal) langModal.classList.remove("active");
-                    try { localStorage.setItem("current_lang", lang); } catch(e) {}
-                });
-            });
-
-            // ============ Toast ============
-            function showToast(msg, duration) {
-                duration = duration || 2000;
-                var el = document.getElementById("customToast");
-                if (!el) return;
-                el.textContent = msg;
-                el.classList.add("show");
-                clearTimeout(el._timer);
-                el._timer = setTimeout(function() {
-                    el.classList.remove("show");
-                }, duration);
-            }
-
-            // ============ Confirm Dialog ============
-            function showConfirm(title, content, onOk) {
-                document.getElementById("confirmTitle").textContent = title;
-                document.getElementById("confirmContent").textContent = content;
-                document.getElementById("customConfirmOverlay").style.display = "block";
-                document.getElementById("customConfirm").style.display = "block";
-
-                function hide() {
-                    document.getElementById("customConfirmOverlay").style.display = "none";
-                    document.getElementById("customConfirm").style.display = "none";
-                }
-
-                var okBtn = document.getElementById("confirmOkBtn");
-                var cancelBtn = document.getElementById("confirmCancelBtn");
-                var overlay = document.getElementById("customConfirmOverlay");
-
-                var newOk = okBtn.cloneNode(true);
-                var newCancel = cancelBtn.cloneNode(true);
-                var newOverlay = overlay.cloneNode(true);
-
-                okBtn.parentNode.replaceChild(newOk, okBtn);
-                cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
-                overlay.parentNode.replaceChild(newOverlay, overlay);
-
-                document.getElementById("confirmOkBtn").addEventListener("click", function() {
-                    hide();
-                    if (onOk) onOk();
-                });
-
-                document.getElementById("confirmCancelBtn").addEventListener("click", hide);
-                document.getElementById("customConfirmOverlay").addEventListener("click", hide);
-            }
-
-            // ============ Wallet Connect ============
-            var walletAddress = null;
-            var walletBtn = document.getElementById("walletBtn");
-
-            if (walletBtn) {
-                walletBtn.addEventListener("click", function() {
-                    if (walletAddress) {
-                        showConfirm("断开钱包连接",
-                            "当前钱包: " + walletAddress.substring(0, 6) + "..." + walletAddress.substring(walletAddress.length - 4) + "\n\n是否断开连接？",
-                            function() {
-                                walletAddress = null;
-                                document.getElementById("walletAddress").textContent = "";
-                                walletBtn.classList.remove("connected");
-                                showToast("已断开连接");
-                            });
-                    } else {
-                        connectWallet();
-                    }
-                });
-            }
-
-            async function connectWallet() {
-                try {
-                    var accounts = [];
-                    if (typeof window.ethereum !== "undefined") {
-                        accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-                    }
-                    if (accounts && accounts.length > 0) {
-                        walletAddress = accounts[0];
-                        var short = walletAddress.substring(walletAddress.length - 4);
-                        document.getElementById("walletAddress").textContent = short;
-                        walletBtn.classList.add("connected");
-                        showToast("钱包连接成功");
-                    } else {
-                        showToast("请先安装 MetaMask 或其他钱包插件");
-                    }
-                } catch (error) {
-                    showToast("钱包连接失败: " + error.message);
-                }
-            }
-
-            // ============ Bet Dialog ============
-            var selectedTeamData = null;
-            var selectedBetType = null;
-
-            document.querySelectorAll(".team-card .bet-btn").forEach(function(btn) {
-                btn.addEventListener("click", function(e) {
-                    e.preventDefault();
-                    var card = this.closest(".team-card");
-                    selectedTeamData = {
-                        name: card.querySelector(".team-name").textContent,
-                        logo: card.querySelector(".team-logo img").getAttribute("src")
-                    };
-                    selectedBetType = this.classList.contains("bet-champion") ? 1 : 2;
-
-                    var oddsEls = card.querySelectorAll(".odds-value");
-                    var odds = selectedBetType === 1 ? oddsEls[0].textContent : oddsEls[1].textContent;
-                    var typeName = selectedBetType === 1 ? "冠军" : "亚军";
-
-                    document.getElementById("betDialogTeamLogo").setAttribute("src", selectedTeamData.logo);
-                    document.getElementById("betDialogTeamName").textContent = selectedTeamData.name;
-                    document.getElementById("betDialogTypeName").textContent = typeName;
-                    document.getElementById("betDialogOdds").textContent = odds;
-                    document.getElementById("betAmountInput").value = "100";
-                    document.getElementById("betDialogProfit").textContent = ((100 * parseFloat(odds)) - 100).toFixed(2);
-                    document.getElementById("betAmountDialog").classList.add("show");
-                });
-            });
-
-            var betInput = document.getElementById("betAmountInput");
-            if (betInput) {
-                betInput.addEventListener("input", function() {
-                    var amount = parseFloat(this.value) || 0;
-                    var odds = parseFloat(document.getElementById("betDialogOdds").textContent) || 0;
-                    var profit = amount > 0 ? (amount * odds - amount).toFixed(2) : "0";
-                    document.getElementById("betDialogProfit").textContent = profit;
-                });
-            }
-
-            document.querySelectorAll(".quick-amount").forEach(function(btn) {
-                btn.addEventListener("click", function(e) {
-                    e.preventDefault();
-                    var amount = this.getAttribute("data-amount");
-                    document.getElementById("betAmountInput").value = amount;
-                    document.getElementById("betAmountInput").dispatchEvent(new Event("input"));
-                });
-            });
-
-            function closeBetDialog() {
-                document.getElementById("betAmountDialog").classList.remove("show");
-            }
-
-            var betCancel = document.getElementById("betDialogCancel");
-            var betOverlay = document.querySelector("#betAmountDialog .dialog-overlay");
-            if (betCancel) betCancel.addEventListener("click", function(e) { e.preventDefault(); closeBetDialog(); });
-            if (betOverlay) betOverlay.addEventListener("click", function(e) { e.preventDefault(); closeBetDialog(); });
-
-            var betConfirm = document.getElementById("betDialogConfirm");
-            if (betConfirm) {
-                betConfirm.addEventListener("click", function(e) {
-                    e.preventDefault();
-                    var amount = parseFloat(document.getElementById("betAmountInput").value);
-                    if (!amount || amount < 1 || isNaN(amount)) {
-                        showToast("请输入正确的投注金额", 2000);
-                        return;
-                    }
-                    showToast("投注成功！" + selectedTeamData.name + " " + (selectedBetType === 1 ? "冠军" : "亚军") + " " + amount + " USDT", 2000);
-                    closeBetDialog();
-                });
-            }
-
-            // ============ Expose functions ============
-            window.showToast = showToast;
-            window.showConfirm = showConfirm;
-
-            console.log("19888 platform initialized");
-        });
-    })();
-    </script>
+<script src="js/app.js"></script>
 </body>
 </html>
