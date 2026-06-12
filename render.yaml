@@ -1,6 +1,12 @@
 services:
   - type: web
-    name: 19888-platform
-    env: node
+    name: 19888-api
+    runtime: node
+    rootDir: backend
     buildCommand: npm install
-    startCommand: node backend/server.js
+    startCommand: node server.js
+    envVars:
+      - key: JWT_SECRET
+        value: 19888-prod-change-me
+      - key: ADMIN_PASSWORD
+        value: 19888admin

@@ -2493,7 +2493,7 @@ process.on('unhandledRejection', (reason) => {
     console.error(`[${new Date().toISOString()}] UNHANDLED REJECTION:`, reason);
 });
 
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n🔒 19888 API Server v2.0 (lucky944-compatible) running on http://localhost:${PORT}`);
   console.log(`   Frontend:  http://localhost:${PORT}/`);
   console.log(`   Admin:     http://localhost:${PORT}/admin.html`);
