@@ -449,7 +449,7 @@
         '<span style="color:#999">平 ' + (dO ? dO.toFixed(2) : '—') + '</span>' +
         '<span style="color:#E53935;font-weight:600">客 ' + (aO ? aO.toFixed(2) : '—') + '</span>' +
       '</div>';
-    return '<li><a href="javascript:;" class="con" onclick="app.openMatch(' + m.id + ')">' +
+    return '<li><a href="javascript:;" class="con" data-match-id="' + m.id + '">' +
       '<div class="league-name"><p class="p1">' + league + '</p></div>' +
       '<div class="match-content">' +
         '<div class="team-left">' +
@@ -477,7 +477,7 @@
     var home = sanitize(m.home || m.home_team || '');
     var away = sanitize(m.away || m.away_team || '');
     var league = sanitize(m.league || m.league_name || '');
-    return '<li><a href="javascript:;" class="con" onclick="app.openMatch(' + m.id + ')">' +
+    return '<li><a href="javascript:;" class="con" data-match-id="' + m.id + '">' +
       '<div class="league-name"><p class="p1">' + league + '</p></div>' +
       '<div class="match-content">' +
         '<div class="team-left">' +
@@ -3106,6 +3106,16 @@
     });
     if (!navigator.onLine && !banner) { createBanner(); banner.style.transform = 'translateY(0)'; }
   })();
+
+  // Event delegation: match card clicks (data-match-id)
+  document.addEventListener('click', function(e) {
+    var target = e.target.closest('[data-match-id]');
+    if (target) {
+      e.preventDefault();
+      var mid = parseInt(target.getAttribute('data-match-id'));
+      if (mid) openMatch(mid);
+    }
+  });
 
   // Global error handler — log but don't swallow
   window.addEventListener('error', function(e) {
