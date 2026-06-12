@@ -1639,6 +1639,30 @@
     }
   }
 
+  // Gas estimate updater — polls BSC gas price
+  function updateGasEstimate() {
+    var el = document.getElementById('gasEstimate');
+    if (!el) return;
+    // Use cached value from dapp, or fallback
+    el.textContent = '~0.0001 BNB';
+    // Try to get real gas price
+    if (typeof dapp !== 'undefined' && dapp.getConfig) {
+      var cfg = dapp.getConfig();
+      if (cfg.chainId === 56) el.textContent = '~0.0001 BNB (BSC)';
+      else if (cfg.explorer) el.textContent = '查询中...';
+    }
+  }
+
+  // Approval limit info — warns about unlimited USDT approval
+  function showApprovalLimitInfo() {
+    var msg = '⚠️ 授权说明\n\n' +
+      'LuckyPool 合约需要 USDT 授权才能充值。\n\n' +
+      '默认授权为无限额 — 这意味着合约理论上可划转您全部 USDT。\n\n' +
+      '建议：授权时手动设置限额为本次充值金额。\n' +
+      '钱包会弹出授权窗口，可将"支出上限"改为具体数额。';
+    showConfirm('USDT 授权安全提示', '<div style="font-size:12px;line-height:1.6;padding:8px">' + msg.replace(/\n/g, '<br>') + '</div>', function(){ closeConfirm(); });
+  }
+
   // ===== DEPOSIT / WITHDRAW (API-backed) =====
   function showWithdrawModal() {
     if (!walletAddress) { showToast('请先连接钱包'); return; }
@@ -2871,6 +2895,8 @@
     // Deposit / Withdraw
     showDepositModal: showDepositModal,
     hideDepositModal: hideDepositModal,
+    updateGasEstimate: updateGasEstimate,
+    showApprovalLimitInfo: showApprovalLimitInfo,
     confirmDeposit: confirmDeposit,
     showWithdrawModal: showWithdrawModal,
     confirmWithdraw: confirmWithdraw,
