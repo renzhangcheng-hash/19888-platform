@@ -2310,6 +2310,35 @@ app.get('/api/vip/levels', asyncHandler((req, res) => {
   res.json({ code:0, data: VIP_LEVELS });
 }));
 
+// POST /api/vip/check-upgrade — check & trigger VIP upgrade
+app.post('/api/vip/check-upgrade', asyncHandler((req, res) => {
+  const { wallet_address } = req.body;
+  if (!isValidWallet(wallet_address)) return res.status(400).json({ code:1, msg:'无效的钱包地址' });
+  const addr = wallet_address.toLowerCase().trim();
+  const user = getUser(addr);
+  if (!user) return res.json({ code:0, data: { can_upgrade: false, current_level: 0, next_level: null } });
+
+  const bets = read('bets').filter(b => b.address.toLowerCase() === addr);
+  const totalWagered = bets.reduce((s, b) => s + (b.amount || 0), 0);
+  const currentLevel = computeVIPLevel(totalWagered);
+
+  // Find next achievable level
+  const nextLevel = VIP_LEVELS.find(v => v.level > currentLevel);
+  if (nextLevel && totalWagered >= nextLevel.min_wagered) {
+    // Upgrade user's VIP level in data
+    const users = read('users');
+    const idx = users.findIndex(u => u.address.toLowerCase() === addr);
+    if (idx !== -1) {
+      users[idx].vip_level = nextLevel.level;
+      users[idx].vip_name = nextLevel.name;
+      write('users', users);
+    }
+    return res.json({ code:0, data: { can_upgrade: true, new_level: nextLevel.level, name: nextLevel.name } });
+  }
+
+  res.json({ code:0, data: { can_upgrade: false, current_level: currentLevel, next_level: nextLevel ? { level: nextLevel.level, name: nextLevel.name, need: +(nextLevel.min_wagered - totalWagered).toFixed(2) } : null } });
+}));
+
 // ═══════════════════════════════════════════════════
 //  RISK CONTROL SYSTEM (L5-L7)
 // ═══════════════════════════════════════════════════
@@ -2438,7 +2467,18 @@ app.get('/api/invite/earnings', asyncHandler((req, res) => {
   const invitedAddresses = invitedUsers.map(u => u.address.toLowerCase());
   const invitedBets = bets.filter(b => invitedAddresses.includes(b.address.toLowerCase()));
   const totalVolume = invitedBets.reduce((s, b) => s + (b.amount || 0), 0);
-  const totalEarned = +((user.balance || 0) - 0).toFixed(4); // simplified
+  // Calculate total earned: commission_l1 on direct invitees' volume
+  const l1Earned = +(totalVolume * agent.commission_l1).toFixed(4);
+  // L2: second-level invitees (those invited by your direct invitees)
+  const l2Addresses = [];
+  for (const iu of invitedUsers) {
+    const l2Users = users.filter(u => u.invited_by === iu.invite_code);
+    l2Addresses.push(...l2Users.map(u => u.address.toLowerCase()));
+  }
+  const l2Bets = bets.filter(b => l2Addresses.includes(b.address.toLowerCase()));
+  const l2Volume = l2Bets.reduce((s, b) => s + (b.amount || 0), 0);
+  const l2Earned = +(l2Volume * agent.commission_l2).toFixed(4);
+  const totalEarned = +(l1Earned + l2Earned).toFixed(4);
 
   res.json({
     code:0,
@@ -2449,6 +2489,7 @@ app.get('/api/invite/earnings', asyncHandler((req, res) => {
       commission_l1: agent.commission_l1,
       commission_l2: agent.commission_l2,
       total_volume: +totalVolume.toFixed(2),
+      total_earned: totalEarned,
       last_claimed: user.last_claimed_reward || null,
       next_level: AGENT_LEVELS.find(a => a.level > agentLevel) || null,
     }

@@ -1606,9 +1606,9 @@
   async function claimInviteRewards() {
     if (!walletAddress) { showToast('请先连接钱包'); return; }
     try {
-      var res = await apiFetch('/invite/claim', {
+      var res = await apiFetch('/invite/claim-reward', {
         method: 'POST',
-        body: JSON.stringify({ address: walletAddress })
+        body: JSON.stringify({ wallet_address: walletAddress })
       });
       if (res && res.code === 0) {
         showToast('✅ 返佣奖励已领取');
