@@ -2679,23 +2679,6 @@
   // ===== TEAM DETAIL PAGE =====
   var _pageDetailOriginalHTML = null;
   var _teamNameMap = null;
-  // Find match by ID — searches mock data first, then API data
-  function findMatch(matchId) {
-    if (!matchId) return null;
-    // Try mock data
-    for (var i = 0; i < mockMatches.length; i++) {
-      if (mockMatches[i].id == matchId || mockMatches[i].match_id == matchId) {
-        return mockMatches[i];
-      }
-    }
-    // Try API data
-    for (var i = 0; i < allMatches.length; i++) {
-      if (allMatches[i].id == matchId || allMatches[i].match_id == matchId) {
-        return allMatches[i];
-      }
-    }
-    return null;
-  }
 
   async function openTeamDetail(teamName) {
     // Save original page-detail HTML on first call
