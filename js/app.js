@@ -191,9 +191,28 @@
     return null;
   }
 
+  function loadScript(src) {
+    return new Promise(function(resolve, reject) {
+      var s = document.createElement('script');
+      s.src = src;
+      s.onload = resolve;
+      s.onerror = function() { reject(new Error('Failed to load ' + src)); };
+      document.body.appendChild(s);
+    });
+  }
+
   // ===== WALLET (DApp via web3.js) =====
   async function connectWallet() {
-    if (typeof window.dapp === 'undefined') { showToast('Web3模块未加载'); return; }
+    if (typeof window.dapp === 'undefined') {
+      showToast('加载钱包模块...');
+      try {
+        await loadScript('js/vendor/ethers-6.13.umd.min.js');
+        await loadScript('js/web3.js');
+      } catch(e) {
+        showToast('钱包模块加载失败: ' + e.message);
+        return;
+      }
+    }
     // dapp.connect() internally waits for wallet provider injection (TP Wallet support)
     const result = await window.dapp.connect();
     if (result.success) {
