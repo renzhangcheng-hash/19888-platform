@@ -121,7 +121,6 @@
 
     function tryUrl(idx) {
       if (idx >= urls.length) {
-        apiAvailable = false;
         return Promise.resolve(null);
       }
       var base = urls[idx];
