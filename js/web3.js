@@ -118,7 +118,7 @@
       try {
         walletProvider = await detectWallet();
         if (!walletProvider) {
-          return { success: false, error: '未检测到钱包。请安装MetaMask或TP Wallet。' };
+          return { success: false, error: '未检测到钱包。请安装MetaMask，或在TP Wallet内置浏览器中打开。' };
         }
 
         const accounts = await walletProvider.request({ method: 'eth_requestAccounts' });
@@ -403,8 +403,33 @@
   };
 
   // ===== HELPERS =====
+
+  // Detect and wait for ethereum provider (handles delayed injection)
   async function detectWallet() {
-    return typeof window.ethereum !== 'undefined' ? window.ethereum : null;
+    // 1. Already available
+    if (typeof window.ethereum !== 'undefined') return window.ethereum;
+    // 2. TokenPocket desktop extension
+    if (typeof window.tp !== 'undefined' && window.tp.ethereum) return window.tp.ethereum;
+    // 3. Other providers (Binance, Coinbase, etc.)
+    if (typeof window.BinanceChain !== 'undefined') return window.BinanceChain;
+
+    // 4. Wait for mobile wallet injection (TokenPocket, Trust, etc.)
+    //    These inject `ethereum` asynchronously after page load
+    return new Promise(function(resolve) {
+      var timeout = setTimeout(function() { resolve(null); }, 5000);
+      if (document.readyState === 'complete') {
+        if (typeof window.ethereum !== 'undefined') { clearTimeout(timeout); resolve(window.ethereum); }
+        else { clearTimeout(timeout); resolve(null); }
+      } else {
+        var handler = function() {
+          if (typeof window.ethereum !== 'undefined') { clearTimeout(timeout); resolve(window.ethereum); }
+          else { clearTimeout(timeout); resolve(null); }
+        };
+        document.addEventListener('DOMContentLoaded', handler);
+        // Also listen for ethereum injection event
+        window.addEventListener('ethereum#initialized', handler, { once: true });
+      }
+    });
   }
 
   function updateWalletUI() {

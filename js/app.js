@@ -193,16 +193,16 @@
 
   // ===== WALLET (DApp via web3.js) =====
   async function connectWallet() {
-    if (typeof dapp === 'undefined') { showToast('Web3模块未加载'); return; }
-    const result = await dapp.connect();
+    if (typeof window.dapp === 'undefined') { showToast('Web3模块未加载'); return; }
+    // dapp.connect() internally waits for wallet provider injection (TP Wallet support)
+    const result = await window.dapp.connect();
     if (result.success) {
       walletAddress = result.address;
 
       // Check if on Sepolia, if not — switch
       const chainOk = await dapp.switchChain();
       if (!chainOk) {
-        showToast('请切换到Sepolia测试网');
-        return;
+        showToast('⚠️ 未检测到Sepolia网络，部分功能可能受限');
       }
 
       showToast('钱包已连接: ' + walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4));
