@@ -454,13 +454,13 @@
     var homeSections = ['liveStatsBar', 'announceBar', 'aiRecCard', 'trustSignalsBar', 'tabHeaderWrapper'];
     for (var s = 0; s < homeSections.length; s++) {
       var sec = document.getElementById(homeSections[s]);
-      if (sec) sec.style.display = (page === 'home') ? '' : 'none';
+      if (sec) sec.style.display = (page === 'home') ? 'block' : 'none';
     }
 
     // Show target page (create if needed)
     var target = document.getElementById('page-' + page);
     if (target) {
-      target.style.display = '';
+      target.style.display = 'block';
     }
 
     // Update bottom nav active state
@@ -480,7 +480,7 @@
         topTabs[k].classList.toggle('on', k === 0);
       }
       var tabCons = document.querySelectorAll('.slick_tab .tab_con');
-      if (tabCons.length > 0) tabCons[0].style.display = '';
+      if (tabCons.length > 0) tabCons[0].style.display = 'block';
       if (tabCons.length > 1) tabCons[1].style.display = 'none';
     }
 
@@ -500,7 +500,7 @@
     var tabCons = document.querySelectorAll('.slick_tab .tab_con');
     var topTabs = document.querySelectorAll('.slick_tab_btn .ul-tabs_b1 li');
     for (var i = 0; i < tabCons.length; i++) {
-      tabCons[i].style.display = (i === idx) ? '' : 'none';
+      tabCons[i].style.display = (i === idx) ? 'block' : 'none';
     }
     for (var j = 0; j < topTabs.length; j++) {
       topTabs[j].classList.toggle('on', j === idx);
@@ -538,10 +538,10 @@
       (hasMore ? '<li class="load-more-li"><a href="javascript:;" class="load-more-btn" onclick="app.loadMoreMatches()">▼ 加载更多 (' + (total - end) + ')</a></li>' : '');
   }
 
-  window.app.loadMoreMatches = function() {
+  function loadMoreMatches() {
     _homeMatchPage++;
     renderHomeMatchPage();
-  };
+  }
 
   // ===== PAGE: HOME - Champion Bet =====
   async function renderChampionBet() {
@@ -574,7 +574,7 @@
 
   // ===== PAGE: MATCHES (grouped by league) =====
   async function renderMatchesPage() {
-    var container = document.getElementById('matchesPageList');
+    var container = document.getElementById('matchesPageList') || document.getElementById('fullMatchList');
     if (!container) {
       var mainEl = document.querySelector('.main .wp');
       if (!mainEl) return;
@@ -595,12 +595,13 @@
     if (!data || data.length === 0) {
       container.innerHTML = '<li><div class="con" style="padding:30px;text-align:center;color:#999">暂无赛事数据</div></li>';
     } else {
-      // Group by league letter, sort groups
+      // Group by league group (e.g. "世界杯 A组" from "世界杯 A组·第1轮")
       var groups = {};
       data.forEach(function(m) {
         var league = m.league || m.league_name || '';
-        var letter = league.match(/^(\S+)/);
-        var key = letter ? letter[1] : league;
+        // Extract group prefix (e.g. "世界杯 A组" from "世界杯 A组·第1轮")
+        var key = league.replace(/·.*$/, '');
+        if (!key) key = '其他';
         if (!groups[key]) groups[key] = [];
         groups[key].push(m);
       });
@@ -1820,6 +1821,7 @@
     setLanguage: setLanguage,
     switchTopTab: switchTopTab,
     renderMatchCards: renderMatchCards,
+    loadMoreMatches: loadMoreMatches,
     renderChampionBet: renderChampionBet,
     openBetDialog: showBetDialog,
     // Deposit / Withdraw
