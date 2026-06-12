@@ -173,6 +173,10 @@ contract ChampionBetTest is Test {
         );
         champ = ChampionBet(address(champProxy));
         vm.stopPrank();
+
+        // Authorize ChampionBet to call pool.recordBet
+        vm.prank(owner);
+        pool.setAuthorizedContract(address(champ), true);
         
         usdt.mint(alice, 10000 ether);
     }
