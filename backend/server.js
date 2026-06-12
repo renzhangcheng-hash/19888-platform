@@ -2493,32 +2493,15 @@ process.on('unhandledRejection', (reason) => {
     console.error(`[${new Date().toISOString()}] UNHANDLED REJECTION:`, reason);
 });
 
-const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`\n🔒 19888 API Server v2.0 (lucky944-compatible) running on http://localhost:${PORT}`);
-  console.log(`   Frontend:  http://localhost:${PORT}/`);
-  console.log(`   Admin:     http://localhost:${PORT}/admin.html`);
-  console.log(`   API:       http://localhost:${PORT}/api/status`);
-  console.log(`\n   NEW lucky944 Endpoints:`);
-  console.log(`   GET  /api/user/balance?address=0x...`);
-  console.log(`   GET  /api/user/profile?address=0x...`);
-  console.log(`   POST /api/user/profile`);
-  console.log(`   GET  /api/ai-hosting/status?address=0x...`);
-  console.log(`   POST /api/ai-hosting/activate`);
-  console.log(`   POST /api/ai-hosting/deactivate`);
-  console.log(`   GET  /api/ai-hosting/history?address=0x...`);
-  console.log(`   POST /api/ai-hosting/settings`);
-  console.log(`   GET  /api/bet-records?address=0x...`);
-  console.log(`   GET  /api/teams`);
-  console.log(`   GET  /api/teams/:id`);
-  console.log(`   GET  /api/teams/:id/stats\n`);
-  console.log(`\n   NEW Invite/Deposit/PnL Endpoints:`);
-  console.log(`   POST /api/invite/generate-code`);
-  console.log(`   GET  /api/invite/stats?wallet=0x...`);
-  console.log(`   POST /api/invite/referral-tracking`);
-  console.log(`   POST /api/invite/claim-reward`);
-  console.log(`   POST /api/deposit`);
-  console.log(`   GET  /api/deposit/history?wallet=0x...`);
-  console.log(`   GET  /api/user/pnl?wallet=0x...`);
-  console.log(`   POST /api/admin/create-match`);
-  console.log(`   POST /api/admin/settle-match\n`);
-});
+try {
+  const server = app.listen(PORT, '0.0.0.0', () => {
+    console.log('PORT=' + PORT + ' STARTED');
+  });
+  server.on('error', (err) => {
+    console.error('LISTEN ERROR:', err.message);
+    process.exit(1);
+  });
+} catch(e) {
+  console.error('STARTUP CRASH:', e.message);
+  process.exit(1);
+}
