@@ -36,7 +36,7 @@
   };
 
   // Default to Sepolia for development, switchable via localStorage
-  let activeChain = localStorage.getItem('19888_chain') || 'sepolia';
+  let activeChain = localStorage.getItem('19888_chain') || 'mainnet';
   function getConfig() {
     return CHAINS[activeChain] || CHAINS.sepolia;
   }
