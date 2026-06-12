@@ -693,6 +693,7 @@
       profilePage = document.createElement('div');
       profilePage.id = 'page-profile';
       profilePage.className = 'tab_con page';
+      profilePage.style.display = 'block';
       mainEl.querySelector('.slick_tab').appendChild(profilePage);
     }
 
@@ -1344,6 +1345,7 @@
       container = document.createElement('div');
       container.id = 'page-ai';
       container.className = 'page';
+      container.style.display = 'block';
       mainEl.appendChild(container);
     }
 
@@ -1426,6 +1428,7 @@
       container = document.createElement('div');
       container.id = 'page-transactions';
       container.className = 'page';
+      container.style.display = 'block';
       mainEl.appendChild(container);
     }
 
