@@ -856,6 +856,11 @@
     if (modal) modal.style.display = 'flex';
   }
 
+  function hideWithdrawModal() {
+    var modal = document.getElementById('withdrawModal');
+    if (modal) modal.style.display = 'none';
+  }
+
   async function confirmDeposit() {
     var amountInput = document.getElementById('depositAmount');
     var amount = parseFloat(amountInput ? amountInput.value : 0);
@@ -1977,7 +1982,9 @@
     if (!navigator.onLine && !banner) { createBanner(); banner.style.transform = 'translateY(0)'; }
   })();
 
-  // Global error handler
-  window.onerror = function() { return true; };
+  // Global error handler — log but don't swallow
+  window.addEventListener('error', function(e) {
+    console.error('[19888 Error]', e.message, e.filename, e.lineno);
+  });
 
 })();
