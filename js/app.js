@@ -476,7 +476,7 @@
   }
 
   // ===== NAVIGATION =====
-  var tabPageMap = { 'home': 0, 'ai': 1, 'matches': 2, 'market': 3, 'profile': 4, 'docs': -1, 'fiat': -1 };
+  var tabPageMap = { 'home': 0, 'ai': 1, 'matches': 2, 'market': 3, 'profile': 4, 'transactions': 4, 'docs': -1, 'fiat': -1 };
   var tabNames = ['home', 'ai', 'matches', 'market', 'profile'];
 
   function navigateTo(page) {
@@ -678,6 +678,7 @@
 
   // ===== PAGE: MARKET (K-line + Orderbook) =====
   var _marketKlineData = [];
+  var _cachedOnlineUsers = null;
   var _marketPollTimer = null;
 
   async function renderMarketPage() {
@@ -713,10 +714,10 @@
           '<h3 style="font-size:16px;font-weight:700;margin:0;color:var(--text)">📈 K线图</h3>' +
           '<span style="font-size:11px;color:var(--text-muted)">最后50根 · 1小时</span>' +
         '</div>' +
-        chartHtml +
+        '<div class="market-chart-section">' + chartHtml + '</div>' +
         '<div style="height:16px"></div>' +
         '<h3 style="font-size:16px;font-weight:700;margin:0 0 8px 0;color:var(--text)">📊 订单簿</h3>' +
-        obHtml +
+        '<div class="market-orderbook-section">' + obHtml + '</div>' +
       '</div>';
 
     // Start long-polling fallback
@@ -747,7 +748,9 @@
     return data;
   }
 
+  var _cachedMockOrderbook = null;
   function generateMockOrderbook() {
+    if (_cachedMockOrderbook) return _cachedMockOrderbook;
     var basePrice = 45600;
     var bids = [], asks = [];
     for (var i = 0; i < 10; i++) {
@@ -756,7 +759,8 @@
       bids.push({ price: parseFloat(bidPx.toFixed(2)), quantity: parseFloat((Math.random() * 5 + 0.1).toFixed(4)) });
       asks.push({ price: parseFloat(askPx.toFixed(2)), quantity: parseFloat((Math.random() * 5 + 0.1).toFixed(4)) });
     }
-    return { bids: bids, asks: asks };
+    _cachedMockOrderbook = { bids: bids, asks: asks };
+    return _cachedMockOrderbook;
   }
 
   function renderKlineChart(candles) {
@@ -900,12 +904,11 @@
           _marketKlineData = Array.isArray(res.data) ? res.data : (res.data.candles || _marketKlineData);
           var obContainer = document.getElementById('marketContent');
           if (obContainer && currentPage === 'market') {
-            // Re-render just the chart part (keep orderbook stable)
-            var chartEl = obContainer.querySelector('svg');
-            if (chartEl) {
-              // Simple refresh by re-rendering chart portion
-              var newChart = renderKlineChart(_marketKlineData);
-              // Inline update via innerHTML of chart section
+            // Update chart section
+            var chartSection = obContainer.querySelector('.market-chart-section');
+            if (chartSection && _marketKlineData.length > 0) {
+              var chartHtml = renderKlineChart(_marketKlineData);
+              chartSection.innerHTML = chartHtml;
             }
           }
         }
@@ -1785,21 +1788,8 @@
     document.body.removeChild(ta);
   }
 
-  async function claimInviteRewards() {
-    if (!walletAddress) { showToast('请先连接钱包'); return; }
-    try {
-      var res = await apiFetch('/invite/claim-reward', {
-        method: 'POST',
-        body: JSON.stringify({ wallet_address: walletAddress })
-      });
-      if (res && res.code === 0) {
-        showToast('✅ 返佣奖励已领取');
-        loadInviteData();
-      } else {
-        showToast(res && res.message ? res.message : '领取失败');
-      }
-    } catch(e) { showToast('领取失败，请重试'); }
-  }
+  // claimInviteRewards defined below with the profile section — L2049 is the active version
+  function _placeholder() {}
 
   function shareInvite() {
     if (!inviteCode) { showToast('邀请码未生成'); return; }
@@ -2514,7 +2504,10 @@
       }
     } catch(e) {}
     var online = document.getElementById('statOnline');
-    if (online) online.textContent = Math.floor(Math.random() * 200 + 50);
+    if (online) {
+      if (!_cachedOnlineUsers) _cachedOnlineUsers = Math.floor(Math.random() * 200 + 50);
+      online.textContent = _cachedOnlineUsers;
+    }
     setTimeout(loadLiveStats, 60000);
   }
 
@@ -2609,12 +2602,19 @@
   // ===== TEAM DETAIL PAGE =====
   var _pageDetailOriginalHTML = null;
   var _teamNameMap = null;
-
-  function getTeamIdByName(name) {
-    if (_teamNameMap && _teamNameMap[name] !== undefined) return _teamNameMap[name];
-    for (var i = 0; i < mockChampionTeams.length; i++) {
-      if (mockChampionTeams[i].name === name) {
-        return mockChampionTeams[i].id;
+  // Find match by ID — searches mock data first, then API data
+  function findMatch(matchId) {
+    if (!matchId) return null;
+    // Try mock data
+    for (var i = 0; i < mockMatches.length; i++) {
+      if (mockMatches[i].id == matchId || mockMatches[i].match_id == matchId) {
+        return mockMatches[i];
+      }
+    }
+    // Try API data
+    for (var i = 0; i < allMatches.length; i++) {
+      if (allMatches[i].id == matchId || allMatches[i].match_id == matchId) {
+        return allMatches[i];
       }
     }
     return null;
@@ -2896,8 +2896,8 @@
       });
     }
 
-    // Language modal
-    var langBtn = document.getElementById('globalLangSwitchBtn');
+    // Language modal — use querySelector for class-based element
+    var langBtn = document.querySelector('.global-lang-switch-btn');
     if (langBtn) {
       langBtn.addEventListener('click', function(e) {
         e.preventDefault(); e.stopPropagation();
