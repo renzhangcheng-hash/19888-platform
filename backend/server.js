@@ -136,8 +136,12 @@ app.use('/api/admin', adminLimiter);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true, parameterLimit: 1000 }));
 
-// ── Static Frontend ───────────────────────────────
-app.use(express.static(path.join(__dirname, '..')));
+app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
+// Static files — serve only when path exists (Render compatibility)
+const staticPath = path.join(__dirname, '..');
+if (fs.existsSync(staticPath)) {
+  app.use(express.static(staticPath));
+}
 
 // ── Ensure Data Directory ─────────────────────────
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
