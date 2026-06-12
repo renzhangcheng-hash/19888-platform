@@ -99,6 +99,7 @@ const ALLOWED_ORIGINS = [
 const ALLOWED_ORIGIN_SUFFIXES = [
   '.netlify.app',
   '19888.asia',
+  '.onrender.com',
 ];
 app.use(cors({
   origin: (origin, callback) => {

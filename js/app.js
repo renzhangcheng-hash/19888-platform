@@ -2,7 +2,7 @@
   'use strict';
 
   // ===== CONFIG =====
-  const DEFAULT_API_BASE = 'https://enlargement-celtic-for-moderators.trycloudflare.com/api';
+  const DEFAULT_API_BASE = 'https://one9888-api.onrender.com/api';
   function resolveApiBase() {
     // Priority: localStorage override → same-domain api → default tunnel
     const stored = cacheGet('19888_api_base');
