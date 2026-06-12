@@ -487,15 +487,16 @@
     if (page === 'profile') startProfileAutoRefresh();
     else stopProfileAutoRefresh();
 
-    // Hide all pages
+    // Hide all pages — use CSS classes for fade animation
     var pages = document.querySelectorAll('.page');
     for (var i = 0; i < pages.length; i++) {
-      pages[i].style.display = 'none';
+      pages[i].classList.remove('active');
+      pages[i].style.display = '';
     }
 
     if (page === 'detail') {
       var detailPage = document.getElementById('page-detail');
-      if (detailPage) detailPage.style.display = 'block';
+      if (detailPage) { detailPage.classList.add('active'); detailPage.style.display = ''; }
       // Hide home sections
       var homeSecs = ['liveStatsBar', 'announceBar', 'aiRecCard', 'trustSignalsBar', 'tabHeaderWrapper'];
       for (var s = 0; s < homeSecs.length; s++) {
@@ -509,13 +510,14 @@
     var homeSections = ['liveStatsBar', 'announceBar', 'aiRecCard', 'trustSignalsBar', 'tabHeaderWrapper'];
     for (var s = 0; s < homeSections.length; s++) {
       var sec = document.getElementById(homeSections[s]);
-      if (sec) sec.style.display = (page === 'home') ? 'block' : 'none';
+      if (sec) sec.style.display = (page === 'home') ? '' : 'none';
     }
 
     // Show target page (create if needed)
     var target = document.getElementById('page-' + page);
     if (target) {
-      target.style.display = 'block';
+      target.classList.add('active');
+      target.style.display = '';
     }
 
     // Update bottom nav active state
@@ -558,7 +560,8 @@
     var tabCons = document.querySelectorAll('.slick_tab .tab_con');
     var topTabs = document.querySelectorAll('.slick_tab_btn .ul-tabs_b1 li');
     for (var i = 0; i < tabCons.length; i++) {
-      tabCons[i].style.display = (i === idx) ? 'block' : 'none';
+      tabCons[i].classList.toggle('active', i === idx);
+      tabCons[i].style.display = '';
     }
     for (var j = 0; j < topTabs.length; j++) {
       topTabs[j].classList.toggle('on', j === idx);

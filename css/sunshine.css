@@ -305,6 +305,152 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,107,53,0.12
   .wallet-address{font-size:11px}
 }
 
+/* ===== STATS BAR ===== */
+.stats-bar{display:flex;gap:0;background:var(--bg-alt);border:1px solid var(--border);border-radius:10px;padding:8px 0;margin:10px 0 6px;overflow:hidden;font-size:11px;text-align:center}
+.stats-bar .stat-cell{flex:1;border-right:1px solid var(--border)}
+.stats-bar .stat-cell:last-child{border-right:none}
+.stats-bar .stat-label{color:var(--text-muted);font-size:10px}
+.stats-bar .stat-value{font-weight:700;font-size:14px}
+.stats-bar .stat-value.bets{color:var(--accent)}
+.stats-bar .stat-value.online{color:var(--green)}
+.stats-bar .stat-value.payout{color:#667eea}
+.stats-bar .stat-value.users{color:var(--text)}
+
+/* ===== ANNOUNCE BAR ===== */
+.announce-bar{display:flex;align-items:center;gap:8px;background:linear-gradient(90deg,var(--bg-alt),#FFE0B2);border-radius:8px;padding:8px 12px;margin-bottom:8px;font-size:11px;color:#E65100;overflow:hidden}
+.announce-bar .announce-text{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:marquee-scroll 15s linear infinite}
+
+@keyframes marquee-scroll {
+  0%{transform:translateX(100%)}
+  100%{transform:translateX(-100%)}
+}
+.announce-bar .announce-icon{flex-shrink:0;font-size:14px}
+
+/* ===== AI RECOMMENDATION ===== */
+.ai-rec-card{background:linear-gradient(135deg,#667eea,#764ba2);border-radius:10px;padding:14px;margin-bottom:10px}
+.ai-rec-card .rec-header{display:flex;justify-content:space-between;align-items:center}
+.ai-rec-card .rec-label{font-size:10px;color:rgba(255,255,255,0.7)}
+.ai-rec-card .rec-text{font-size:15px;font-weight:700;color:#fff;margin:4px 0}
+.ai-rec-card .rec-stars{font-size:12px;color:#FFD700}
+.ai-rec-card .rec-btn{background:rgba(255,255,255,0.2);color:#fff;border:1px solid rgba(255,255,255,0.3);padding:8px 16px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+.ai-rec-card .rec-btn:hover{background:rgba(255,255,255,0.3)}
+
+/* ===== TRUST SIGNALS ===== */
+.trust-signals{display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+.trust-signals::-webkit-scrollbar{display:none}
+.trust-signal{flex-shrink:0;background:var(--surface);border:1px solid #E8F5E9;border-radius:8px;padding:6px 10px;font-size:10px;color:var(--text-light);min-width:100px;text-align:center}
+.trust-signal .signal-title{color:var(--green);font-weight:700;font-size:11px}
+.trust-signal .signal-sub{color:var(--text-muted);font-size:9px;margin-top:1px}
+
+/* ===== PAGE TRANSITIONS ===== */
+.tab_con{display:none;opacity:0;transition:opacity .25s ease}
+.tab_con.show,.tab_con.active{display:block;opacity:1}
+.page{display:none;opacity:0;transition:opacity .25s ease}
+.page.active{display:block;opacity:0;animation:pageFadeIn .3s ease forwards}
+@keyframes pageFadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ===== SAFE AREA ===== */
+@supports(padding-bottom:env(safe-area-inset-bottom)){
+  .ul-tabbar{padding-bottom:calc(10px + env(safe-area-inset-bottom))}
+  .main{padding-bottom:calc(70px + env(safe-area-inset-bottom))}
+}
+
+/* ===== VIP CARD (Sunshine theme) ===== */
+.vip-card-sunshine{background:linear-gradient(135deg,var(--bg-alt),#FFE0B2);border:1px solid rgba(255,107,53,0.12);border-radius:12px;padding:14px 18px;margin-bottom:12px}
+.vip-card-sunshine .vip-label{font-size:10px;color:var(--text-muted);margin-bottom:4px}
+.vip-card-sunshine .vip-level{font-size:22px;font-weight:800;color:var(--text)}
+.vip-card-sunshine .vip-stat{font-size:16px;font-weight:700;color:var(--text)}
+.vip-card-sunshine .vip-progress-label{font-size:10px;color:var(--text-muted)}
+.vip-card-sunshine .vip-progress-track{height:6px;background:rgba(255,107,53,0.12);border-radius:3px;overflow:hidden}
+.vip-card-sunshine .vip-progress-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--gold));border-radius:3px;width:0%;transition:width .5s}
+.vip-card-sunshine .vip-badge{display:inline-block;background:rgba(255,107,53,0.12);color:var(--accent);padding:2px 8px;border-radius:10px;font-size:10px}
+.vip-card-sunshine .vip-badge.odds-badge{background:rgba(102,126,234,0.12);color:#667eea}
+
+/* ===== DIALOG STANDARD ===== */
+.dialog-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.3);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:100000}
+.dialog-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-md);padding:20px;max-width:340px;width:90%;position:relative}
+.dialog-box h3{font-size:16px;color:var(--text);margin:0 0 12px;text-align:center}
+.dialog-box input{width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:15px;text-align:center;font-weight:600;margin-bottom:8px}
+.dialog-box input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-ring)}
+.dialog-box .dialog-actions{display:flex;gap:8px;margin-top:12px}
+.dialog-btn{flex:1;padding:10px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;text-align:center}
+.dialog-btn.primary{background:var(--accent-grad);color:#fff}
+.dialog-btn.primary:hover{box-shadow:0 2px 12px rgba(255,107,53,0.3)}
+.dialog-btn.secondary{background:var(--bg);color:var(--text);border:1px solid var(--border)}
+.dialog-btn.secondary:hover{background:var(--surface-hover)}
+.dialog-btn.info{background:var(--accent);color:#fff}
+
+/* ===== QUICK AMOUNTS (dialog) ===== */
+.quick-amounts{display:flex;gap:6px;margin-bottom:12px}
+.quick-amount{flex:1;padding:6px;border:1px solid var(--border);border-radius:6px;background:var(--bg);font-size:12px;cursor:pointer;color:var(--text-light);text-align:center;transition:all .15s}
+.quick-amount:hover,.quick-amount.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* ===== PROFILE HEADER ===== */
+.profile-header{display:flex;align-items:center;gap:12px;padding:12px 0}
+.profile-header .avatar{width:48px;height:48px;border-radius:50%;overflow:hidden;border:2px solid var(--border-light);flex-shrink:0}
+.profile-header .avatar img{width:100%;height:100%;object-fit:cover}
+.profile-header .user-info{flex:1;min-width:0}
+.profile-header .nickname{font-size:15px;font-weight:600;color:var(--text)}
+.profile-header .wallet-addr{font-size:11px;color:var(--text-muted);word-break:break-all}
+
+/* ===== PNL PANEL ===== */
+.pnl-panel{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:12px}
+.pnl-item{text-align:center}
+.pnl-label{display:block;font-size:10px;color:var(--text-muted);margin-bottom:2px}
+.pnl-value{font-size:16px;font-weight:700;color:var(--text)}
+
+/* ===== INVITE MODAL (sunshine) ===== */
+.invite-code-display{font-size:20px;font-weight:700;color:var(--accent);text-align:center;padding:10px;background:var(--bg-alt);border-radius:8px;margin-bottom:8px}
+.invite-stats{font-size:13px;color:var(--text-light);text-align:center;padding:8px;background:var(--bg);border-radius:6px;margin-bottom:8px}
+.invite-full-btn{width:100%;padding:8px;border:none;border-radius:6px;font-size:13px;cursor:pointer;font-weight:600}
+.invite-full-btn.primary{background:var(--accent-grad);color:#fff}
+.invite-full-btn.green{background:var(--green);color:#fff}
+.invite-full-btn.gold{background:var(--gold);color:#fff}
+.invite-full-btn.gray{background:var(--bg);color:var(--text-light);border:1px solid var(--border)}
+.invite-full-btn:hover{opacity:.9}
+
+/* ===== SCORE BET GRID ===== */
+.score-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px}
+.score-cell{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 4px;text-align:center;cursor:pointer;transition:all .15s}
+.score-cell:hover{border-color:var(--accent);background:var(--accent-glow)}
+.score-cell.selected{border-color:var(--accent);background:linear-gradient(135deg,var(--accent-glow),rgba(255,107,53,0.12));box-shadow:0 0 0 2px var(--accent-ring)}
+.score-cell .score-label{font-size:11px;color:var(--text-light)}
+.score-cell .score-odds{font-size:13px;font-weight:700;color:var(--accent)}
+
+/* ===== MATCH DETAIL ===== */
+.match-detail-header{text-align:center;padding:16px 0;border-bottom:1px solid var(--border);margin-bottom:16px}
+.match-teams{display:flex;justify-content:center;align-items:center;gap:16px;margin-bottom:8px}
+.match-teams .team{font-size:16px;font-weight:600;color:var(--text)}
+.match-teams .vs{font-size:14px;color:var(--text-muted);font-weight:700}
+.match-meta{font-size:12px;color:var(--text-muted)}
+.match-meta span{margin:0 8px}
+
+/* ===== SECTION HEADER ===== */
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.section-header h4{font-size:14px;color:var(--text);margin:0}
+
+/* ===== FILTER TABS (records) ===== */
+.filter-tabs{display:flex;gap:4px}
+.filter-btn{background:var(--surface);border:1px solid var(--border);color:var(--text-light);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;transition:all .15s}
+.filter-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.filter-btn:hover:not(.active){border-color:var(--accent);color:var(--accent)}
+
+/* ===== BETS LIST ===== */
+.bets-list{min-height:120px}
+.record-item{padding:12px;border-bottom:1px solid var(--border)}
+.record-item:last-child{border-bottom:none}
+.record-header{display:flex;justify-content:space-between;margin-bottom:4px}
+.record-label{font-size:11px;color:var(--text-muted)}
+.record-team{font-weight:600;color:var(--text);margin-bottom:4px;font-size:13px}
+.record-footer{display:flex;justify-content:space-between;align-items:center}
+.record-amount{font-size:13px;font-weight:600}
+.record-status{font-size:11px;font-weight:600}
+.cancel-bet-btn{background:none;border:1px solid var(--red);color:var(--red);padding:4px 10px;border-radius:12px;font-size:11px;cursor:pointer}
+.cancel-bet-btn:hover{background:var(--red-soft)}
+
+/* ===== MARKET PAGE ===== */
+.market-page{padding:12px}
+
 /* ===== LOADING STATES ===== */
 .loading-text{text-align:center;padding:40px;color:var(--text-muted)}
 
