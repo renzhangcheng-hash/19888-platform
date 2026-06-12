@@ -175,6 +175,50 @@ function write(name, data) {
   fs.renameSync(tmp, f);
 }
 
+// ── File Lock for Atomic Read-Modify-Write ─────────
+const fileLocks = new Map();
+function acquireLock(name, timeout = 5000) {
+  return new Promise((resolve, reject) => {
+    const start = Date.now();
+    function tryAcquire() {
+      if (!fileLocks.has(name)) {
+        fileLocks.set(name, true);
+        resolve();
+      } else if (Date.now() - start > timeout) {
+        reject(new Error(`Lock timeout for ${name}`));
+      } else {
+        setImmediate(tryAcquire);
+      }
+    }
+    tryAcquire();
+  });
+}
+function releaseLock(name) { fileLocks.delete(name); }
+
+// Atomic read-modify-write with lock
+function lockedUpdate(name, updateFn) {
+  return new Promise((resolve, reject) => {
+    // Use setImmediate to avoid blocking the event loop
+    setImmediate(async () => {
+      try {
+        await acquireLock(name, 3000);
+        try {
+          const data = read(name);
+          const result = updateFn(data);
+          write(name, data);
+          releaseLock(name);
+          resolve(result);
+        } catch (e) {
+          releaseLock(name);
+          throw e;
+        }
+      } catch (e) {
+        reject(e);
+      }
+    });
+  });
+}
+
 // ── Input Validation Helpers ──────────────────────
 function isValidWallet(addr) {
   if (typeof addr !== 'string') return false;
@@ -185,6 +229,13 @@ function isValidWallet(addr) {
 function isValidAmount(val) {
   const n = Number(val);
   return Number.isFinite(n) && n > 0 && n <= 10000;
+}
+
+// ── Deduplication Helper ───────────────────────────
+function isDuplicateTx(txHash, collection) {
+  if (!txHash) return false;
+  const records = read(collection);
+  return records.some(r => r.tx_hash && r.tx_hash.toLowerCase() === txHash.toLowerCase());
 }
 
 function isValidTeamId(val) {
@@ -1857,9 +1908,9 @@ app.post('/api/invite/claim-reward', asyncHandler((req, res) => {
 //  DEPOSIT & WITHDRAW
 // ═══════════════════════════════════════════════════
 
-// POST /api/withdraw — withdraw USDT from user balance
-app.post('/api/withdraw', asyncHandler((req, res) => {
-  const { wallet_address, amount, withdraw_address } = req.body;
+// POST /api/withdraw — withdraw USDT from user balance (ATOMIC with lock)
+app.post('/api/withdraw', asyncHandler(async (req, res) => {
+  const { wallet_address, amount, withdraw_address, tx_hash } = req.body;
 
   if (!wallet_address || !isValidWallet(wallet_address)) {
     return res.status(400).json({ code: 1, msg: '无效的钱包地址' });
@@ -1868,7 +1919,7 @@ app.post('/api/withdraw', asyncHandler((req, res) => {
     return res.status(400).json({ code: 1, msg: '无效的提现地址' });
   }
   if (!isValidAmount(amount)) {
-    return res.status(400).json({ code: 1, msg: '提现金额必须是正数（不超过10000）' });
+    return res.status(400).json({ code: 1, msg: '提现金额无效（1-10000 USDT）' });
   }
   if (Number(amount) < 1) {
     return res.status(400).json({ code: 1, msg: '最小提现金额 1 USDT' });
@@ -1878,46 +1929,64 @@ app.post('/api/withdraw', asyncHandler((req, res) => {
   const amt = Number(amount);
   const toAddr = withdraw_address.toLowerCase().trim();
 
-  const users = read('users');
-  const user = users.find(u => u.address.toLowerCase() === addr);
-  if (!user) {
-    return res.status(404).json({ code: 1, msg: '用户不存在，请先连接钱包' });
+  // Deduplication
+  if (tx_hash && isDuplicateTx(tx_hash, 'withdrawals')) {
+    return res.status(409).json({ code: 1, msg: '重复的提现请求' });
   }
 
-  const balance = computeBalance(user);
-  if (balance.available < amt) {
-    return res.status(400).json({ code: 1, msg: `余额不足。可用: ${balance.available} USDT` });
+  // Atomic update with lock
+  try {
+    const result = await lockedUpdate('users', (users) => {
+      const user = users.find(u => u.address.toLowerCase() === addr);
+      if (!user) throw { code: 404, msg: '用户不存在' };
+
+      const available = (user.balance || 0) - (user.frozen_bet || 0) - (user.frozen_ai || 0);
+      if (available < amt) {
+        throw { code: 400, msg: `余额不足。可用: ${available.toFixed(2)} USDT` };
+      }
+
+      // Balance floor
+      user.balance = Math.max(0, +(user.balance - amt).toFixed(4));
+
+      // Risk: large withdraw alert
+      if (amt >= (riskConfig.large_withdraw_threshold || 500)) {
+        addRiskAlert('large_withdraw', 'warning',
+          `${addr.slice(0, 10)}... 提现 ${amt} USDT → ${toAddr.slice(0, 10)}...`);
+      }
+
+      return { user, users };
+    });
+
+    // Record withdrawal (separate lock for withdrawals file)
+    const wResult = await lockedUpdate('withdrawals', (withdrawals) => {
+      const withdrawal = {
+        id: (withdrawals[withdrawals.length - 1]?.id || 0) + 1,
+        address: addr,
+        to_address: toAddr,
+        amount: amt,
+        tx_hash: tx_hash || null,
+        status: 'pending',
+        created_at: new Date().toISOString(),
+      };
+      withdrawals.push(withdrawal);
+      return withdrawal;
+    });
+
+    console.log(`[Withdraw] ${addr.slice(0, 10)}... → ${toAddr.slice(0, 10)}... ${amt} USDT`);
+
+    res.json({
+      code: 0,
+      msg: '提现申请已提交',
+      data: {
+        withdraw_id: wResult.id,
+        amount: amt,
+        to_address: toAddr,
+      }
+    });
+  } catch (e) {
+    if (e.code) return res.status(e.code).json({ code: 1, msg: e.msg });
+    throw e;
   }
-
-  // Deduct balance
-  user.balance = +(user.balance - amt).toFixed(4);
-  write('users', users);
-
-  // Record withdrawal
-  const withdrawals = read('withdrawals');
-  const withdrawal = {
-    id: (withdrawals[withdrawals.length - 1]?.id || 0) + 1,
-    address: addr,
-    to_address: toAddr,
-    amount: amt,
-    status: 'pending',   // pending → processing → completed/failed
-    created_at: new Date().toISOString(),
-  };
-  withdrawals.push(withdrawal);
-  write('withdrawals', withdrawals);
-
-  console.log(`[Withdraw] ${addr.slice(0,10)}... → ${toAddr.slice(0,10)}... ${amt} USDT`);
-
-  res.json({
-    code: 0,
-    msg: '提现申请已提交',
-    data: {
-      withdraw_id: withdrawal.id,
-      amount: amt,
-      to_address: toAddr,
-      new_balance: computeBalance(user),
-    }
-  });
 }));
 
 // GET /api/withdraw/history?wallet=0x...
