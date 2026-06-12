@@ -665,7 +665,11 @@
           '<div class="nickname" style="font-size:16px;font-weight:700;color:#1a1a2e">我的钱包</div>' +
           '<div class="wallet-addr" style="font-size:12px;color:#999;font-family:monospace;overflow:hidden;text-overflow:ellipsis">' + shortAddr + '</div>' +
         '</div>' +
-        '<button onclick="app.showInviteModal()" style="background:#F0F0FF;color:#667eea;border:none;padding:8px 14px;border-radius:18px;font-size:13px;font-weight:600;cursor:pointer">📨 邀请</button>' +
+        '<div style="display:flex;gap:6px">' +
+          '<button onclick="app.showProfileEdit()" style="background:#fff;border:1px solid #ddd;border-radius:18px;padding:6px 12px;font-size:11px;color:#666;cursor:pointer">✏️</button>' +
+          '<button onclick="app.showInviteModal()" style="background:#F0F0FF;color:#667eea;border:none;padding:8px 14px;border-radius:18px;font-size:13px;font-weight:600;cursor:pointer">📨 邀请</button>' +
+          '<button onclick="app.claimInviteRewards()" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;padding:8px 14px;border-radius:18px;font-size:12px;font-weight:600;cursor:pointer">💰 领取</button>' +
+        '</div>' +
       '</div>' +
 
       // ---- Balance Cards ----
@@ -1131,6 +1135,104 @@
       showConfirm('AI托管记录', html);
     } catch(e) { showToast('加载失败'); }
   }
+
+  // ===== AI SETTINGS =====
+  async function showAISettings() {
+    if (!walletAddress) return;
+    try {
+      var res = await apiFetch('/ai-hosting/status?address=' + encodeURIComponent(walletAddress));
+      var s = (res && res.data && res.data.settings) || { max_bet_per_match: 100, max_daily_bet: 500, risk_level: 'medium' };
+      var html = '<div style="text-align:left;font-size:12px;line-height:2">' +
+        '<label>单场上限: <input id="aiMaxBet" type="number" value="' + s.max_bet_per_match + '" style="width:80px;padding:4px;border:1px solid #ddd;border-radius:4px"></label><br>' +
+        '<label>日上限: <input id="aiMaxDaily" type="number" value="' + s.max_daily_bet + '" style="width:80px;padding:4px;border:1px solid #ddd;border-radius:4px"></label><br>' +
+        '<label>风险等级: <select id="aiRisk" style="padding:4px;border:1px solid #ddd;border-radius:4px">' +
+          '<option value="low" ' + (s.risk_level === 'low' ? 'selected' : '') + '>低风险</option>' +
+          '<option value="medium" ' + (s.risk_level === 'medium' ? 'selected' : '') + '>中风险</option>' +
+          '<option value="high" ' + (s.risk_level === 'high' ? 'selected' : '') + '>高风险</option>' +
+        '</select></label>' +
+      '</div>';
+      showConfirm('⚙️ AI托管设置', html, async function() {
+        var settings = {
+          max_bet_per_match: Number(document.getElementById('aiMaxBet').value) || 100,
+          max_daily_bet: Number(document.getElementById('aiMaxDaily').value) || 500,
+          risk_level: document.getElementById('aiRisk').value
+        };
+        try {
+          var r = await apiFetch('/ai-hosting/settings', {
+            method: 'POST',
+            body: JSON.stringify({ wallet_address: walletAddress, settings: settings })
+          });
+          if (r && r.code === 0) showToast('设置已保存');
+        } catch(e) { showToast('保存失败'); }
+      });
+    } catch(e) { showToast('加载设置失败'); }
+  }
+
+  // ===== PROFILE EDIT =====
+  async function showProfileEdit() {
+    if (!walletAddress) return;
+    try {
+      var res = await apiFetch('/user/profile?address=' + encodeURIComponent(walletAddress));
+      var p = (res && res.data) || {};
+      var html = '<div style="text-align:left;font-size:12px;line-height:2">' +
+        '<label>昵称: <input id="editNick" value="' + (p.nickname || '') + '" style="width:120px;padding:4px;border:1px solid #ddd;border-radius:4px"></label>' +
+      '</div>';
+      showConfirm('✏️ 编辑资料', html, async function() {
+        var nick = document.getElementById('editNick').value.trim() || '';
+        try {
+          var r = await apiFetch('/user/profile', {
+            method: 'POST',
+            body: JSON.stringify({ address: walletAddress, nickname: nick })
+          });
+          if (r && r.code === 0) { showToast('资料已更新'); renderProfile(); }
+        } catch(e) { showToast('更新失败'); }
+      });
+    } catch(e) { showToast('加载失败'); }
+  }
+
+  // ===== REFERRAL CLAIM =====
+  async function claimInviteRewards() {
+    if (!walletAddress) return;
+    try {
+      var r = await apiFetch('/invite/claim-reward', {
+        method: 'POST',
+        body: JSON.stringify({ wallet_address: walletAddress })
+      });
+      if (r && r.code === 0) { showToast('✅ 已领取 ' + r.data.claimed + ' USDT'); renderProfile(); }
+      else showToast(r.msg || '领取失败');
+    } catch(e) { showToast('网络错误'); }
+  }
+
+  // ===== SCORE BET (猜比分) =====
+  var _selectedScore = null;
+  function openScoreBet(matchId) {
+    var match = findMatch(matchId);
+    if (!match) return;
+    var scores = ['0:0','1:0','0:1','1:1','2:0','0:2','2:1','1:2','2:2','3:0','0:3','3:1','1:3','3:2','2:3','3:3','主4+','客4+'];
+    var btns = scores.map(function(s) { return '<button onclick="app.selectScoreBet(\'' + s + '\')" style="padding:8px 6px;border:1px solid #ddd;border-radius:6px;background:#fff;font-size:11px;cursor:pointer">' + s + '</button>'; }).join('');
+    var html = '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px">' + btns + '</div>' +
+      '<input id="scoreBetAmount" type="number" placeholder="下注金额 (USDT)" value="10" style="width:100%;margin-top:12px;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:13px">';
+    showConfirm('猜比分 — ' + match.home + ' vs ' + match.away, html, function() {
+      var amt = Number(document.getElementById('scoreBetAmount').value) || 10;
+      if (!_selectedScore) { showToast('请选择一个比分'); return; }
+      placeScoreBet(matchId, _selectedScore, amt);
+    });
+  }
+
+  function selectScoreBet(score) { _selectedScore = score; showToast('已选: ' + score); }
+
+  async function placeScoreBet(matchId, score, amount) {
+    if (!walletAddress) { showToast('请先连接钱包'); return; }
+    try {
+      var r = await apiFetch('/score-bet/place', {
+        method: 'POST',
+        body: JSON.stringify({ wallet_address: walletAddress, match_id: matchId, selected_score: score, amount: amount })
+      });
+      if (r && r.code === 0) showToast('✅ 比分投注成功');
+      else showToast(r.msg || '投注失败');
+      closeConfirm();
+    } catch(e) { showToast('网络错误'); }
+  }
   function setupDappListeners() {
     // Listen for tx status updates from dapp
     window.addEventListener('dapp:txStatus', function(e) {
@@ -1238,6 +1340,7 @@
               '<button onclick="app.toggleAIHosting()" style="background:' + (aiStatus && aiStatus.active ? 'var(--surface-hover)' : 'var(--accent)') + ';color:' + (aiStatus && aiStatus.active ? 'var(--text)' : '#0B0E11') + ';border:none;padding:8px 16px;border-radius:4px;font-size:12px;font-weight:700;cursor:pointer">' + (aiStatus && aiStatus.active ? '停用' : '激活托管') + '</button>' +
             '</div>' +
             '<p style="font-size:11px;color:var(--text-muted);line-height:1.6">AI自动执行反波胆投注，最小冻结10 USDT，双阶段链上确认，可随时停用。</p>' +
+            (aiStatus && aiStatus.active ? '<button onclick="app.showAISettings()" style="background:transparent;border:1px solid var(--border);border-radius:4px;padding:6px 12px;font-size:11px;color:var(--text);cursor:pointer;margin-top:8px">⚙️ 托管设置</button>' : '') +
           '</div>'
         :
           '<div style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:16px;text-align:center">' +
@@ -1337,6 +1440,22 @@
       window._selectedScore = null;
       window._detailMatchId = matchId;
     }
+
+    // Inject score-bet button after grid
+    setTimeout(function() {
+      var existBtn = document.getElementById('scoreBetBtn');
+      if (!existBtn) {
+        var sg = document.getElementById('scoreGrid');
+        if (sg && sg.parentNode) {
+          var btn = document.createElement('button');
+          btn.id = 'scoreBetBtn';
+          btn.textContent = '🎯 猜比分 (波胆投注)';
+          btn.style.cssText = 'width:100%;margin-top:8px;padding:10px;background:linear-gradient(135deg,#FF6B35,#FFA502);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer';
+          btn.onclick = function() { app.openScoreBet(currentDetailMatchId); };
+          sg.parentNode.insertBefore(btn, sg.nextSibling);
+        }
+      }
+    }, 100);
 
     // Wire up quick-bet amounts
     var amtBtns = document.querySelectorAll('.quick-bet-amt');
@@ -1615,6 +1734,13 @@
     loadWithdrawHistory: loadWithdrawHistory,
     checkVIPUpgrade: checkVIPUpgrade,
     loadAIHistory: loadAIHistory,
+    // New: AI settings, profile edit, invite claim, score bet
+    showAISettings: showAISettings,
+    showProfileEdit: showProfileEdit,
+    claimInviteRewards: claimInviteRewards,
+    openScoreBet: openScoreBet,
+    selectScoreBet: selectScoreBet,
+    placeScoreBet: placeScoreBet,
   };
 
   // ===== INIT =====
