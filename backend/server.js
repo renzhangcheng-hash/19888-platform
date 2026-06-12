@@ -26,6 +26,8 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const jwt = require('jsonwebtoken');
 const { ethers } = require('ethers');
+const http = require('http');
+const socketIo = require('socket.io');
 
 const app = express();
 const PORT = process.env.PORT || 3088;
@@ -357,6 +359,85 @@ function generate18Grid() {
     const odds = +((1 / (1 - prob)) * (1 - HOUSE_EDGE_ANTI)).toFixed(2);
     return { score, odds: Math.max(1.01, odds) };
   });
+}
+
+// ═══════════════════════════════════════════════════
+//  MOCK MARKET DATA GENERATORS
+// ═══════════════════════════════════════════════════
+
+// ── Generate mock K-line (candlestick) data ───────
+function generateMockKlines(symbol = 'BTCUSD', interval = '1h', limit = 100) {
+  const klines = [];
+  const now = Date.now();
+  const intervalMs = { '1m': 60000, '5m': 300000, '15m': 900000, '30m': 1800000, '1h': 3600000, '4h': 14400000, '1d': 86400000 };
+  const ms = intervalMs[interval] || 3600000;
+  let basePrice = symbol === 'BTCUSD' ? 68500 : (symbol === 'ETHUSD' ? 3450 : 1.05);
+
+  for (let i = limit - 1; i >= 0; i--) {
+    const t = now - i * ms;
+    const open = basePrice + (Math.random() - 0.5) * basePrice * 0.02;
+    const close = open + (Math.random() - 0.5) * open * 0.015;
+    const high = Math.max(open, close) * (1 + Math.random() * 0.008);
+    const low = Math.min(open, close) * (1 - Math.random() * 0.008);
+    const volume = Math.round((100 + Math.random() * 900) * 100) / 100;
+    klines.push([t, +open.toFixed(2), +high.toFixed(2), +low.toFixed(2), +close.toFixed(2), volume]);
+    basePrice = close;
+  }
+  return klines;
+}
+
+// ── Generate mock orderbook ────────────────────────
+function generateMockOrderbook(symbol = 'BTCUSD', depth = 20) {
+  const midPrice = symbol === 'BTCUSD' ? 68500 : (symbol === 'ETHUSD' ? 3450 : 1.05);
+  const spread = midPrice * 0.001; // 0.1% spread
+  const bids = [];
+  const asks = [];
+
+  for (let i = 0; i < depth; i++) {
+    const bidPrice = +(midPrice - spread * (i + 1) + (Math.random() - 0.5) * spread * 0.5).toFixed(2);
+    const askPrice = +(midPrice + spread * (i + 1) + (Math.random() - 0.5) * spread * 0.5).toFixed(2);
+    const bidQty = +((Math.random() * 2 + 0.1) * (depth - i) / depth).toFixed(4);
+    const askQty = +((Math.random() * 2 + 0.1) * (depth - i) / depth).toFixed(4);
+    bids.push([bidPrice, bidQty]);
+    asks.push([askPrice, askQty]);
+  }
+
+  // Sort bids descending by price, asks ascending by price
+  bids.sort((a, b) => b[0] - a[0]);
+  asks.sort((a, b) => a[0] - b[0]);
+
+  return { bids, asks, timestamp: Date.now() };
+}
+
+// ── Generate mock match odds ──────────────────────
+function generateMockOdds() {
+  const matches = read('matches');
+  if (!matches || matches.length === 0) {
+    return [];
+  }
+  return matches.slice(0, 10).map(m => ({
+    match_id: m.id,
+    home: m.home,
+    away: m.away,
+    odds_home: +(m.odds_home || 1.5 + Math.random() * 3).toFixed(2),
+    odds_draw: +(m.odds_draw || 2.5 + Math.random() * 2).toFixed(2),
+    odds_away: +(m.odds_away || 3 + Math.random() * 5).toFixed(2),
+    updated_at: new Date().toISOString(),
+  }));
+}
+
+// ── Generate mock pool status ──────────────────────
+function generateMockPool() {
+  const aiPool = read('ai_pool');
+  const totalFrozen = aiPool && aiPool.total_frozen ? aiPool.total_frozen : 12500;
+  const activeUsers = aiPool && aiPool.active_users ? aiPool.active_users : 47;
+  return {
+    total_pool: +((totalFrozen || 12500) + Math.random() * 5000).toFixed(2),
+    active_users: (activeUsers || 47) + Math.floor(Math.random() * 5) - 2,
+    total_bets_today: Math.floor(200 + Math.random() * 800),
+    avg_roi: +((Math.random() * 12 - 3)).toFixed(2),
+    updated_at: new Date().toISOString(),
+  };
 }
 
 // ── Seed Data ─────────────────────────────────────
@@ -2521,6 +2602,44 @@ app.get('/api/user/transactions', asyncHandler((req, res) => {
 }));
 
 // ═══════════════════════════════════════════════════
+//  MARKET DATA ENDPOINTS (K-line & Orderbook)
+// ═══════════════════════════════════════════════════
+
+// GET /api/market/kline?symbol=BTCUSD&interval=1h&limit=100
+// Returns mock candlestick OHLCV data
+app.get('/api/market/kline', asyncHandler((req, res) => {
+  const symbol = (req.query.symbol || 'BTCUSD').toUpperCase();
+  const interval = req.query.interval || '1h';
+  const limit = Math.min(parseInt(req.query.limit, 10) || 100, 1000);
+
+  const klines = generateMockKlines(symbol, interval, limit);
+  res.json({
+    code: 0,
+    data: {
+      symbol,
+      interval,
+      klines,
+    },
+  });
+}));
+
+// GET /api/market/orderbook?symbol=BTCUSD&depth=20
+// Returns mock orderbook data
+app.get('/api/market/orderbook', asyncHandler((req, res) => {
+  const symbol = (req.query.symbol || 'BTCUSD').toUpperCase();
+  const depth = Math.min(parseInt(req.query.depth, 10) || 20, 100);
+
+  const orderbook = generateMockOrderbook(symbol, depth);
+  res.json({
+    code: 0,
+    data: {
+      symbol,
+      ...orderbook,
+    },
+  });
+}));
+
+// ═══════════════════════════════════════════════════
 //  GLOBAL ERROR HANDLER (catch-all)
 // ═══════════════════════════════════════════════════
 app.use((err, req, res, _next) => {
@@ -2537,15 +2656,85 @@ app.use((err, req, res, _next) => {
 // ═══════════════════════════════════════════════════
 seed();
 
+// ── Create HTTP Server & Attach Socket.IO ─────────
+const server = http.createServer(app);
+const io = socketIo(server, {
+  cors: {
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+      if (ALLOWED_ORIGIN_SUFFIXES.some(s => origin.endsWith(s))) return callback(null, true);
+      callback(null, false);
+    },
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
+});
+
+// ── WebSocket Connection Handler ──────────────────
+io.on('connection', (socket) => {
+  console.log(`[WS] Client connected: ${socket.id}`);
+
+  // Send initial data on connect
+  socket.emit('kline_update', {
+    symbol: 'BTCUSD',
+    interval: '1h',
+    klines: generateMockKlines('BTCUSD', '1h', 50),
+    timestamp: Date.now(),
+  });
+
+  socket.emit('odds_update', {
+    matches: generateMockOdds(),
+    timestamp: Date.now(),
+  });
+
+  socket.emit('pool_update', generateMockPool());
+
+  socket.on('disconnect', () => {
+    console.log(`[WS] Client disconnected: ${socket.id}`);
+  });
+});
+
+// ── Periodic WebSocket Emissions ──────────────────
+// K-line update every 5 seconds
+const klineInterval = setInterval(() => {
+  const klines = generateMockKlines('BTCUSD', '1h', 50);
+  io.emit('kline_update', {
+    symbol: 'BTCUSD',
+    interval: '1h',
+    klines,
+    timestamp: Date.now(),
+  });
+}, 5000);
+
+// Odds update every 10 seconds
+const oddsInterval = setInterval(() => {
+  io.emit('odds_update', {
+    matches: generateMockOdds(),
+    timestamp: Date.now(),
+  });
+}, 10000);
+
+// Pool update every 30 seconds
+const poolInterval = setInterval(() => {
+  io.emit('pool_update', generateMockPool());
+}, 30000);
+
 // ── Graceful Shutdown ─────────────────────────────
 let _shuttingDown = false;
 function gracefulShutdown(signal) {
   if (_shuttingDown) return;
   _shuttingDown = true;
   console.log(`\n[SHUTDOWN] Received ${signal}. Closing gracefully...`);
-  server.close(() => {
-    console.log('[SHUTDOWN] HTTP server closed.');
-    process.exit(0);
+  clearInterval(klineInterval);
+  clearInterval(oddsInterval);
+  clearInterval(poolInterval);
+  io.close(() => {
+    console.log('[SHUTDOWN] Socket.IO closed.');
+    server.close(() => {
+      console.log('[SHUTDOWN] HTTP server closed.');
+      process.exit(0);
+    });
   });
   // Force exit after 10s
   setTimeout(() => {
@@ -2569,7 +2758,7 @@ process.on('unhandledRejection', (reason) => {
 });
 
 try {
-  const server = app.listen(PORT, '0.0.0.0', () => {
+  server.listen(PORT, '0.0.0.0', () => {
     console.log('PORT=' + PORT + ' STARTED');
   });
   server.on('error', (err) => {

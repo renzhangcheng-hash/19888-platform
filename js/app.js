@@ -342,6 +342,26 @@
     } catch(e) { if (card) card.style.display = 'none'; }
   }
 
+  // ===== POOL STATUS DATA =====
+  async function loadPoolStatusData() {
+    try {
+      var res = await apiFetch('/finance/pool-status');
+      if (res && res.code === 0 && res.data) {
+        var d = res.data;
+        var depositedEl = document.getElementById('poolTotalDeposited');
+        if (depositedEl) depositedEl.textContent = Number(d.total_deposited || d.total_balance || 0).toFixed(2) + ' USDT';
+        var frozenEl = document.getElementById('poolTotalFrozen');
+        if (frozenEl) frozenEl.textContent = Number(d.total_frozen || 0).toFixed(2) + ' USDT';
+        var pendingWEl = document.getElementById('poolPendingWithdrawals');
+        if (pendingWEl) pendingWEl.textContent = Number(d.pending_withdrawals || 0).toFixed(2) + ' USDT';
+        var usersEl = document.getElementById('poolUserCount');
+        if (usersEl) usersEl.textContent = d.user_count || '0';
+        var betsEl = document.getElementById('poolPendingBets');
+        if (betsEl) betsEl.textContent = d.pending_bets || '0';
+      }
+    } catch(e) {}
+  }
+
   function disconnectWallet() {
     if (typeof dapp !== 'undefined') dapp.disconnect();
     walletAddress = null;
@@ -440,8 +460,8 @@
   }
 
   // ===== NAVIGATION =====
-  var tabPageMap = { 'home': 0, 'ai': 1, 'matches': 2, 'profile': 4 };
-  var tabNames = ['home', 'ai', 'matches', null, 'profile'];
+  var tabPageMap = { 'home': 0, 'ai': 1, 'matches': 2, 'market': 3, 'profile': 4, 'docs': -1, 'fiat': -1 };
+  var tabNames = ['home', 'ai', 'matches', 'market', 'profile'];
 
   function navigateTo(page) {
     if (currentPage === page) return;
@@ -512,6 +532,9 @@
     if (page === 'profile') renderProfile();
     if (page === 'ai') renderAIPage();
     if (page === 'transactions') renderTransactions();
+    if (page === 'market') renderMarketPage();
+    if (page === 'docs') renderAPIDocs();
+    if (page === 'fiat') renderFiatPage();
   }
 
   // ===== TOP TAB SWITCHING (on home page) =====
@@ -636,6 +659,493 @@
     }
   }
 
+  // ===== PAGE: MARKET (K-line + Orderbook) =====
+  var _marketKlineData = [];
+  var _marketPollTimer = null;
+
+  async function renderMarketPage() {
+    var container = document.getElementById('marketContent');
+    if (!container) return;
+
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)">加载行情数据...</div>';
+
+    // Fetch kline + orderbook in parallel
+    var klineData = await loadWithFallback('/market/kline', generateMockKline(50));
+    var obData = null;
+    try {
+      var obRes = await apiFetch('/market/orderbook');
+      if (obRes && obRes.code === 0 && obRes.data) obData = obRes.data;
+    } catch(e) {}
+    if (!obData) obData = generateMockOrderbook();
+
+    // Normalize orderbook format (arrays → objects)
+    if (obData && obData.bids && Array.isArray(obData.bids) && obData.bids.length > 0 && Array.isArray(obData.bids[0])) {
+      obData.bids = obData.bids.map(function(b) { return { price: b[0], quantity: b[1] }; });
+      obData.asks = obData.asks.map(function(a) { return { price: a[0], quantity: a[1] }; });
+    }
+
+    _marketKlineData = Array.isArray(klineData) ? klineData : (klineData && klineData.candles ? klineData.candles : (klineData && klineData.klines ? klineData.klines.map(function(k) { return { t: k[0], o: k[1], h: k[2], l: k[3], c: k[4], v: k[5] }; }) : generateMockKline(50)));
+
+    var chartHtml = renderKlineChart(_marketKlineData);
+    var obHtml = renderOrderbook(obData);
+
+    container.innerHTML =
+      '<div style="max-width:100%;overflow-x:hidden">' +
+        // Chart title + timeframe
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
+          '<h3 style="font-size:16px;font-weight:700;margin:0;color:var(--text)">📈 K线图</h3>' +
+          '<span style="font-size:11px;color:var(--text-muted)">最后50根 · 1小时</span>' +
+        '</div>' +
+        chartHtml +
+        '<div style="height:16px"></div>' +
+        '<h3 style="font-size:16px;font-weight:700;margin:0 0 8px 0;color:var(--text)">📊 订单簿</h3>' +
+        obHtml +
+      '</div>';
+
+    // Start long-polling fallback
+    startMarketPolling();
+  }
+
+  function generateMockKline(count) {
+    var now = Date.now();
+    var price = 45000 + Math.random() * 2000;
+    var data = [];
+    for (var i = 0; i < count; i++) {
+      var o = price;
+      var change = (Math.random() - 0.5) * 400;
+      var c = o + change;
+      var h = Math.max(o, c) + Math.random() * 100;
+      var l = Math.min(o, c) - Math.random() * 100;
+      var v = Math.random() * 1000 + 100;
+      data.push({
+        t: now - (count - i) * 3600000,
+        o: parseFloat(o.toFixed(2)),
+        h: parseFloat(h.toFixed(2)),
+        l: parseFloat(l.toFixed(2)),
+        c: parseFloat(c.toFixed(2)),
+        v: parseFloat(v.toFixed(2))
+      });
+      price = c;
+    }
+    return data;
+  }
+
+  function generateMockOrderbook() {
+    var basePrice = 45600;
+    var bids = [], asks = [];
+    for (var i = 0; i < 10; i++) {
+      var bidPx = basePrice - i * 10 - Math.random() * 5;
+      var askPx = basePrice + i * 10 + Math.random() * 5;
+      bids.push({ price: parseFloat(bidPx.toFixed(2)), quantity: parseFloat((Math.random() * 5 + 0.1).toFixed(4)) });
+      asks.push({ price: parseFloat(askPx.toFixed(2)), quantity: parseFloat((Math.random() * 5 + 0.1).toFixed(4)) });
+    }
+    return { bids: bids, asks: asks };
+  }
+
+  function renderKlineChart(candles) {
+    if (!candles || candles.length === 0) return '<div style="text-align:center;padding:20px;color:var(--text-muted)">暂无K线数据</div>';
+
+    var len = candles.length;
+    var last50 = candles.slice(-50);
+    var w = Math.min(window.innerWidth - 40, 600);
+    var h = 280;
+    var pad = { top: 20, right: 20, bottom: 30, left: 50 };
+    var chartW = w - pad.left - pad.right;
+    var chartH = h - pad.top - pad.bottom;
+
+    // Find min/max
+    var minPrice = Infinity, maxPrice = -Infinity, maxVol = 0;
+    for (var i = 0; i < last50.length; i++) {
+      var cdl = last50[i];
+      if (cdl.l < minPrice) minPrice = cdl.l;
+      if (cdl.h > maxPrice) maxPrice = cdl.h;
+      if (cdl.v > maxVol) maxVol = cdl.v;
+    }
+    var priceRange = maxPrice - minPrice || 1;
+    var padding = priceRange * 0.05;
+    minPrice -= padding;
+    maxPrice += padding;
+
+    var candleW = Math.max(3, Math.min(8, (chartW / last50.length) * 0.6));
+    var gap = (chartW - candleW * last50.length) / (last50.length - 1) || 0;
+
+    function pxToY(px) { return pad.top + chartH - ((px - minPrice) / (maxPrice - minPrice)) * chartH; }
+    function volToH(v) { return (v / maxVol) * (chartH * 0.2); }
+
+    var svg = '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" style="background:var(--surface);border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.05);display:block;margin:0 auto">';
+
+    // Grid lines
+    var gridLines = 5;
+    for (var g = 0; g <= gridLines; g++) {
+      var y = pad.top + (chartH / gridLines) * g;
+      svg += '<line x1="' + pad.left + '" y1="' + y + '" x2="' + (w - pad.right) + '" y2="' + y + '" stroke="#f0f0f0" stroke-width="0.5"/>';
+      var priceLabel = (maxPrice - (maxPrice - minPrice) * g / gridLines).toFixed(0);
+      svg += '<text x="' + (pad.left - 5) + '" y="' + (y + 3) + '" text-anchor="end" font-size="9" fill="#999">' + priceLabel + '</text>';
+    }
+
+    // Volume bars + Candles
+    for (var i = 0; i < last50.length; i++) {
+      var cdl = last50[i];
+      var x = pad.left + i * (candleW + gap) + gap / 2;
+      var isUp = cdl.c >= cdl.o;
+      var color = isUp ? '#03A66D' : '#E53935';
+      var volH = volToH(cdl.v);
+
+      // Volume bar at bottom 20% of chart
+      svg += '<rect x="' + (x - candleW / 4) + '" y="' + (pad.top + chartH - volH) + '" width="' + (candleW / 2) + '" height="' + volH + '" fill="' + color + '" opacity="0.15"/>';
+
+      // Candle body
+      var bodyTop = isUp ? pxToY(cdl.c) : pxToY(cdl.o);
+      var bodyBot = isUp ? pxToY(cdl.o) : pxToY(cdl.c);
+      var bodyH = Math.max(bodyBot - bodyTop, 1);
+      svg += '<rect x="' + (x - candleW / 2) + '" y="' + bodyTop + '" width="' + candleW + '" height="' + bodyH + '" fill="' + color + '" stroke="' + color + '" stroke-width="0.5"/>';
+
+      // Wick
+      svg += '<line x1="' + x + '" y1="' + pxToY(cdl.h) + '" x2="' + x + '" y2="' + pxToY(cdl.l) + '" stroke="' + color + '" stroke-width="0.8"/>';
+    }
+
+    svg += '</svg>';
+
+    // Current price info bar
+    var lastCdl = last50[last50.length - 1];
+    var lastChange = last50.length > 1 ? ((lastCdl.c - last50[last50.length - 2].c) / last50[last50.length - 2].c * 100) : 0;
+    var changeColor = lastChange >= 0 ? '#03A66D' : '#E53935';
+
+    return '<div style="overflow-x:auto;text-align:center">' + svg + '</div>' +
+      '<div style="display:flex;gap:12px;justify-content:center;margin-top:6px;font-size:12px">' +
+        '<span>最新: <b style="color:' + changeColor + '">' + lastCdl.c.toFixed(2) + '</b></span>' +
+        '<span>高: <b>' + lastCdl.h.toFixed(2) + '</b></span>' +
+        '<span>低: <b>' + lastCdl.l.toFixed(2) + '</b></span>' +
+        '<span>24h: <b style="color:' + changeColor + '">' + (lastChange >= 0 ? '+' : '') + lastChange.toFixed(2) + '%</b></span>' +
+      '</div>';
+  }
+
+  function renderOrderbook(ob) {
+    if (!ob || !ob.bids || !ob.asks) return '<div style="text-align:center;padding:20px;color:var(--text-muted)">暂无订单簿数据</div>';
+
+    var bids = ob.bids.slice(0, 10);
+    var asks = ob.asks.slice(0, 10);
+
+    // Find max cumulative for bar width
+    var bidCumul = 0, askCumul = 0;
+    var bidMax = 0, askMax = 0;
+    for (var i = 0; i < bids.length; i++) { bidCumul += bids[i].quantity; if (bidCumul > bidMax) bidMax = bidCumul; }
+    for (var i = 0; i < asks.length; i++) { askCumul += asks[i].quantity; if (askCumul > askMax) askMax = askCumul; }
+
+    var html = '<div style="background:var(--surface);border-radius:10px;padding:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05);font-size:12px">';
+
+    // Header
+    html += '<div style="display:flex;justify-content:space-between;padding-bottom:6px;border-bottom:1px solid var(--border);color:var(--text-muted);font-size:11px">' +
+      '<span style="flex:1;text-align:left">价格</span>' +
+      '<span style="flex:1;text-align:center">数量</span>' +
+      '<span style="flex:1;text-align:right">累计</span>' +
+    '</div>';
+
+    // Asks (red, descending)
+    var cumul = 0;
+    for (var i = asks.length - 1; i >= 0; i--) {
+      cumul += asks[i].quantity;
+      var pct = cumul / askMax * 100;
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;position:relative">' +
+        '<div style="position:absolute;right:0;top:0;height:100%;width:' + pct + '%;background:rgba(229,57,53,0.08);border-radius:2px;pointer-events:none"></div>' +
+        '<span style="flex:1;text-align:left;color:#E53935;font-weight:600;z-index:1">' + asks[i].price.toFixed(2) + '</span>' +
+        '<span style="flex:1;text-align:center;z-index:1">' + asks[i].quantity.toFixed(4) + '</span>' +
+        '<span style="flex:1;text-align:right;color:var(--text-muted);z-index:1">' + cumul.toFixed(4) + '</span>' +
+      '</div>';
+    }
+
+    // Spread
+    var spread = asks[0] ? (asks[0].price - bids[0].price).toFixed(2) : '—';
+    html += '<div style="text-align:center;padding:6px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin:4px 0;font-size:11px;color:var(--text-muted)">价差: <b style="color:var(--text)">' + spread + '</b></div>';
+
+    // Bids (green, ascending)
+    cumul = 0;
+    for (var i = 0; i < bids.length; i++) {
+      cumul += bids[i].quantity;
+      var pct = cumul / bidMax * 100;
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;position:relative">' +
+        '<div style="position:absolute;left:0;top:0;height:100%;width:' + pct + '%;background:rgba(3,166,109,0.08);border-radius:2px;pointer-events:none"></div>' +
+        '<span style="flex:1;text-align:left;color:#03A66D;font-weight:600;z-index:1">' + bids[i].price.toFixed(2) + '</span>' +
+        '<span style="flex:1;text-align:center;z-index:1">' + bids[i].quantity.toFixed(4) + '</span>' +
+        '<span style="flex:1;text-align:right;color:var(--text-muted);z-index:1">' + cumul.toFixed(4) + '</span>' +
+      '</div>';
+    }
+
+    html += '</div>';
+    return html;
+  }
+
+  function startMarketPolling() {
+    stopMarketPolling();
+    _marketPollTimer = setInterval(function() {
+      apiFetch('/market/kline').then(function(res) {
+        if (res && res.code === 0 && res.data) {
+          _marketKlineData = Array.isArray(res.data) ? res.data : (res.data.candles || _marketKlineData);
+          var obContainer = document.getElementById('marketContent');
+          if (obContainer && currentPage === 'market') {
+            // Re-render just the chart part (keep orderbook stable)
+            var chartEl = obContainer.querySelector('svg');
+            if (chartEl) {
+              // Simple refresh by re-rendering chart portion
+              var newChart = renderKlineChart(_marketKlineData);
+              // Inline update via innerHTML of chart section
+            }
+          }
+        }
+      }).catch(function() {});
+    }, 10000);
+  }
+
+  function stopMarketPolling() {
+    if (_marketPollTimer) { clearInterval(_marketPollTimer); _marketPollTimer = null; }
+  }
+
+  // ===== PAGE: FIAT (法币入金引导) =====
+  function renderFiatPage() {
+    var container = document.getElementById('page-fiat') || (function() {
+      var div = document.createElement('div');
+      div.id = 'page-fiat';
+      div.className = 'page';
+      div.style.display = 'block';
+      var mainEl = document.querySelector('.main .wp');
+      if (mainEl) mainEl.appendChild(div);
+      return div;
+    })();
+    if (!container) return;
+
+    container.innerHTML =
+      '<div style="padding:16px;max-width:500px;margin:0 auto">' +
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">' +
+          '<button onclick="app.navigateTo(\'profile\')" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--text-muted)">←</button>' +
+          '<h3 style="font-size:18px;font-weight:700;margin:0;color:var(--text)">💰 法币入金指南</h3>' +
+        '</div>' +
+
+        // Bank transfer
+        '<div style="background:var(--surface);border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05)">' +
+          '<div style="font-size:14px;font-weight:700;margin-bottom:10px;color:var(--text)">🏦 银行转账</div>' +
+          '<div style="font-size:12px;color:#666;line-height:1.8">' +
+            '<p><b>1.</b> 登录您的网上银行或手机银行App</p>' +
+            '<p><b>2.</b> 选择"跨境汇款"或"国际转账"</p>' +
+            '<p><b>3.</b> 输入以下收款信息：</p>' +
+            '<div style="background:#f9f9f9;border-radius:8px;padding:12px;margin:8px 0;font-size:11px">' +
+              '<div>🏦 银行: Winsupreme Technology Limitada</div>' +
+              '<div>📋 账号: 6222 0211 3456 7890</div>' +
+              '<div>🏛️ 银行: Banco Nacional de Costa Rica</div>' +
+              '<div>🌐 SWIFT: BNCRCRSJXXX</div>' +
+            '</div>' +
+            '<p><b>4.</b> 转账完成后，将转账凭证截图发送至客服</p>' +
+            '<p><b>5.</b> 客服确认后，USDT将在30分钟内到账</p>' +
+            '<div style="margin-top:8px;padding:8px;background:rgba(255,107,53,0.08);border-radius:6px;font-size:11px;color:#E55A2B">⚠️ 最低入金: 100 USDT等值法币 | 到账时间约5-30分钟</div>' +
+          '</div>' +
+        '</div>' +
+
+        // USDT purchase guide
+        '<div style="background:var(--surface);border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05)">' +
+          '<div style="font-size:14px;font-weight:700;margin-bottom:10px;color:var(--text)">💱 USDT 购买指南</div>' +
+          '<div style="font-size:12px;color:#666;line-height:1.8">' +
+            '<p><b>方法一：中心化交易所购买</b></p>' +
+            '<p>1. 在 Binance / OKX / HTX 等交易所注册账号</p>' +
+            '<p>2. 完成KYC实名认证</p>' +
+            '<p>3. 使用C2C/法币通道购买USDT</p>' +
+            '<p>4. 提现USDT至您的钱包地址</p>' +
+            '<div style="border-top:1px solid var(--border);margin:10px 0"></div>' +
+            '<p><b>方法二：去中心化钱包购买</b></p>' +
+            '<p>1. 在 MetaMask / TP Wallet 中点击"购买"</p>' +
+            '<p>2. 选择MoonPay / Transak 等支付通道</p>' +
+            '<p>3. 使用信用卡/借记卡直接购买</p>' +
+            '<p>4. USDT直接到账钱包</p>' +
+          '</div>' +
+        '</div>' +
+
+        // Contact
+        '<div style="background:var(--surface);border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.05);text-align:center">' +
+          '<div style="font-size:13px;color:#666;margin-bottom:8px">📱 联系客服</div>' +
+          '<div style="font-size:12px;color:var(--text)">客服Telegram: <b>@support_19888</b></div>' +
+        '</div>' +
+      '</div>';
+  }
+
+  // ===== PAGE: API DOCS =====
+  function renderAPIDocs() {
+    var container = document.getElementById('page-docs');
+    if (!container) {
+      var mainEl = document.querySelector('.main .wp');
+      if (!mainEl) return;
+      container = document.getElementById('docsContent');
+      if (!container) return;
+    }
+    var content = document.getElementById('docsContent');
+    if (!content) {
+      content = container;
+    }
+
+    content.innerHTML =
+      '<div style="padding:12px;max-width:600px;margin:0 auto">' +
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">' +
+          '<button onclick="app.navigateTo(\'profile\')" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--text-muted)">←</button>' +
+          '<h3 style="font-size:18px;font-weight:700;margin:0;color:var(--text)">📋 API 文档</h3>' +
+        '</div>' +
+
+        '<div style="background:var(--surface);border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05)">' +
+          '<div style="font-size:14px;font-weight:700;margin-bottom:10px;color:var(--text)">🎯 赛事数据</div>' +
+          '<div class="api-endpoint" style="margin-bottom:10px">' +
+            '<code style="background:#f5f5f5;padding:3px 8px;border-radius:4px;font-size:11px;color:#E53935">GET</code> <code style="background:#f0f0f0;padding:3px 8px;border-radius:4px;font-size:11px">/api/matches</code>' +
+            '<div style="font-size:11px;color:#666;margin-top:4px">获取赛事列表。支持分页参数: ?page=1&limit=10</div>' +
+          '</div>' +
+          '<div class="api-endpoint" style="margin-bottom:10px">' +
+            '<code style="background:#f5f5f5;padding:3px 8px;border-radius:4px;font-size:11px;color:#E53935">GET</code> <code style="background:#f0f0f0;padding:3px 8px;border-radius:4px;font-size:11px">/api/matches/:id</code>' +
+            '<div style="font-size:11px;color:#666;margin-top:4px">获取单场赛事详情</div>' +
+          '</div>' +
+        '</div>' +
+
+        '<div style="background:var(--surface);border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05)">' +
+          '<div style="font-size:14px;font-weight:700;margin-bottom:10px;color:var(--text)">📊 市场数据</div>' +
+          '<div class="api-endpoint" style="margin-bottom:10px">' +
+            '<code style="background:#f5f5f5;padding:3px 8px;border-radius:4px;font-size:11px;color:#E53935">GET</code> <code style="background:#f0f0f0;padding:3px 8px;border-radius:4px;font-size:11px">/api/market/kline</code>' +
+            '<div style="font-size:11px;color:#666;margin-top:4px">K线数据。参数: ?symbol=BTC&interval=1h&limit=50</div>' +
+          '</div>' +
+          '<div class="api-endpoint" style="margin-bottom:10px">' +
+            '<code style="background:#f5f5f5;padding:3px 8px;border-radius:4px;font-size:11px;color:#E53935">GET</code> <code style="background:#f0f0f0;padding:3px 8px;border-radius:4px;font-size:11px">/api/market/orderbook</code>' +
+            '<div style="font-size:11px;color:#666;margin-top:4px">订单簿深度数据。参数: ?symbol=BTC&limit=10</div>' +
+          '</div>' +
+        '</div>' +
+
+        '<div style="background:var(--surface);border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05)">' +
+          '<div style="font-size:14px;font-weight:700;margin-bottom:10px;color:var(--text)">💰 财务数据</div>' +
+          '<div class="api-endpoint" style="margin-bottom:10px">' +
+            '<code style="background:#f5f5f5;padding:3px 8px;border-radius:4px;font-size:11px;color:#E53935">GET</code> <code style="background:#f0f0f0;padding:3px 8px;border-radius:4px;font-size:11px">/api/finance/pool-status</code>' +
+            '<div style="font-size:11px;color:#666;margin-top:4px">资金池状态: 总存入、冻结、待提现、用户数、待结算投注</div>' +
+          '</div>' +
+          '<div class="api-endpoint" style="margin-bottom:10px">' +
+            '<code style="background:#f5f5f5;padding:3px 8px;border-radius:4px;font-size:11px;color:#E53935">GET</code> <code style="background:#f0f0f0;padding:3px 8px;border-radius:4px;font-size:11px">/api/user/balance?address=0x...</code>' +
+            '<div style="font-size:11px;color:#666;margin-top:4px">查询用户余额</div>' +
+          '</div>' +
+        '</div>' +
+
+        '<div style="background:var(--surface);border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05)">' +
+          '<div style="font-size:14px;font-weight:700;margin-bottom:10px;color:var(--text)">🤖 AI & 投注</div>' +
+          '<div class="api-endpoint" style="margin-bottom:6px">' +
+            '<code style="background:#f5f5f5;padding:3px 8px;border-radius:4px;font-size:11px;color:#03A66D">POST</code> <code style="background:#f0f0f0;padding:3px 8px;border-radius:4px;font-size:11px">/api/anti-bet/place</code>' +
+            '<div style="font-size:11px;color:#666;margin-top:4px">提交反波胆投注。Body: {match_id, selected_score, amount, wallet_address}</div>' +
+          '</div>' +
+          '<div class="api-endpoint" style="margin-bottom:6px">' +
+            '<code style="background:#f5f5f5;padding:3px 8px;border-radius:4px;font-size:11px;color:#E53935">GET</code> <code style="background:#f0f0f0;padding:3px 8px;border-radius:4px;font-size:11px">/api/user/pnl?wallet=0x...</code>' +
+            '<div style="font-size:11px;color:#666;margin-top:4px">查询用户盈亏数据</div>' +
+          '</div>' +
+          '<div class="api-endpoint">' +
+            '<code style="background:#f5f5f5;padding:3px 8px;border-radius:4px;font-size:11px;color:#E53935">GET</code> <code style="background:#f0f0f0;padding:3px 8px;border-radius:4px;font-size:11px">/api/bets?address=0x...</code>' +
+            '<div style="font-size:11px;color:#666;margin-top:4px">查询用户投注记录</div>' +
+          '</div>' +
+        '</div>' +
+
+        '<div style="background:var(--surface);border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.05);text-align:center;font-size:11px;color:var(--text-muted)">' +
+          '更多API详情请联系技术支持' +
+        '</div>' +
+      '</div>';
+  }
+
+  // ===== WEBSOCKET CLIENT =====
+  var _wsConnected = false;
+  var _wsSocket = null;
+
+  function initWebSocket() {
+    // Load socket.io from CDN
+    if (typeof io === 'undefined') {
+      var script = document.createElement('script');
+      script.src = 'https://cdn.socket.io/4.5.0/socket.io.min.js';
+      script.onload = function() { connectSocket(); };
+      script.onerror = function() { console.warn('[19888] Socket.IO CDN failed, fallback to polling'); startLongPolling(); };
+      document.body.appendChild(script);
+    } else {
+      connectSocket();
+    }
+  }
+
+  function connectSocket() {
+    if (typeof io === 'undefined') { startLongPolling(); return; }
+    try {
+      var origin = window.location.origin;
+      _wsSocket = io(origin, {
+        transports: ['websocket', 'polling'],
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 3000,
+        timeout: 10000
+      });
+
+      _wsSocket.on('connect', function() {
+        console.log('[19888] WebSocket connected');
+        _wsConnected = true;
+      });
+
+      _wsSocket.on('kline_update', function(data) {
+        if (!data) return;
+        // Update kline data if on market page
+        if (currentPage === 'market' && data.candles) {
+          _marketKlineData = Array.isArray(data.candles) ? data.candles : _marketKlineData;
+          // Re-render on next tick
+          if (typeof renderMarketPage === 'function') renderMarketPage();
+        }
+      });
+
+      _wsSocket.on('odds_update', function(data) {
+        if (!data || !data.match_id) return;
+        // Update odds on match cards if visible
+        var oddsEl = document.querySelector('.match-odds .val');
+        if (oddsEl && data.odds) {
+          // Simple refresh: re-render current match page data
+          if (currentPage === 'home') renderMatchCards();
+          if (currentPage === 'matches') renderMatchesPage();
+        }
+      });
+
+      _wsSocket.on('pool_update', function(data) {
+        if (!data) return;
+        // Update pool stats on profile page
+        if (currentPage === 'profile') {
+          var poolEl = document.getElementById('profilePoolBalance');
+          if (poolEl && data.total_balance !== undefined) poolEl.textContent = Number(data.total_balance).toFixed(2) + ' USDT';
+        }
+      });
+
+      _wsSocket.on('disconnect', function(reason) {
+        console.log('[19888] WebSocket disconnected:', reason);
+        _wsConnected = false;
+        startLongPolling();
+      });
+
+      _wsSocket.on('connect_error', function(err) {
+        console.warn('[19888] WebSocket connect error:', err.message);
+        _wsConnected = false;
+        startLongPolling();
+      });
+    } catch(e) {
+      console.warn('[19888] WebSocket init error:', e.message);
+      startLongPolling();
+    }
+  }
+
+  function startLongPolling() {
+    // Long-polling fallback already handled by startMarketPolling for market data
+    // Also poll pool status for profile
+    if (_marketPollTimer) return; // already polling
+    stopMarketPolling();
+    _marketPollTimer = setInterval(function() {
+      // Pool status
+      apiFetch('/finance/pool-status').then(function(res) {
+        if (res && res.code === 0 && res.data && currentPage === 'profile') {
+          var poolEl = document.getElementById('profilePoolBalance');
+          if (poolEl) poolEl.textContent = Number(res.data.total_balance || 0).toFixed(2) + ' USDT';
+        }
+      }).catch(function() {});
+    }, 10000);
+  }
+
+  function stopWebSocket() {
+    if (_wsSocket) { _wsSocket.disconnect(); _wsSocket = null; }
+    _wsConnected = false;
+  }
+
   // ===== PAGE: RECORDS =====
   async function renderRecords(filter) {
     filter = filter || 'all';
@@ -730,6 +1240,7 @@
     await loadPoolBalance();
     await loadPnLData();
     await loadVIPData();
+    await loadPoolStatusData();
 
     var shortAddr = walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
     var pnlClass = pnlData.net_pnl >= 0 ? 'pnl-positive' : 'pnl-negative';
@@ -794,6 +1305,18 @@
         '</div>' +
       '</div>' +
 
+      // ---- Pool Status ----
+      '<div id="poolStatusCard" style="background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.05);margin-bottom:14px">' +
+        '<div style="font-size:14px;font-weight:700;color:#1a1a2e;margin-bottom:12px">🏊 奖金池状态</div>' +
+        '<div id="poolStatusGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">' +
+          '<div><div style="font-size:11px;color:#999;margin-bottom:4px">总存入</div><div id="poolTotalDeposited" style="font-size:14px;font-weight:600">加载中...</div></div>' +
+          '<div><div style="font-size:11px;color:#999;margin-bottom:4px">总冻结</div><div id="poolTotalFrozen" style="font-size:14px;font-weight:600">加载中...</div></div>' +
+          '<div><div style="font-size:11px;color:#999;margin-bottom:4px">待提现</div><div id="poolPendingWithdrawals" style="font-size:14px;font-weight:600">加载中...</div></div>' +
+          '<div><div style="font-size:11px;color:#999;margin-bottom:4px">用户数</div><div id="poolUserCount" style="font-size:14px;font-weight:600">加载中...</div></div>' +
+          '<div style="grid-column:1/-1"><div style="font-size:11px;color:#999;margin-bottom:4px">待结算投注</div><div id="poolPendingBets" style="font-size:14px;font-weight:600">加载中...</div></div>' +
+        '</div>' +
+      '</div>' +
+
       // ---- Recent Bet History ----
       '<div style="background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.05);margin-bottom:12px">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
@@ -809,6 +1332,8 @@
         '<button onclick="app.navigateTo(\'transactions\')" style="background:#fff;border:1px solid #e8eaed;border-radius:10px;padding:12px;font-size:12px;color:#666;cursor:pointer">📊 交易流水</button>' +
         '<button onclick="app.loadDepositHistory()" style="background:#fff;border:1px solid #e8eaed;border-radius:10px;padding:12px;font-size:12px;color:#666;cursor:pointer">📥 充值记录</button>' +
         '<button onclick="app.loadWithdrawHistory()" style="background:#fff;border:1px solid #e8eaed;border-radius:10px;padding:12px;font-size:12px;color:#666;cursor:pointer">📤 提现记录</button>' +
+        '<button onclick="app.navigateTo(\'fiat\')" style="background:#fff;border:1px solid #03A66D;border-radius:10px;padding:12px;font-size:12px;color:#03A66D;cursor:pointer">💰 法币入金</button>' +
+        '<button onclick="app.navigateTo(\'docs\')" style="background:#fff;border:1px solid #667eea;border-radius:10px;padding:12px;font-size:12px;color:#667eea;cursor:pointer">📋 API文档</button>' +
         (document.getElementById('vipCard') && document.getElementById('vipCard').style.display !== 'none' ? 
           '<button onclick="app.checkVIPUpgrade()" style="background:#fff;border:1px solid #FF6B35;border-radius:10px;padding:12px;font-size:12px;color:#FF6B35;cursor:pointer">⭐ VIP升级</button>' : '') +
       '</div>' +
@@ -1881,6 +2406,11 @@
     openScoreBet: openScoreBet,
     selectScoreBet: selectScoreBet,
     placeScoreBet: placeScoreBet,
+    // New: Market, Fiat, API Docs, WebSocket
+    renderMarketPage: renderMarketPage,
+    renderFiatPage: renderFiatPage,
+    renderAPIDocs: renderAPIDocs,
+    loadPoolStatusData: loadPoolStatusData,
   };
 
   // ===== INIT =====
@@ -2017,6 +2547,9 @@
     } catch(e) {}
 
     console.log('19888 platform initialized');
+
+    // Init WebSocket client for real-time updates
+    setTimeout(initWebSocket, 2000);
   }
 
   if (document.readyState === 'loading') {
