@@ -207,6 +207,15 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,107,53,0.12
 .load-more-btn{display:block;text-align:center;padding:14px;color:var(--accent);font-size:14px;font-weight:600;text-decoration:none;background:var(--surface);border:1px dashed var(--border);border-radius:8px;transition:all .2s}
 .load-more-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
 
+/* ===== SKELETON LOADING ===== */
+@keyframes skeleton-pulse{0%{opacity:.6}50%{opacity:.2}100%{opacity:.6}}
+.skeleton-loading{display:flex;flex-direction:column;gap:12px;padding:16px;list-style:none}
+.skeleton-row{height:72px;background:var(--surface);border:1px solid var(--border);border-radius:8px;animation:skeleton-pulse 1.5s ease-in-out infinite}
+.skeleton-row:nth-child(2){animation-delay:.2s}
+.skeleton-row:nth-child(3){animation-delay:.4s}
+.skeleton-row:nth-child(4){animation-delay:.6s}
+.skeleton-row:nth-child(5){animation-delay:.8s}
+
 /* ===== LEAGUE GROUP HEADER ===== */
 .league-group-header{list-style:none;margin:8px 0}
 .league-group-header .con{background:rgba(255,107,53,0.06);border:1px solid var(--border);border-radius:6px;padding:4px 0}

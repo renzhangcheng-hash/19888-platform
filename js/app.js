@@ -516,7 +516,7 @@
   async function renderMatchCards() {
     var container = document.getElementById('matchList');
     if (!container) return;
-    container.innerHTML = '<li><div class="con" style="padding:20px;text-align:center;color:#999">加载中...</div></li>';
+    container.innerHTML = '<li class="skeleton-row"></li><li class="skeleton-row"></li><li class="skeleton-row"></li><li class="skeleton-row"></li><li class="skeleton-row"></li>';
     var data = await loadWithFallback('/matches', mockMatches);
     if (!data || data.length === 0) {
       container.innerHTML = '<li><div class="con" style="padding:30px;text-align:center;color:#999">暂无赛事数据</div></li>';
@@ -589,7 +589,7 @@
       container = document.getElementById('matchesPageList');
     }
 
-    container.innerHTML = '<li><div class="con" style="padding:20px;text-align:center;color:#999">加载中...</div></li>';
+    container.innerHTML = '<li class="skeleton-row"></li><li class="skeleton-row"></li><li class="skeleton-row"></li><li class="skeleton-row"></li><li class="skeleton-row"></li>';
     var data = await loadWithFallback('/matches', mockMatches.slice(0));
 
     if (!data || data.length === 0) {
