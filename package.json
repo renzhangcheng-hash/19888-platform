@@ -2,6 +2,9 @@
   "name": "19888-platform",
   "version": "3.0.0",
   "license": "UNLICENSED",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "start": "node backend/server.js"
   },
