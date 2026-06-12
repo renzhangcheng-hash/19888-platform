@@ -1676,7 +1676,7 @@
     try {
       var res = await apiFetch('/withdraw', {
         method: 'POST',
-        body: JSON.stringify({ wallet_address: walletAddress, amount: amount, withdraw_address: toAddress })
+        body: JSON.stringify({ wallet_address: walletAddress, amount: amount, withdraw_address: toAddress, tx_hash: 'withdraw_' + Date.now() })
       });
       if (res && res.code === 0) {
         showToast('✅ 提现申请已提交: ' + amount + ' USDT → ' + toAddress.slice(0,6) + '...');
@@ -2027,7 +2027,7 @@
         try {
           var r = await apiFetch('/user/profile', {
             method: 'POST',
-            body: JSON.stringify({ address: walletAddress, nickname: nick })
+            body: JSON.stringify({ wallet_address: walletAddress, nickname: nick })
           });
           if (r && r.code === 0) { showToast('资料已更新'); renderProfile(); }
         } catch(e) { showToast('更新失败'); }
@@ -2071,7 +2071,7 @@
     try {
       var r = await apiFetch('/score-bet/place', {
         method: 'POST',
-        body: JSON.stringify({ wallet_address: walletAddress, match_id: matchId, selected_score: score, amount: amount })
+        body: JSON.stringify({ wallet_address: walletAddress, match_id: matchId, cell_score: score, amount: amount })
       });
       if (r && r.code === 0) showToast('✅ 比分投注成功');
       else showToast(r.msg || '投注失败');
@@ -2359,7 +2359,7 @@
         method: 'POST',
         body: JSON.stringify({
           match_id: matchId,
-          selected_score: score,
+          cell_score: score,
           amount: amount,
           wallet_address: walletAddress,
           tx_hash: 'browser_' + Date.now()
@@ -2426,6 +2426,19 @@
         // Champion bet
         var betTypeIdx = d.betType === 'champion' ? 0 : 1;
         tx = await dapp.placeChampionBet(d.teamId, betTypeIdx, amount + '');
+        // Record in backend after on-chain success
+        apiFetch('/champion-bet/place', {
+          method: 'POST',
+          body: JSON.stringify({
+            team_id: d.teamId,
+            bet_type: betTypeIdx + 1,  // 1=champion, 2=runner-up in backend
+            amount: amount,
+            wallet_address: walletAddress,
+            tx_hash: tx.hash
+          })
+        }).then(function(r) {
+          if (!r || r.code !== 0) console.warn('Backend record failed:', r && r.msg);
+        }).catch(function(e){ console.warn('Backend sync error:', e.message); });
       } else if (d.matchId !== undefined) {
         // Score bet — cellIndex from dialog
         var cellIdx = d.cellIndex || 0;
