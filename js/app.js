@@ -385,14 +385,24 @@
 
   function updateWalletUI() { /* handled by web3.js */ }
 
-  // ===== WORLD CUP COUNTDOWN =====
+  // ===== XSS Sanitization Helper (FP-V19888-5) =====
+  function sanitize(str) {
+    if (typeof str !== 'string') return '';
+    if (typeof DOMPurify !== 'undefined' && DOMPurify.sanitize) {
+      return DOMPurify.sanitize(str);
+    }
+    // Fallback: basic HTML entity encoding
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+  }
+
   // ===== TEAM LOGO =====
   function teamLogoImg(name, size) {
     var s = size || 50;
-    var slug = name.replace(/[^a-zA-Z\u4e00-\u9fff]/g, '_').toLowerCase();
-    var fallback = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="50" fill="#F0E8E0"/><text x="50" y="60" text-anchor="middle" font-size="32" fill="#FF6B35" font-family="Arial" font-weight="bold">' + name.charAt(0) + '</text></svg>');
-    var src = 'img/teams/' + name + '.png';
-    return '<img src="' + src + '" width="' + s + '" height="' + s + '" style="border-radius:50%;object-fit:contain;background:#F0E8E0;flex-shrink:0" alt="' + name + '" loading="lazy" onerror="var t=this;if(t.src.indexOf(\'.png\')!==-1){t.src=t.src.replace(\'.png\',\'.svg\')}else{t.onerror=null;t.src=\'' + fallback + '\'}">';
+    var safeName = sanitize(name);
+    var slug = safeName.replace(/[^a-zA-Z\u4e00-\u9fff]/g, '_').toLowerCase();
+    var fallback = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="50" fill="#F0E8E0"/><text x="50" y="60" text-anchor="middle" font-size="32" fill="#FF6B35" font-family="Arial" font-weight="bold">' + safeName.charAt(0) + '</text></svg>');
+    var src = 'img/teams/' + encodeURIComponent(name) + '.png';
+    return '<img src="' + src + '" width="' + s + '" height="' + s + '" style="border-radius:50%;object-fit:contain;background:#F0E8E0;flex-shrink:0" alt="' + safeName + '" loading="lazy" onerror="var t=this;if(t.src.indexOf(\'.png\')!==-1){t.src=t.src.replace(\'.png\',\'.svg\')}else{t.onerror=null;t.src=\'' + fallback + '\'}">';
   }
 
   // ===== MATCH CARD (lucky944 DOM — enhanced with odds) =====
@@ -401,9 +411,9 @@
     var parts = t.split(' ');
     var dateStr = parts.length > 1 ? parts[0].slice(5) : '';
     var timeStr = parts.length > 1 ? parts[1].slice(0, 5) : t.slice(11, 16) || '--';
-    var home = m.home || m.home_team || '';
-    var away = m.away || m.away_team || '';
-    var league = m.league || m.league_name || '';
+    var home = sanitize(m.home || m.home_team || '');
+    var away = sanitize(m.away || m.away_team || '');
+    var league = sanitize(m.league || m.league_name || '');
     var hO = Number(m.odds_home || m.home_odds || 0);
     var dO = Number(m.odds_draw || m.draw_odds || 0);
     var aO = Number(m.odds_away || m.away_odds || 0);
@@ -438,9 +448,9 @@
     var parts = t.split(' ');
     var dateStr = parts.length > 1 ? parts[0].slice(5) : '';
     var timeStr = parts.length > 1 ? parts[1].slice(0, 5) : t.slice(11, 16) || '--';
-    var home = m.home || m.home_team || '';
-    var away = m.away || m.away_team || '';
-    var league = m.league || m.league_name || '';
+    var home = sanitize(m.home || m.home_team || '');
+    var away = sanitize(m.away || m.away_team || '');
+    var league = sanitize(m.league || m.league_name || '');
     return '<li><a href="javascript:;" class="con" onclick="app.openMatch(' + m.id + ')">' +
       '<div class="league-name"><p class="p1">' + league + '</p></div>' +
       '<div class="match-content">' +
@@ -582,8 +592,8 @@
     var end = Math.min(_homeMatchPage * _homeMatchPageSize, total);
     var slice = _homeMatchesData.slice(0, end);
     var hasMore = end < total;
-    container.innerHTML = slice.map(function(m) { return matchCardHTML(m); }).join('') +
-      (hasMore ? '<li class="load-more-li"><a href="javascript:;" class="load-more-btn" onclick="app.loadMoreMatches()">▼ 加载更多 (' + (total - end) + ')</a></li>' : '');
+    container.innerHTML = sanitize(slice.map(function(m) { return matchCardHTML(m); }).join('') +
+      (hasMore ? '<li class="load-more-li"><a href="javascript:;" class="load-more-btn" onclick="app.loadMoreMatches()">▼ 加载更多 (' + (total - end) + ')</a></li>' : ''));
   }
 
   function loadMoreMatches() {
@@ -605,16 +615,17 @@
     grid.innerHTML = teams.map(function(t) {
       var champOdds = (t.championship_odds || t.champion_odds || 8).toFixed(2);
       var runnerOdds = (t.runner_up_odds || t.runnerUpOdds || 6).toFixed(2);
+      var safeName = sanitize(t.name);
       return '<div class="team-card">' +
         '<div class="team-logo">' + teamLogoImg(t.name, 56) + '</div>' +
-        '<div class="team-name">' + t.name + '</div>' +
+        '<div class="team-name">' + safeName + '</div>' +
         '<div class="odds-group">' +
           '<div class="odds-item"><span class="odds-label">冠军</span><span class="odds-value">' + champOdds + '</span></div>' +
           '<div class="odds-item"><span class="odds-label">亚军</span><span class="odds-value">' + runnerOdds + '</span></div>' +
         '</div>' +
         '<div class="bet-buttons">' +
-          '<button class="bet-btn bet-champion" onclick="app.openChampionBet(\'' + t.name + '\', ' + t.id + ', \'champion\', ' + champOdds + ')">投冠军</button>' +
-          '<button class="bet-btn bet-runner-up" onclick="app.openChampionBet(\'' + t.name + '\', ' + t.id + ', \'runnerup\', ' + runnerOdds + ')">投亚军</button>' +
+          '<button class="bet-btn bet-champion" onclick="app.openChampionBet(\'' + safeName.replace(/'/g, "\\'") + '\', ' + t.id + ', \'champion\', ' + champOdds + ')">投冠军</button>' +
+          '<button class="bet-btn bet-runner-up" onclick="app.openChampionBet(\'' + safeName.replace(/'/g, "\\'") + '\', ' + t.id + ', \'runnerup\', ' + runnerOdds + ')">投亚军</button>' +
         '</div>' +
       '</div>';
     }).join('');
@@ -656,12 +667,12 @@
       var keys = Object.keys(groups).sort();
       var html = '';
       keys.forEach(function(k) {
-        if (html) html += '<li class="league-group-header"><div class="con" style="padding:6px 12px;text-align:center"><span class="load-more-btn" style="cursor:default;padding:6px 16px;font-size:12px">' + k + '</span></div></li>';
+        if (html) html += '<li class="league-group-header"><div class="con" style="padding:6px 12px;text-align:center"><span class="load-more-btn" style="cursor:default;padding:6px 16px;font-size:12px">' + sanitize(k) + '</span></div></li>';
         groups[k].forEach(function(m) {
           html += matchesPageCardHTML(m);
         });
       });
-      container.innerHTML = html;
+      container.innerHTML = sanitize(html);
     }
   }
 
@@ -1319,12 +1330,15 @@
       var cls = r.status === 'won' ? 'won' : r.status === 'lost' ? 'lost' : 'pending';
       var txt = r.status === 'won' ? '已赢' : r.status === 'lost' ? '已输' : '进行中';
       var color = r.status === 'won' ? '#03A66D' : r.status === 'lost' ? '#e53935' : '#DAA520';
+      var safeTeam = sanitize(r.team || '');
+      var safeType = sanitize(r.type || '投注');
+      var safeTime = sanitize(r.time || '');
       html += '<div class="record-item">' +
         '<div class="record-header">' +
-          '<span class="record-label">' + (r.type || '投注') + '</span>' +
-          '<span class="record-label">' + (r.time || '') + '</span>' +
+          '<span class="record-label">' + safeType + '</span>' +
+          '<span class="record-label">' + safeTime + '</span>' +
         '</div>' +
-        '<div class="record-team">' + (r.team || '') + '</div>' +
+        '<div class="record-team">' + safeTeam + '</div>' +
         '<div class="record-footer">' +
           '<span class="record-amount">' + (r.amount || 0) + ' USDT</span>' +
           '<div style="display:flex;align-items:center;gap:8px">' +
@@ -1555,10 +1569,13 @@
     container.innerHTML = records.map(function(r) {
       var cls = r.status === 'won' ? 'won' : r.status === 'lost' ? 'lost' : 'pending';
       var txt = r.status === 'won' ? '✅ 已赢' : r.status === 'lost' ? '❌ 已输' : '⏳ 进行中';
+      var safeType = sanitize(r.type || '');
+      var safeTeam = sanitize(r.team || '');
+      var safeTime = sanitize(r.time || '');
       return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f0f0f0">' +
         '<div style="flex:1;min-width:0">' +
-          '<div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (r.type || '') + '</div>' +
-          '<div style="font-size:11px;color:#999">' + (r.time || '') + '</div>' +
+          '<div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + safeType + '</div>' +
+          '<div style="font-size:11px;color:#999">' + safeTime + '</div>' +
         '</div>' +
         '<div style="text-align:right;margin-left:12px;flex-shrink:0">' +
           '<div style="font-size:13px;font-weight:600">' + (r.amount || 0).toFixed(2) + ' USDT</div>' +
@@ -1724,11 +1741,11 @@
       var totalEarned = agentInfo.total_earned || 0;
 
       if (statsEl) statsEl.innerHTML =
-        '<div style="font-size:12px;color:#DAA520;margin-bottom:4px">🏅 ' + levelName + ' · 一级返佣 ' + commissionL1 + '% · 二级返佣 ' + commissionL2 + '%</div>' +
+        '<div style="font-size:12px;color:#DAA520;margin-bottom:4px">🏅 ' + sanitize(levelName) + ' · 一级返佣 ' + sanitize(commissionL1) + '% · 二级返佣 ' + sanitize(commissionL2) + '%</div>' +
         '<div>已邀请: <b>' + inviteData.count + '</b>人 | 交易额: <b>$' + (agentInfo.total_volume || 0).toLocaleString() + '</b></div>' +
         '<div style="font-size:11px;color:#999;margin-top:4px">已赚取: ' + totalEarned.toFixed(2) + ' USDT</div>' +
         '<div style="font-size:11px;color:#999">已领取: ' + inviteData.rewards.toFixed(2) + ' USDT</div>' +
-        (nextLevel ? '<div style="font-size:11px;color:#667eea;margin-top:4px">下一等级: ' + nextLevel.name + ' (需邀请 ' + nextLevel.min_invites + '人)</div>' : '');
+        (nextLevel ? '<div style="font-size:11px;color:#667eea;margin-top:4px">下一等级: ' + sanitize(nextLevel.name) + ' (需邀请 ' + nextLevel.min_invites + '人)</div>' : '');
 
       // Render invite levels
       renderInviteLevels(levelsEl, agentInfo);
@@ -1847,7 +1864,7 @@
       html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;margin-bottom:4px;background:' + (isCurrent ? '#EEF0FF' : '#fafafa') + ';border-radius:8px;font-size:12px">' +
         '<div style="width:24px;text-align:center;font-size:14px">' + checkMark + '</div>' +
         '<div style="flex:1">' +
-          '<div style="font-weight:' + (isCurrent ? '700' : '400') + ';color:' + (isCurrent ? '#667eea' : '#333') + '">' + lv.name + '</div>' +
+          '<div style="font-weight:' + (isCurrent ? '700' : '400') + ';color:' + (isCurrent ? '#667eea' : '#333') + '">' + sanitize(lv.name) + '</div>' +
           '<div style="font-size:10px;color:#999">返佣 L1: ' + (lv.commission_l1 * 100).toFixed(0) + '% · L2: ' + (lv.commission_l2 * 100).toFixed(0) + '% · 需 ' + lv.min_invites + '人</div>' +
         '</div>' +
         '<div style="font-size:11px;font-weight:600;color:' + textColor + ';padding:2px 8px;border-radius:10px;background:' + bgColor + '">' +
@@ -2222,7 +2239,7 @@
       return;
     }
 
-    container.innerHTML = '<div style="padding:12px">' +
+    container.innerHTML = sanitize('<div style="padding:12px">' +
       '<h3 style="font-size:16px;color:var(--text);margin-bottom:12px">交易流水</h3>' +
       txData.map(function(tx) {
         var icon = tx.type === 'deposit' ? '📥' : tx.type === 'withdraw' ? '📤' : '🎯';
@@ -2233,14 +2250,14 @@
         return '<div style="display:flex;align-items:center;padding:12px;border-bottom:1px solid var(--border);gap:12px">' +
           '<div style="font-size:24px">' + icon + '</div>' +
           '<div style="flex:1;min-width:0">' +
-            '<div style="font-size:13px;color:var(--text)">' + label + (tx.team_name ? ' · ' + tx.team_name : '') + '</div>' +
-            '<div style="font-size:11px;color:var(--text-muted)">' + time + '</div>' +
-            '<div style="font-size:10px;color:var(--text-muted)">' + (tx.status || '') + (tx.tx_hash ? ' · ' + tx.tx_hash.slice(0,8) + '...' : '') + '</div>' +
+            '<div style="font-size:13px;color:var(--text)">' + label + (tx.team_name ? ' · ' + sanitize(tx.team_name) : '') + '</div>' +
+            '<div style="font-size:11px;color:var(--text-muted)">' + sanitize(time) + '</div>' +
+            '<div style="font-size:10px;color:var(--text-muted)">' + sanitize(tx.status || '') + (tx.tx_hash ? ' · ' + sanitize(tx.tx_hash.slice(0,8)) + '...' : '') + '</div>' +
           '</div>' +
           '<div style="font-size:14px;font-weight:700;color:' + amountColor + ';white-space:nowrap">' + (amount > 0 ? '+' : '') + Number(amount).toFixed(2) + ' USDT</div>' +
         '</div>';
       }).join('') +
-    '</div>';
+    '</div>');
   }
 
   // ===== BETTING FLOW =====
@@ -2269,11 +2286,11 @@
 
     var homeEl = document.getElementById('detailHomeTeam');
     if (homeEl) {
-      homeEl.innerHTML = '<a href="javascript:;" onclick="event.stopPropagation();app.openTeamDetail(\'' + home.replace(/'/g, "\\'") + '\')" style="color:inherit;text-decoration:none">' + home + '</a>';
+      homeEl.innerHTML = '<a href="javascript:;" onclick="event.stopPropagation();app.openTeamDetail(\'' + home.replace(/'/g, "\\'") + '\')" style="color:inherit;text-decoration:none">' + sanitize(home) + '</a>';
     }
     var awayEl = document.getElementById('detailAwayTeam');
     if (awayEl) {
-      awayEl.innerHTML = '<a href="javascript:;" onclick="event.stopPropagation();app.openTeamDetail(\'' + away.replace(/'/g, "\\'") + '\')" style="color:inherit;text-decoration:none">' + away + '</a>';
+      awayEl.innerHTML = '<a href="javascript:;" onclick="event.stopPropagation();app.openTeamDetail(\'' + away.replace(/'/g, "\\'") + '\')" style="color:inherit;text-decoration:none">' + sanitize(away) + '</a>';
     }
     var timeEl = document.getElementById('detailMatchTime');
     if (timeEl) timeEl.textContent = time;
@@ -2525,7 +2542,7 @@
         var recent = res.data.recent_payout || res.data.total_frozen;
         if (recent !== undefined) {
           var el = document.getElementById('recentPayout');
-          if (el) el.innerHTML = '<div style="color:#667eea;font-weight:700">🔥 奖池</div><div>$' + Number(recent).toLocaleString() + '</div>';
+          if (el) el.innerHTML = sanitize('<div style="color:#667eea;font-weight:700">🔥 奖池</div><div>$' + Number(recent).toLocaleString() + '</div>');
         }
       }
     } catch(e) {}
@@ -2701,9 +2718,9 @@
     var detailPage = document.getElementById('page-detail');
     if (!detailPage) return;
 
-    var name = teamData.name || '—';
-    var group = teamData.group_name || teamData.group || '';
-    var country = teamData.country || '';
+    var name = sanitize(teamData.name || '—');
+    var group = sanitize(teamData.group_name || teamData.group || '');
+    var country = sanitize(teamData.country || '');
     var logoHtml = teamLogoImg(name, 60);
 
     // Handle both direct stats format and nested betting_stats format

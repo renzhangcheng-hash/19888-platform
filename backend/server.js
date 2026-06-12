@@ -28,15 +28,27 @@ const jwt = require('jsonwebtoken');
 const { ethers } = require('ethers');
 const http = require('http');
 const socketIo = require('socket.io');
+const bcrypt = require('bcryptjs');
 
 const app = express();
 const PORT = process.env.PORT || 3088;
 const DATA_DIR = path.join(__dirname, 'data');
 
 // ── JWT Config ──────────────────────────────────
-// FP-V19888-2: Never use randomBytes as fallback — restarts invalidate all sessions.
-// Use env var or a fixed fallback. Production MUST set JWT_SECRET env.
-const JWT_SECRET = process.env.JWT_SECRET || '19888-fixed-jwt-fallback-change-in-production';
+// FP-V19888-3: Use env var, or generate once and persist in jwt_secret.txt
+let JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  const fs2 = require('fs');
+  const secretPath = path.join(__dirname, 'data', 'jwt_secret.txt');
+  try {
+    JWT_SECRET = fs2.readFileSync(secretPath, 'utf8').trim();
+  } catch (_e) {
+    JWT_SECRET = require('crypto').randomBytes(32).toString('hex');
+    fs2.mkdirSync(path.join(__dirname, 'data'), { recursive: true });
+    fs2.writeFileSync(secretPath, JWT_SECRET, 'utf8');
+    console.log('⚠️ JWT_SECRET not set — generated persistent random secret');
+  }
+}
 const JWT_EXPIRY = process.env.JWT_EXPIRY || '24h';
 
 // ── Sepolia RPC for on-chain verification ───────
@@ -91,25 +103,22 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
-// ── CORS — allow localhost, *.netlify.app, and 19888.asia ──
+// ── CORS — allow only explicit origins ──
+// FP-V19888-4: Exact origins only. NO suffix matching (prevents subdomain takeover).
 const ALLOWED_ORIGINS = [
   'http://localhost:3088',
   'http://127.0.0.1:3088',
   'http://localhost:3000',
   'http://127.0.0.1:3000',
-];
-const ALLOWED_ORIGIN_SUFFIXES = [
-  '.netlify.app',
-  '19888.asia',
-  '.onrender.com',
+  'https://19888.netlify.app',
+  'https://19888.asia',
+  'https://www.19888.asia',
+  'https://one9888-api.onrender.com',
 ];
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
-    if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
-    if (ALLOWED_ORIGIN_SUFFIXES.some(s => origin.endsWith(s))) return callback(null, true);
-    // Return 403 instead of crashing the middleware with 500
-    callback(null, false);
+    callback(null, ALLOWED_ORIGINS.includes(origin));
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -275,11 +284,15 @@ function asyncHandler(fn) {
 
 // ── Auth Helpers ──────────────────────────────────
 function hashPassword(pw) {
-  return crypto.createHash('sha256').update(pw + '19888salt').digest('hex');
+  return bcrypt.hashSync(pw, 10);
 }
 
 function verifyPassword(pw, hash) {
-  return hashPassword(pw) === hash;
+  try {
+    return bcrypt.compareSync(pw, hash);
+  } catch (e) {
+    return false;
+  }
 }
 
 // ── User factory (single source of truth for new user creation) ──
@@ -468,9 +481,14 @@ function seed() {
   // Always seed admin account if it doesn't exist (FP fix)
   const admins = read('admins');
   if (admins.length === 0) {
-    const ADMIN_DEFAULT_PASS = process.env.ADMIN_PASSWORD || '19888admin-change-me';
-    write('admins', [{ username: 'admin', password: hashPassword(ADMIN_DEFAULT_PASS) }]);
-    console.log('✅ Admin account created');
+    const ADMIN_DEFAULT_PASS = process.env.ADMIN_PASSWORD;
+    if (!ADMIN_DEFAULT_PASS) {
+      console.error('❌ CRITICAL: Set ADMIN_PASSWORD env var before first boot. Generating random fallback...');
+    }
+    const pass = ADMIN_DEFAULT_PASS || require('crypto').randomBytes(6).toString('hex');
+    write('admins', [{ username: 'admin', password: hashPassword(pass) }]);
+    console.log(`✅ Admin account created (password: ${pass})`);
+    console.log('⚠️  Change this password immediately after first login');
   }
 
   // Always seed AI pool if missing
@@ -1044,8 +1062,8 @@ app.get('/api/teams/:id/stats', asyncHandler((req, res) => {
     data: {
       team_id: team.id,
       team_name: team.name,
-      championship_odds: team.championship_odds,
-      runner_up_odds: team.runner_up_odds,
+      championship_odds: team.champion_odds,
+      runner_up_odds: team.runner_odds,
       betting_stats: {
         total_bets: totalBets,
         total_volume: +totalVolume.toFixed(2),
@@ -1169,7 +1187,7 @@ app.post('/api/champion-bet/place', riskCheck, asyncHandler(async (req, res) => 
     return res.status(400).json({ code:1, msg:'您已对该球队下过相同类型的投注，请等待结算' });
   }
 
-  const odds = btype === 1 ? team.championship_odds : team.runner_up_odds;
+  const odds = btype === 1 ? team.champion_odds : team.runner_odds;
   const bet = {
     id: (bets[bets.length - 1]?.id || 0) + 1,
     address: addr,
@@ -1188,7 +1206,7 @@ app.post('/api/champion-bet/place', riskCheck, asyncHandler(async (req, res) => 
   write('bets', bets);
 
   // Deduct from available balance (freeze for bet)
-  user.balance = (user.balance || 0) - amt;
+  user.balance = Math.max(0, +(user.balance - amt).toFixed(4));
   user.frozen_bet = (user.frozen_bet || 0) + amt;
   write('users', users);
 
@@ -1264,7 +1282,7 @@ app.post('/api/bet/confirm', riskCheck, asyncHandler(async (req, res) => {
   write('bets', bets);
 
   // Deduct from available balance
-  user.balance = (user.balance || 0) - amt;
+  user.balance = Math.max(0, +(user.balance - amt).toFixed(4));
   user.frozen_bet = (user.frozen_bet || 0) + amt;
   write('users', users);
 
@@ -1334,7 +1352,7 @@ app.post('/api/anti-bet/place', riskCheck, asyncHandler((req, res) => {
   write('bets', bets);
 
   // Deduct from available balance
-  user.balance = (user.balance || 0) - amt;
+  user.balance = Math.max(0, +(user.balance - amt).toFixed(4));
   user.frozen_bet = (user.frozen_bet || 0) + amt;
   write('users', users);
 
@@ -1405,7 +1423,7 @@ app.post('/api/score-bet/place', riskCheck, asyncHandler((req, res) => {
   write('bets', bets);
 
   // Deduct from available balance
-  user.balance = (user.balance || 0) - amt;
+  user.balance = Math.max(0, +(user.balance - amt).toFixed(4));
   user.frozen_bet = (user.frozen_bet || 0) + amt;
   write('users', users);
 
