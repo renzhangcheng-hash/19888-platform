@@ -90,6 +90,7 @@
     get contracts() { return contracts; },
     get CONTRACTS() { return getConfig().contracts; },
     get activeChain() { return activeChain; },
+    getConfig() { return getConfig(); },
 
     // ===== NETWORK MANAGEMENT =====
 

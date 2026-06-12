@@ -208,6 +208,29 @@
   }
 
   // ===== WALLET (DApp via web3.js) =====
+  // BscScan tx link helper
+  function txLink(txHash) {
+    var base = (typeof dapp !== 'undefined' && dapp.getConfig) ? dapp.getConfig().explorer : 'https://bscscan.com';
+    return base + '/tx/' + txHash;
+  }
+
+  // Show toast with tx link
+  function showTxToast(msg, txHash, duration) {
+    var link = txLink(txHash);
+    var html = msg + ' <a href=\"' + link + '\" target=\"_blank\" style=\"color:#FF6B35;text-decoration:underline;font-weight:700\">查看交易 ↗</a>';
+    showToast(html, duration || 5000);
+  }
+
+  // ===== GAS TIP (first-time BNB reminder) =====
+  let _gasTipShown = false;
+  function showGasTip() {
+    if (_gasTipShown) return;
+    _gasTipShown = true;
+    var cfg = (typeof dapp !== 'undefined' && dapp.getConfig) ? dapp.getConfig() : null;
+    var token = cfg ? cfg.currency.symbol : 'BNB';
+    showToast('💡 BSC交易需要' + token + '作为Gas费。请确保钱包有少量' + token + '。', 6000);
+  }
+
   async function connectWallet() {
     if (typeof window.dapp === 'undefined') {
       showToast('加载钱包模块...');
@@ -224,13 +247,14 @@
     if (result.success) {
       walletAddress = result.address;
 
-      // Check if on Sepolia, if not — switch
+      // Check chain and switch to correct network
       const chainOk = await dapp.switchChain();
       if (!chainOk) {
-        showToast('⚠️ 未检测到Sepolia网络，部分功能可能受限');
+        showToast('⚠️ 请切换到BSC主网以进行交易');
       }
 
       showToast('钱包已连接: ' + walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4));
+      showGasTip();  // Remind about BNB gas
 
       // Sync with backend (await it)
       await apiFetch('/wallet/connect', { method: 'POST', body: JSON.stringify({ wallet_address: walletAddress }) });
@@ -1642,7 +1666,7 @@
             body: JSON.stringify({ wallet_address: walletAddress, tx_hash: txHash, amount: amount })
           });
           if (confirmRes && confirmRes.code === 0) {
-            showToast('✅ 充值成功: ' + amount + ' USDT\nTx: ' + txHash.slice(0, 10) + '...');
+            showTxToast('✅ 充值成功: ' + amount + ' USDT', txHash);
             hideDepositModal();
             if (currentPage === 'profile') renderProfile();
             return;
@@ -2090,7 +2114,8 @@
         showToast(d.message, 5000);
       } else if (d.status === 'success') {
         hideDepositModal();
-        showToast('✅ ' + d.message + (d.txHash ? ' Tx: ' + d.txHash.slice(0, 10) + '...' : ''), 4000);
+        if (d.txHash) showTxToast('✅ ' + d.message, d.txHash);
+        else showToast('✅ ' + d.message, 4000);
         renderProfile();
       } else if (d.status === 'error') {
         showToast('❌ ' + d.message, 3000);
@@ -2450,7 +2475,7 @@
         showToast('无效的投注数据'); return;
       }
 
-      showToast('✅ 投注成功! Tx: ' + tx.hash.slice(0, 10) + '...');
+      showTxToast('✅ 投注成功!', tx.hash);
     } catch(e) {
       showToast('❌ 交易失败: ' + (e.reason || e.message || '未知错误'));
       console.error('Bet error:', e);
