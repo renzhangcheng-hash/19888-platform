@@ -2,27 +2,17 @@
   'use strict';
 
   // ===== CONFIG =====
-  const DEFAULT_API_BASE = 'https://flavor-conclusions-manitoba-transmit.trycloudflare.com/api';
+  const DEFAULT_API_BASE = 'https://enlargement-celtic-for-moderators.trycloudflare.com/api';
   function resolveApiBase() {
     // Priority: localStorage override → same-domain api → default tunnel
-    const stored = localStorage.getItem('19888_api_base');
+    const stored = cacheGet('19888_api_base');
     if (stored) return stored;
     // On localhost, use relative path
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
       return '/api';
     }
-    // On 19888.asia, try same-domain first, fallback to tunnel
-    // We store the working URL in localStorage after discovery
     return DEFAULT_API_BASE;
   }
-  const API_BASE = resolveApiBase();
-  let API_BASE_FALLBACKS = [
-    window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' ? window.location.origin + '/api' : null,
-    DEFAULT_API_BASE,
-  ].filter(Boolean);
-  // Remove duplicate fallbacks
-  API_BASE_FALLBACKS = [...new Set(API_BASE_FALLBACKS.filter(u => u !== API_BASE))];
-  const API_TIMEOUT = 8000;
 
   // ===== STATE =====
   let apiAvailable = false;
@@ -35,73 +25,132 @@
   let oddsFlashInterval = null;
   let lang = 'cn';
 
-  // ===== MOCK DATA =====
-  const mockMatches = [
-    { id:1, league:'英超 第38轮', home:'曼城', away:'利物浦', time:'2026-06-04 00:30', odds_home:2.10, odds_draw:3.30, odds_away:3.40, status:'upcoming', venue:'伊蒂哈德球场' },
-    { id:2, league:'西甲 第38轮', home:'皇马', away:'巴萨', time:'2026-06-05 04:00', odds_home:2.40, odds_draw:3.20, odds_away:2.90, status:'upcoming', venue:'伯纳乌球场' },
-    { id:3, league:'法甲 第38轮', home:'巴黎圣日耳曼', away:'马赛', time:'2026-06-03 03:00', odds_home:1.82, odds_draw:3.50, odds_away:4.20, status:'live', venue:'王子公园球场' },
-    { id:4, league:'意甲 第38轮', home:'尤文图斯', away:'国米', time:'2026-06-05 02:45', odds_home:2.15, odds_draw:3.10, odds_away:3.50, status:'upcoming', venue:'安联球场' },
-    { id:5, league:'德甲 第34轮', home:'拜仁慕尼黑', away:'多特蒙德', time:'2026-06-06 01:30', odds_home:1.95, odds_draw:3.60, odds_away:3.80, status:'upcoming', venue:'安联竞技场' },
-    { id:6, league:'国际友谊赛', home:'巴西', away:'阿根廷', time:'2026-06-07 08:00', odds_home:2.50, odds_draw:3.00, odds_away:2.80, status:'upcoming', venue:'马拉卡纳球场' },
-    { id:7, league:'欧冠 决赛', home:'拜仁慕尼黑', away:'巴黎圣日耳曼', time:'2026-06-08 03:00', odds_home:2.20, odds_draw:3.40, odds_away:3.10, status:'upcoming', venue:'温布利大球场' },
-    { id:8, league:'英超 第37轮', home:'阿森纳', away:'切尔西', time:'2026-06-08 00:30', odds_home:2.05, odds_draw:3.25, odds_away:3.60, status:'upcoming', venue:'酋长球场' },
-  ];
+  // In-memory cache fallback when localStorage unavailable (FP-V19888-4)
+  const _memCache = new Map();
 
+  function cacheSet(key, val) {
+    try { localStorage.setItem(key, val); }
+    catch(e) {
+      console.warn('[FP-V19888-4] localStorage unavailable, using memory cache:', e.message);
+      _memCache.set(key, val);
+    }
+  }
+  function cacheGet(key) {
+    try { return localStorage.getItem(key); }
+    catch(e) { return _memCache.get(key) || null; }
+  }
+
+  // ===== API OFFLINE BANNER (FP-V19888-3) =====
+  let _apiOfflineBannerShown = false;
+  function showApiOfflineBanner() {
+    if (_apiOfflineBannerShown) return;
+    _apiOfflineBannerShown = true;
+    var banner = document.createElement('div');
+    banner.id = 'api-offline-banner';
+    banner.style.cssText = 'background:#FFF3CD;color:#856404;text-align:center;padding:8px 12px;font-size:12px;font-weight:600;border-bottom:1px solid #FFC107;position:sticky;top:45px;z-index:99;display:flex;align-items:center;justify-content:space-between;gap:8px';
+    banner.innerHTML = '<span>⚠️ API离线 — 展示示例数据，不可下注</span><button onclick="app.retryConnection()" style="background:#E53935;color:#fff;border:none;padding:4px 12px;border-radius:4px;font-size:11px;cursor:pointer;font-weight:700">🔄 重试连接</button>';
+    var header = document.querySelector('.header');
+    if (header && header.nextSibling) {
+      header.parentNode.insertBefore(banner, header.nextSibling);
+    }
+    // Auto-hide when API recovers
+    setTimeout(function() {
+      var el = document.getElementById('api-offline-banner');
+      if (el && apiAvailable) { el.style.display = 'none'; _apiOfflineBannerShown = false; }
+    }, 10000);
+  }
+
+  // Retry API connection
+  function retryConnection() {
+    _apiOfflineBannerShown = false;
+    var banner = document.getElementById('api-offline-banner');
+    if (banner) banner.style.display = 'none';
+    // Reload current page data
+    if (currentPage === 'home') renderMatchCards();
+    if (currentPage === 'ai') renderAIPage();
+    if (currentPage === 'matches') navigateTo('matches');
+    if (currentPage === 'records') renderRecords();
+    if (currentPage === 'profile') renderProfile();
+    if (currentPage === 'transactions') renderTransactions();
+  }
+
+  // Try API, fallback to mock data (FP-V19888-3)
+  async function loadWithFallback(endpoint, mockData) {
+    var res = await apiFetch(endpoint);
+    if (res && res.code === 0 && res.data) {
+      apiAvailable = true;
+      return res.data;
+    }
+    // API failed — show banner and return mock
+    if (!apiAvailable) showApiOfflineBanner();
+    return mockData;
+  }
+  const mockMatches = [
+    {id:1,league:"世界杯 A组·第1轮",home:"美国",away:"墨西哥",time:"2026-06-11 14:00",odds_home:1.65,odds_draw:3.30,odds_away:6.00,status:"upcoming"},
+    {id:2,league:"世界杯 A组·第2轮",home:"挪威",away:"新西兰",time:"2026-06-11 17:00",odds_home:1.70,odds_draw:3.50,odds_away:5.50,status:"upcoming"},
+    {id:3,league:"世界杯 B组·第1轮",home:"巴西",away:"德国",time:"2026-06-11 14:00",odds_home:1.56,odds_draw:3.50,odds_away:6.50,status:"upcoming"},
+    {id:4,league:"世界杯 C组·第5轮",home:"法国",away:"荷兰",time:"2026-06-12 14:00",odds_home:1.55,odds_draw:3.80,odds_away:6.00,status:"upcoming"},
+    {id:5,league:"世界杯 D组·第3轮",home:"阿根廷",away:"英格兰",time:"2026-06-12 17:00",odds_home:1.60,odds_draw:3.50,odds_away:5.50,status:"upcoming"},
+    {id:6,league:"世界杯 E组·第1轮",home:"西班牙",away:"意大利",time:"2026-06-12 20:00",odds_home:1.80,odds_draw:3.20,odds_away:4.50,status:"upcoming"},
+    {id:7,league:"世界杯 F组·第2轮",home:"葡萄牙",away:"比利时",time:"2026-06-13 14:00",odds_home:1.75,odds_draw:3.40,odds_away:4.80,status:"upcoming"},
+    {id:8,league:"世界杯 G组·第1轮",home:"摩洛哥",away:"塞内加尔",time:"2026-06-13 17:00",odds_home:2.80,odds_draw:2.90,odds_away:2.80,status:"upcoming"},
+  ];
   const mockChampionTeams = [
-    { id:1, name:'巴西', championship_odds:5.50, runner_up_odds:4.20 },
-    { id:2, name:'法国', championship_odds:6.00, runner_up_odds:4.50 },
-    { id:3, name:'阿根廷', championship_odds:7.50, runner_up_odds:5.50 },
-    { id:4, name:'英格兰', championship_odds:8.00, runner_up_odds:5.80 },
-    { id:5, name:'西班牙', championship_odds:9.00, runner_up_odds:6.50 },
-    { id:6, name:'德国', championship_odds:10.00, runner_up_odds:7.00 },
-    { id:7, name:'葡萄牙', championship_odds:12.00, runner_up_odds:8.00 },
-    { id:8, name:'荷兰', championship_odds:15.00, runner_up_odds:9.50 },
+    {id:1,name:"巴西",flag:"🇧🇷",champion_odds:5.5,runner_odds:4.0,group:"B"},
+    {id:2,name:"法国",flag:"🇫🇷",champion_odds:6.0,runner_odds:4.5,group:"C"},
+    {id:3,name:"阿根廷",flag:"🇦🇷",champion_odds:6.5,runner_odds:5.0,group:"D"},
+    {id:4,name:"德国",flag:"🇩🇪",champion_odds:7.0,runner_odds:5.0,group:"B"},
+    {id:5,name:"英格兰",flag:"🏴󠁧󠁢󠁥󠁮󠁧󠁿",champion_odds:7.5,runner_odds:5.5,group:"D"},
+    {id:6,name:"西班牙",flag:"🇪🇸",champion_odds:9.0,runner_odds:6.5,group:"E"},
+    {id:7,name:"葡萄牙",flag:"🇵🇹",champion_odds:10.0,runner_odds:7.0,group:"F"},
+    {id:8,name:"荷兰",flag:"🇳🇱",champion_odds:11.0,runner_odds:8.0,group:"C"},
+    {id:9,name:"意大利",flag:"🇮🇹",champion_odds:13.0,runner_odds:9.0,group:"E"},
+    {id:10,name:"比利时",flag:"🇧🇪",champion_odds:15.0,runner_odds:10.0,group:"F"},
+    {id:11,name:"美国",flag:"🇺🇸",champion_odds:15.0,runner_odds:10.0,group:"A"},
+    {id:12,name:"挪威",flag:"🇳🇴",champion_odds:20.0,runner_odds:14.0,group:"A"},
   ];
 
   // ===== API HELPERS =====
   function apiFetch(endpoint, opts) {
     opts = opts || {};
-    let ctrl = new AbortController();
-    let timer = setTimeout(function() { ctrl.abort(); }, API_TIMEOUT);
 
-    // Try to fetch from current API_BASE, with fallback chain
-    var urlsToTry = [API_BASE].concat(API_BASE_FALLBACKS);
-    var triedIdx = 0;
+    // Simple: try each URL once, first success wins
+    const urls = [resolveApiBase()];
+    const sameOrigin = window.location.origin + '/api';
+    if (urls[0] !== sameOrigin) urls.push(sameOrigin);
 
-    function tryFetch(idx) {
-      if (idx >= urlsToTry.length) {
+    function tryUrl(idx) {
+      if (idx >= urls.length) {
         apiAvailable = false;
-        clearTimeout(timer);
-        return null;
+        return Promise.resolve(null);
       }
-      var base = urlsToTry[idx];
-      return fetch(base + endpoint, {
+      var base = urls[idx];
+      var url = base + endpoint;
+      var ctrl = new AbortController();
+      var timer = setTimeout(function() { ctrl.abort(); }, 10000);
+      return fetch(url, {
         method: opts.method || 'GET',
-        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        headers: { 'Content-Type': 'application/json' },
         body: opts.body || undefined,
         signal: ctrl.signal
       }).then(function(r) {
+        clearTimeout(timer);
         if (!r.ok) throw new Error('HTTP ' + r.status);
         apiAvailable = true;
-        // Store working URL for future use
-        if (base !== resolveApiBase()) {
-          try { localStorage.setItem('19888_api_base', base); } catch(e) {}
-        }
+        if (base !== resolveApiBase()) cacheSet('19888_api_base', base);
         return r.json();
-      }).catch(function() {
-        return tryFetch(idx + 1);
+      }).catch(function(err) {
+        clearTimeout(timer);
+        return tryUrl(idx + 1);
       });
     }
-
-    return tryFetch(0).finally(function() {
-      clearTimeout(timer);
-    });
+    return tryUrl(0);
   }
 
   // ===== TOAST =====
   function showToast(msg, dur) {
     dur = dur || 2000;
-    var el = document.getElementById('customToast');
+    const el = document.getElementById('customToast');
     if (!el) return;
     el.textContent = msg;
     el.classList.add('show');
@@ -111,17 +160,17 @@
 
   // ===== CONFIRM DIALOG =====
   function showConfirm(title, content, onOk) {
-    var overlay = document.getElementById('customConfirmOverlay');
-    var dialog = document.getElementById('customConfirm');
+    const overlay = document.getElementById('customConfirmOverlay');
+    const dialog = document.getElementById('customConfirm');
     if (!overlay || !dialog) return;
     document.getElementById('confirmTitle').textContent = title;
     document.getElementById('confirmContent').textContent = content;
     overlay.style.display = 'block';
     dialog.style.display = 'block';
     function hide() { overlay.style.display = 'none'; dialog.style.display = 'none'; }
-    var ok = document.getElementById('confirmOkBtn');
-    var cancel = document.getElementById('confirmCancelBtn');
-    var nOk = ok.cloneNode(true), nCancel = cancel.cloneNode(true), nOverlay = overlay.cloneNode(true);
+    const ok = document.getElementById('confirmOkBtn');
+    const cancel = document.getElementById('confirmCancelBtn');
+    const nOk = ok.cloneNode(true), nCancel = cancel.cloneNode(true), nOverlay = overlay.cloneNode(true);
     ok.parentNode.replaceChild(nOk, ok);
     cancel.parentNode.replaceChild(nCancel, cancel);
     overlay.parentNode.replaceChild(nOverlay, overlay);
@@ -146,12 +195,12 @@
   // ===== WALLET (DApp via web3.js) =====
   async function connectWallet() {
     if (typeof dapp === 'undefined') { showToast('Web3模块未加载'); return; }
-    var result = await dapp.connect();
+    const result = await dapp.connect();
     if (result.success) {
       walletAddress = result.address;
 
       // Check if on Sepolia, if not — switch
-      var chainOk = await dapp.switchChain();
+      const chainOk = await dapp.switchChain();
       if (!chainOk) {
         showToast('请切换到Sepolia测试网');
         return;
@@ -159,28 +208,67 @@
 
       showToast('钱包已连接: ' + walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4));
 
-      // Sync with backend
-      apiFetch('/wallet/connect', { method: 'POST', body: JSON.stringify({ wallet_address: walletAddress }) });
+      // Sync with backend (await it)
+      await apiFetch('/wallet/connect', { method: 'POST', body: JSON.stringify({ wallet_address: walletAddress }) });
 
-      // Load pool balance
+      // Load all user data from backend
       loadPoolBalance();
+      syncAllUserData();
+      
+      // Refresh current page
+      if (currentPage === 'profile') renderProfile();
+      if (currentPage === 'records') renderRecords();
+      if (currentPage === 'transactions') renderTransactions();
     } else {
       showToast(result.error || '连接失败');
     }
   }
 
   async function loadPoolBalance() {
-    if (typeof dapp === 'undefined') return;
-    try {
-      var bal = await dapp.getPoolBalance();
-      var usdtBal = await dapp.getUSDTBalance();
-      userBalance = parseFloat(bal);
-      // Update UI if profile page visible
-      var balEl = document.getElementById('profilePoolBalance');
-      if (balEl) balEl.textContent = Number(bal).toFixed(2) + ' USDT';
-      var usdtEl = document.getElementById('profileUSDTBalance');
-      if (usdtEl) usdtEl.textContent = Number(usdtBal).toFixed(2) + ' USDT';
-    } catch(e) {}
+    // Always load backend balance first
+    if (walletAddress) {
+      try {
+        var balRes = await apiFetch('/user/balance?address=' + encodeURIComponent(walletAddress));
+        if (balRes && balRes.code === 0 && balRes.data) {
+          userBalance = balRes.data.available || 0;
+          var usdtEl = document.getElementById('profileUSDTBalance');
+          if (usdtEl) usdtEl.textContent = Number(balRes.data.available || 0).toFixed(2) + ' USDT';
+        }
+      } catch(e) {}
+    }
+    // Also try on-chain balance via dapp
+    if (typeof dapp !== 'undefined') {
+      try {
+        const bal = await dapp.getPoolBalance();
+        const balEl = document.getElementById('profilePoolBalance');
+        if (balEl) balEl.textContent = Number(bal).toFixed(2) + ' USDT';
+      } catch(e) {}
+    }
+  }
+
+  // ===== SYNC ALL USER DATA =====
+  async function syncAllUserData() {
+    if (!walletAddress) return;
+    await Promise.all([
+      loadPnLData().catch(function(){}),
+      loadVIPData().catch(function(){}),
+    ]);
+  }
+
+  // Auto-refresh profile data every 30s
+  let _profileRefreshTimer = null;
+  function startProfileAutoRefresh() {
+    stopProfileAutoRefresh();
+    _profileRefreshTimer = setInterval(function() {
+      if (currentPage === 'profile' && walletAddress) {
+        loadPoolBalance();
+        loadPnLData();
+        loadVIPData();
+      }
+    }, 30000);
+  }
+  function stopProfileAutoRefresh() {
+    if (_profileRefreshTimer) { clearInterval(_profileRefreshTimer); _profileRefreshTimer = null; }
   }
 
   // ===== PNl DATA =====
@@ -189,7 +277,7 @@
   async function loadPnLData() {
     if (!walletAddress) return;
     try {
-      var res = await apiFetch('/user/pnl?wallet=' + encodeURIComponent(walletAddress));
+      const res = await apiFetch('/user/pnl?wallet=' + encodeURIComponent(walletAddress));
       if (res && res.code === 0 && res.data) {
         pnlData = {
           total_wagered: parseFloat(res.data.total_wagered) || 0,
@@ -199,6 +287,41 @@
         };
       }
     } catch(e) { pnlData = { total_wagered: 0, total_won: 0, net_pnl: 0, roi: 0 }; }
+  }
+
+  // ===== VIP DATA =====
+  async function loadVIPData() {
+    if (!walletAddress) return;
+    var card = document.getElementById('vipCard');
+    if (!card) return;
+    try {
+      var res = await apiFetch('/vip/status?wallet=' + encodeURIComponent(walletAddress));
+      if (res && res.code === 0 && res.data) {
+        var d = res.data;
+        card.style.display = 'block';
+        var levelEl = document.getElementById('vipLevelName');
+        if (levelEl) levelEl.textContent = d.name;
+        var wageredEl = document.getElementById('vipWagered');
+        if (wageredEl) wageredEl.textContent = '$' + (d.total_wagered || 0).toLocaleString();
+        var cashbackEl = document.getElementById('vipCashback');
+        if (cashbackEl) cashbackEl.textContent = '返佣' + ((d.cashback || 0) * 100).toFixed(1) + '%';
+        var oddsEl = document.getElementById('vipOdds');
+        if (oddsEl) oddsEl.textContent = '赔率+' + ((d.odds_boost || 0) * 100).toFixed(0) + '%';
+        var barEl = document.getElementById('vipProgressBar');
+        var labelEl = document.getElementById('vipProgressLabel');
+        var nextEl = document.getElementById('vipNextLevel');
+        if (d.next_level) {
+          var progress = Math.min(100, ((d.total_wagered || 0) / d.next_level.need * 100));
+          if (barEl) barEl.style.width = progress + '%';
+          if (labelEl) labelEl.textContent = '距' + d.next_level.name + '还需';
+          if (nextEl) nextEl.textContent = '$' + (d.next_level.need || 0).toLocaleString();
+        } else {
+          if (barEl) barEl.style.width = '100%';
+          if (labelEl) labelEl.textContent = '已达最高等级';
+          if (nextEl) nextEl.textContent = '🎉';
+        }
+      }
+    } catch(e) { if (card) card.style.display = 'none'; }
   }
 
   function disconnectWallet() {
@@ -219,26 +342,13 @@
   function updateWalletUI() { /* handled by web3.js */ }
 
   // ===== WORLD CUP COUNTDOWN =====
-  function startWorldCupCountdown() {
-    var target = new Date('2026-06-11T00:00:00Z').getTime();
-    var el = document.getElementById('cd-timer');
-    function tick() {
-      var diff = target - Date.now();
-      if (diff <= 0) { if (el) el.textContent = '世界杯已开赛!'; return; }
-      var d = Math.floor(diff / 86400000), h = Math.floor((diff % 86400000) / 3600000);
-      var m = Math.floor((diff % 3600000) / 60000), s = Math.floor((diff % 60000) / 1000);
-      if (el) el.textContent = d + '天 ' + h + '小时 ' + m + '分 ' + s + '秒';
-    }
-    tick();
-    setInterval(tick, 1000);
-  }
-
   // ===== TEAM LOGO =====
   function teamLogoImg(name, size) {
     var s = size || 50;
     var slug = name.replace(/[^a-zA-Z\u4e00-\u9fff]/g, '_').toLowerCase();
-    var fallback = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="50" fill="#E8EBF5"/><text x="50" y="60" text-anchor="middle" font-size="32" fill="#999" font-family="Arial" font-weight="bold">' + name.charAt(0) + '</text></svg>');
-    return '<img src="img/teams/' + name + '.png" width="' + s + '" height="' + s + '" style="border-radius:50%;object-fit:contain;background:#E8EBF5;flex-shrink:0" alt="' + name + '" onerror="this.onerror=null;this.src=\'' + fallback + '\'">';
+    var fallback = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="50" fill="#F0E8E0"/><text x="50" y="60" text-anchor="middle" font-size="32" fill="#FF6B35" font-family="Arial" font-weight="bold">' + name.charAt(0) + '</text></svg>');
+    var src = 'img/teams/' + name + '.png';
+    return '<img src="' + src + '" width="' + s + '" height="' + s + '" style="border-radius:50%;object-fit:contain;background:#F0E8E0;flex-shrink:0" alt="' + name + '" onerror="var t=this;if(t.src.indexOf(\'.png\')!==-1){t.src=t.src.replace(\'.png\',\'.svg\')}else{t.onerror=null;t.src=\'' + fallback + '\'}">';
   }
 
   // ===== MATCH CARD (lucky944 DOM) =====
@@ -303,17 +413,27 @@
   }
 
   // ===== NAVIGATION =====
-  var tabPageMap = { 'home': 0, 'ai': 1, 'matches': 2, 'records': 3, 'profile': 4 };
-  var tabNames = ['home', 'ai', 'matches', 'records', 'profile'];
+  var tabPageMap = { 'home': 0, 'ai': 1, 'matches': 2, 'records': 3, 'transactions': 3, 'profile': 4 };
+  var tabNames = ['home', 'ai', 'matches', 'records', 'transactions', 'profile'];
 
   function navigateTo(page) {
     if (currentPage === page) return;
     currentPage = page;
 
+    // Auto-refresh management
+    if (page === 'profile') startProfileAutoRefresh();
+    else stopProfileAutoRefresh();
+
     // Hide all pages
     var pages = document.querySelectorAll('.page');
     for (var i = 0; i < pages.length; i++) {
       pages[i].style.display = 'none';
+    }
+
+    if (page === 'detail') {
+      var detailPage = document.getElementById('page-detail');
+      if (detailPage) detailPage.style.display = 'block';
+      return;
     }
 
     // Show target page (create if needed)
@@ -351,6 +471,7 @@
     if (page === 'records') renderRecords();
     if (page === 'profile') renderProfile();
     if (page === 'ai') renderAIPage();
+    if (page === 'transactions') renderTransactions();
   }
 
   // ===== TOP TAB SWITCHING (on home page) =====
@@ -370,15 +491,8 @@
   async function renderMatchCards() {
     var container = document.getElementById('matchList');
     if (!container) return;
-
     container.innerHTML = '<li><div class="con" style="padding:20px;text-align:center;color:#999">加载中...</div></li>';
-
-    var data = mockMatches;
-    if (apiAvailable) {
-      var res = await apiFetch('/matches');
-      if (res && res.code === 0 && res.data && res.data.length > 0) data = res.data;
-    }
-
+    var data = await loadWithFallback('/matches', mockMatches);
     if (!data || data.length === 0) {
       container.innerHTML = '<li><div class="con" style="padding:30px;text-align:center;color:#999">暂无赛事数据</div></li>';
     } else {
@@ -390,12 +504,12 @@
   async function renderChampionBet() {
     var grid = document.getElementById('teamsGrid');
     if (!grid) return;
-
-    var teams = mockChampionTeams;
-    if (apiAvailable) {
-      var res = await apiFetch('/champion-bet/odds');
-      if (res && res.code === 0 && res.data && res.data.odds) teams = res.data.odds;
-    }
+    var teams = await loadWithFallback('/champion-bet/odds', mockChampionTeams.map(function(t) {
+      return { id: t.id, name: t.name, championship_odds: t.championship_odds, runner_up_odds: t.runner_up_odds };
+    }));
+    // loadWithFallback returns raw data array; for champion it might be in .odds
+    if (teams && teams.odds) teams = teams.odds;
+    if (!Array.isArray(teams)) teams = mockChampionTeams;
 
     grid.innerHTML = teams.map(function(t) {
       var champOdds = (t.championship_odds || t.champion_odds || 8).toFixed(2);
@@ -433,12 +547,7 @@
     }
 
     container.innerHTML = '<li><div class="con" style="padding:20px;text-align:center;color:#999">加载中...</div></li>';
-
-    var data = mockMatches.slice(0);
-    if (apiAvailable) {
-      var res = await apiFetch('/matches');
-      if (res && res.code === 0 && res.data && res.data.length > 0) data = res.data;
-    }
+    var data = await loadWithFallback('/matches', mockMatches.slice(0));
 
     if (!data || data.length === 0) {
       container.innerHTML = '<li><div class="con" style="padding:30px;text-align:center;color:#999">暂无赛事数据</div></li>';
@@ -455,8 +564,8 @@
 
     var records = betRecords.slice(0);
 
-    // Try API fetch if wallet connected
-    if (apiAvailable && walletAddress) {
+    // Always try API fetch if wallet connected (FP fix: remove stale apiAvailable gate)
+    if (walletAddress) {
       var res = await apiFetch('/bets?address=' + encodeURIComponent(walletAddress));
       if (res && res.code === 0 && res.data && res.data.length > 0) {
         records = res.data.map(function(r) {
@@ -495,7 +604,10 @@
         '<div style="font-weight:600;margin-bottom:4px">' + (r.team || '') + '</div>' +
         '<div style="display:flex;justify-content:space-between;align-items:center">' +
           '<span>' + (r.amount || 0) + ' USDT</span>' +
-          '<span style="color:' + color + ';font-size:12px;font-weight:600">' + txt + '</span>' +
+          '<div style="display:flex;align-items:center;gap:8px">' +
+            '<span style="color:' + color + ';font-size:12px;font-weight:600">' + txt + '</span>' +
+            (r.status === 'pending' ? '<button onclick="app.cancelBet(' + r.id + ')" style="background:none;border:1px solid #e53935;color:#e53935;padding:4px 10px;border-radius:12px;font-size:11px;cursor:pointer">取消</button>' : '') +
+          '</div>' +
         '</div>' +
       '</div>';
     }).join('');
@@ -536,6 +648,7 @@
     // Load data
     await loadPoolBalance();
     await loadPnLData();
+    await loadVIPData();
 
     var shortAddr = walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
     var pnlClass = pnlData.net_pnl >= 0 ? 'pnl-positive' : 'pnl-negative';
@@ -701,6 +814,13 @@
     }
   }
 
+  // ===== DEPOSIT / WITHDRAW (API-backed) =====
+  function showWithdrawModal() {
+    if (!walletAddress) { showToast('请先连接钱包'); return; }
+    var modal = document.getElementById('withdrawModal');
+    if (modal) modal.style.display = 'flex';
+  }
+
   async function confirmDeposit() {
     var amountInput = document.getElementById('depositAmount');
     var amount = parseFloat(amountInput ? amountInput.value : 0);
@@ -709,39 +829,66 @@
       return;
     }
 
-    if (typeof dapp === 'undefined') { showToast('Web3模块未加载'); return; }
-
-    try {
-      await dapp.executeDeposit(amount);
-    } catch(e) {
-      showToast('❌ ' + (e.reason || e.message || '充值失败'));
-    }
-  }
-
-  function showWithdrawModal() {
-    if (!walletAddress) { showToast('请先连接钱包'); return; }
+    // Try on-chain first via Web3, then confirm via API
     if (typeof dapp !== 'undefined') {
-      dapp.showWithdrawModal();
-    } else {
-      var modal = document.getElementById('withdrawModal');
-      if (modal) modal.style.display = 'flex';
+      try {
+        var txHash = await dapp.executeDeposit(amount);
+        if (txHash) {
+          // Confirm the deposit with backend API
+          var confirmRes = await apiFetch('/deposit', {
+            method: 'POST',
+            body: JSON.stringify({ wallet_address: walletAddress, tx_hash: txHash, amount: amount })
+          });
+          if (confirmRes && confirmRes.code === 0) {
+            showToast('✅ 充值成功: ' + amount + ' USDT\nTx: ' + txHash.slice(0, 10) + '...');
+            hideDepositModal();
+            if (currentPage === 'profile') renderProfile();
+            return;
+          }
+          showToast('⚠️ 链上交易已提交，但后端验证失败: ' + (confirmRes ? confirmRes.msg : '网络错误'));
+          return;
+        }
+      } catch(e) {
+        showToast('❌ ' + (e.reason || e.message || '充值失败'));
+        return;
+      }
     }
+
+    // Fallback: API-only deposit with tx_hash prompt
+    showToast('请通过MetaMask向合约地址转账后，提供交易哈希');
   }
 
   async function confirmWithdraw() {
     var amountInput = document.getElementById('withdrawAmount');
+    var addrInput = document.getElementById('withdrawAddress');
     var amount = parseFloat(amountInput ? amountInput.value : 0);
+    var toAddress = addrInput ? addrInput.value.trim() : '';
+
     if (!amount || isNaN(amount) || amount < 1) {
-      showToast('请输入有效提现金额');
+      showToast('请输入有效提现金额（最低1 USDT）');
       return;
     }
-
-    if (typeof dapp === 'undefined') { showToast('Web3模块未加载'); return; }
+    if (!toAddress || !/^0x[0-9a-fA-F]{40}$/.test(toAddress)) {
+      showToast('请输入有效的提现地址（0x...）');
+      return;
+    }
+    if (!walletAddress) { showToast('请先连接钱包'); return; }
 
     try {
-      await dapp.executeWithdraw(amount);
+      var res = await apiFetch('/withdraw', {
+        method: 'POST',
+        body: JSON.stringify({ wallet_address: walletAddress, amount: amount, withdraw_address: toAddress })
+      });
+      if (res && res.code === 0) {
+        showToast('✅ 提现申请已提交: ' + amount + ' USDT → ' + toAddress.slice(0,6) + '...');
+        var modal = document.getElementById('withdrawModal');
+        if (modal) modal.style.display = 'none';
+        if (currentPage === 'profile') renderProfile();
+      } else {
+        showToast('❌ ' + (res ? res.msg : '提现失败'));
+      }
     } catch(e) {
-      showToast('❌ ' + (e.reason || e.message || '提现失败'));
+      showToast('❌ 网络错误，请重试');
     }
   }
 
@@ -778,7 +925,6 @@
     var modal = document.getElementById('inviteModal');
     if (!modal) return;
 
-    // Show loading state
     var codeEl = document.getElementById('inviteCode');
     var statsEl = document.getElementById('inviteStats');
     if (codeEl) codeEl.textContent = '加载中...';
@@ -786,10 +932,16 @@
 
     modal.style.display = 'flex';
 
-    // Load invite data
-    loadInviteData().then(function() {
+    // Load invite data + agent earnings
+    Promise.all([loadInviteData(), loadAgentEarnings()]).then(function() {
       if (codeEl) codeEl.textContent = inviteCode || '生成失败，请重试';
-      if (statsEl) statsEl.textContent = '已邀请: ' + inviteData.count + '人 | 返佣: ' + inviteData.rewards.toFixed(2) + ' USDT';
+      var agentInfo = window._agentInfo || {};
+      var levelName = agentInfo.name || '普通会员';
+      var commissionL1 = ((agentInfo.commission_l1 || 0) * 100).toFixed(1);
+      if (statsEl) statsEl.innerHTML =
+        '<div style="font-size:12px;color:#DAA520;margin-bottom:4px">🏅 ' + levelName + ' · 一级返佣 ' + commissionL1 + '%</div>' +
+        '<div>已邀请: <b>' + inviteData.count + '</b>人 | 交易额: <b>$' + (agentInfo.total_volume || 0).toLocaleString() + '</b></div>' +
+        '<div style="font-size:11px;color:#999;margin-top:4px">已领取: ' + inviteData.rewards.toFixed(2) + ' USDT</div>';
     });
   }
 
@@ -853,6 +1005,70 @@
     }
   }
 
+  // ===== AGENT EARNINGS =====
+  async function loadAgentEarnings() {
+    if (!walletAddress) return;
+    try {
+      var res = await apiFetch('/invite/earnings?wallet=' + encodeURIComponent(walletAddress));
+      if (res && res.code === 0 && res.data) {
+        window._agentInfo = res.data;
+      }
+    } catch(e) {}
+  }
+
+  // ===== CANCEL BET =====
+  async function cancelBet(betId) {
+    if (!walletAddress) { showToast('请先连接钱包'); return; }
+    showConfirm('取消投注', '确定要取消这笔投注吗？金额将退回余额。', async function() {
+      try {
+        var res = await apiFetch('/bets/' + betId + '/cancel', {
+          method: 'POST',
+          body: JSON.stringify({ wallet_address: walletAddress })
+        });
+        if (res && res.code === 0) {
+          showToast('✅ 投注已取消，' + (res.data ? res.data.refunded : '') + ' USDT 已退回');
+          if (currentPage === 'records') renderRecords();
+          if (currentPage === 'profile') renderProfile();
+        } else {
+          showToast('❌ ' + (res ? res.msg : '取消失败'));
+        }
+      } catch(e) { showToast('网络错误，请重试'); }
+    });
+  }
+
+  // ===== AI HOSTING TOGGLE =====
+  async function toggleAIHosting() {
+    if (!walletAddress) { showToast('请先连接钱包'); return; }
+    try {
+      var statusRes = await apiFetch('/ai-hosting/status?address=' + encodeURIComponent(walletAddress));
+      var isActive = statusRes && statusRes.data && statusRes.data.active;
+      if (isActive) {
+        var res = await apiFetch('/ai-hosting/deactivate', {
+          method: 'POST',
+          body: JSON.stringify({ wallet_address: walletAddress })
+        });
+        if (res && res.code === 0) {
+          showToast('✅ AI托管已停用，冻结资金已释放');
+          renderAIPage();
+        } else {
+          showToast('❌ ' + (res ? res.msg : '操作失败'));
+        }
+      } else {
+        // Activate with default amount
+        var activateRes = await apiFetch('/ai-hosting/activate', {
+          method: 'POST',
+          body: JSON.stringify({ wallet_address: walletAddress, freeze_amount: 100 })
+        });
+        if (activateRes && activateRes.code === 0) {
+          showToast('✅ AI托管已激活，冻结 100 USDT');
+          renderAIPage();
+        } else {
+          showToast('❌ ' + (activateRes ? activateRes.msg : '激活失败'));
+        }
+      }
+    } catch(e) { showToast('网络错误，请重试'); }
+  }
+
   // ===== DAPP EVENT LISTENERS =====
   function setupDappListeners() {
     // Listen for tx status updates from dapp
@@ -890,29 +1106,137 @@
   }
 
   // ===== PAGE: AI =====
-  function renderAIPage() {
-    // AI prediction page - show placeholder content
+  async function renderAIPage() {
     var container = document.getElementById('page-ai');
     if (!container) {
       var mainEl = document.querySelector('.main .wp');
       if (!mainEl) return;
-      var existing = document.getElementById('page-ai');
-      if (!existing) {
-        existing = document.createElement('div');
-        existing.id = 'page-ai';
-        existing.className = 'page';
-        existing.innerHTML = '<div style="padding:20px;text-align:center">' +
-          '<h3 style="margin-bottom:15px">AI 智能预测</h3>' +
-          '<p style="color:#999;margin-bottom:10px">基于5000万场历史数据进行深度学习</p>' +
-          '<p style="color:#999;margin-bottom:10px">反波胆玩法理论胜率高达 88.89%</p>' +
-          '<div style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:20px;border-radius:12px;margin-top:20px">' +
-            '<p style="font-size:24px;font-weight:bold">15%</p>' +
-            '<p style="font-size:12px">AI 托管月化收益</p>' +
-          '</div>' +
-        '</div>';
-        mainEl.appendChild(existing);
-      }
+      container = document.createElement('div');
+      container.id = 'page-ai';
+      container.className = 'page';
+      mainEl.appendChild(container);
     }
+
+    container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted)">加载中...</div>';
+
+    // Fetch pool status + AI hosting if wallet connected
+    var poolData = null;
+    var aiStatus = null;
+    try {
+      var poolRes = await apiFetch('/finance/pool-status');
+      if (poolRes && poolRes.code === 0) poolData = poolRes.data;
+    } catch(e) {}
+    if (walletAddress) {
+      try {
+        var aiRes = await apiFetch('/ai-hosting/status?address=' + encodeURIComponent(walletAddress));
+        if (aiRes && aiRes.code === 0) aiStatus = aiRes.data;
+      } catch(e) {}
+    }
+
+    var userCount = poolData ? poolData.user_count : 0;
+    var poolBalance = poolData ? poolData.total_balance : 0;
+    var pendingBets = poolData ? poolData.pending_bets : 0;
+
+    container.innerHTML =
+      '<div style="padding:16px">' +
+        // Stats overview
+        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">' +
+          '<div style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:12px;text-align:center">' +
+            '<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">平台用户</div>' +
+            '<div style="font-size:20px;font-weight:700;color:var(--text)">' + userCount + '</div>' +
+          '</div>' +
+          '<div style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:12px;text-align:center">' +
+            '<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">资金池</div>' +
+            '<div style="font-size:20px;font-weight:700;color:var(--accent)">$' + Number(poolBalance).toLocaleString() + '</div>' +
+          '</div>' +
+          '<div style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:12px;text-align:center">' +
+            '<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">进行中</div>' +
+            '<div style="font-size:20px;font-weight:700;color:var(--green)">' + pendingBets + '</div>' +
+          '</div>' +
+        '</div>' +
+
+        // AI Introduction
+        '<div style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:20px;margin-bottom:16px">' +
+          '<h3 style="font-size:16px;color:var(--accent);margin-bottom:10px">🤖 AI 智能预测引擎</h3>' +
+          '<p style="font-size:13px;color:var(--text-light);line-height:1.8;margin-bottom:10px">基于5000万场历史数据的深度学习模型，反波胆玩法理论胜率高达88.89%。AI托管自动执行投注策略，月化收益目标15%。</p>' +
+          '<div style="display:flex;gap:8px;margin-top:12px">' +
+            '<div style="flex:1;background:rgba(240,185,11,0.06);border:1px solid rgba(240,185,11,0.15);border-radius:4px;padding:12px;text-align:center">' +
+              '<div style="font-size:10px;color:var(--text-muted)">理论胜率</div><div style="font-size:22px;font-weight:800;color:var(--accent)">88.89%</div>' +
+            '</div>' +
+            '<div style="flex:1;background:rgba(14,203,129,0.06);border:1px solid rgba(14,203,129,0.15);border-radius:4px;padding:12px;text-align:center">' +
+              '<div style="font-size:10px;color:var(--text-muted)">月化收益</div><div style="font-size:22px;font-weight:800;color:var(--green)">+15%</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+
+        // AI Hosting CTA
+        (walletAddress ?
+          '<div style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:16px">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
+              '<div><div style="font-size:14px;font-weight:600;color:var(--text)">AI 自动托管</div><div style="font-size:11px;color:var(--text-muted)">' + (aiStatus && aiStatus.active ? '运行中' : '未激活') + '</div></div>' +
+              '<button onclick="app.toggleAIHosting()" style="background:' + (aiStatus && aiStatus.active ? 'var(--surface-hover)' : 'var(--accent)') + ';color:' + (aiStatus && aiStatus.active ? 'var(--text)' : '#0B0E11') + ';border:none;padding:8px 16px;border-radius:4px;font-size:12px;font-weight:700;cursor:pointer">' + (aiStatus && aiStatus.active ? '停用' : '激活托管') + '</button>' +
+            '</div>' +
+            '<p style="font-size:11px;color:var(--text-muted);line-height:1.6">AI自动执行反波胆投注，最小冻结10 USDT，双阶段链上确认，可随时停用。</p>' +
+          '</div>'
+        :
+          '<div style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:16px;text-align:center">' +
+            '<p style="color:var(--text-muted);font-size:13px;margin-bottom:12px">连接钱包以激活AI自动托管</p>' +
+            '<button onclick="app.connectWallet()" style="background:var(--accent);color:#0B0E11;border:none;padding:10px 24px;border-radius:4px;font-size:13px;font-weight:700;cursor:pointer">🔗 连接钱包</button>' +
+          '</div>') +
+      '</div>';
+  }
+
+  // ===== PAGE: TRANSACTIONS =====
+  async function renderTransactions() {
+    var container = document.getElementById('page-transactions');
+    if (!container) {
+      var mainEl = document.querySelector('.main .wp');
+      if (!mainEl) return;
+      container = document.createElement('div');
+      container.id = 'page-transactions';
+      container.className = 'page';
+      mainEl.appendChild(container);
+    }
+
+    container.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted)">加载中...</div>';
+
+    if (!walletAddress) {
+      container.innerHTML = '<div style="padding:32px;text-align:center;color:var(--text-muted)"><p style="margin-bottom:12px">请先连接钱包</p><button onclick="app.connectWallet()" style="background:var(--accent);color:#0B0E11;border:none;padding:10px 24px;border-radius:4px;cursor:pointer">连接钱包</button></div>';
+      return;
+    }
+
+    var txData = [];
+    try {
+      var res = await apiFetch('/user/transactions?wallet=' + encodeURIComponent(walletAddress) + '&limit=50');
+      if (res && res.code === 0 && res.data && res.data.transactions) {
+        txData = res.data.transactions;
+      }
+    } catch(e) {}
+
+    if (txData.length === 0) {
+      container.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-muted)">暂无交易记录</div>';
+      return;
+    }
+
+    container.innerHTML = '<div style="padding:12px">' +
+      '<h3 style="font-size:16px;color:var(--text);margin-bottom:12px">交易流水</h3>' +
+      txData.map(function(tx) {
+        var icon = tx.type === 'deposit' ? '📥' : tx.type === 'withdraw' ? '📤' : '🎯';
+        var label = tx.type === 'deposit' ? '充值' : tx.type === 'withdraw' ? '提现' : (tx.game_type === 'champion' ? '冠亚' : tx.game_type === 'anti-score' ? '反波胆' : '比分');
+        var amount = tx.amount || 0;
+        var amountColor = amount > 0 ? 'var(--green)' : amount < 0 ? 'var(--red)' : 'var(--text-light)';
+        var time = tx.created_at ? new Date(tx.created_at).toLocaleString('zh-CN') : '';
+        return '<div style="display:flex;align-items:center;padding:12px;border-bottom:1px solid var(--border);gap:12px">' +
+          '<div style="font-size:24px">' + icon + '</div>' +
+          '<div style="flex:1;min-width:0">' +
+            '<div style="font-size:13px;color:var(--text)">' + label + (tx.team_name ? ' · ' + tx.team_name : '') + '</div>' +
+            '<div style="font-size:11px;color:var(--text-muted)">' + time + '</div>' +
+            '<div style="font-size:10px;color:var(--text-muted)">' + (tx.status || '') + (tx.tx_hash ? ' · ' + tx.tx_hash.slice(0,8) + '...' : '') + '</div>' +
+          '</div>' +
+          '<div style="font-size:14px;font-weight:700;color:' + amountColor + ';white-space:nowrap">' + (amount > 0 ? '+' : '') + Number(amount).toFixed(2) + ' USDT</div>' +
+        '</div>';
+      }).join('') +
+    '</div>';
   }
 
   // ===== BETTING FLOW =====
@@ -923,18 +1247,92 @@
     var match = findMatch(matchId);
     if (!match) { showToast('赛事不存在'); return; }
 
-    betDialogData = {
-      matchId: matchId,
-      home: match.home || match.home_team,
-      away: match.away || match.away_team,
-      league: match.league || match.league_name,
-      oddsHome: match.odds_home || (match.odds && match.odds.home) || '--',
-      oddsDraw: match.odds_draw || (match.odds && match.odds.draw) || '--',
-      oddsAway: match.odds_away || (match.odds && match.odds.away) || '--',
-      time: match.time || match.match_time || ''
-    };
+    // Navigate to detail page and populate
+    navigateTo('detail');
+    var home = match.home || match.home_team || '';
+    var away = match.away || match.away_team || '';
+    var time = match.time || match.match_time || '';
+    var venue = match.venue || '';
+    var odds = match.odds_home || '--';
 
-    showBetDialog();
+    var homeEl = document.getElementById('detailHomeTeam');
+    if (homeEl) homeEl.textContent = home;
+    var awayEl = document.getElementById('detailAwayTeam');
+    if (awayEl) awayEl.textContent = away;
+    var timeEl = document.getElementById('detailMatchTime');
+    if (timeEl) timeEl.textContent = time;
+    var venueEl = document.getElementById('detailMatchVenue');
+    if (venueEl) venueEl.textContent = venue || '--';
+    var oddsEl = document.getElementById('detailOdds');
+    if (oddsEl) oddsEl.textContent = typeof odds === 'number' ? odds.toFixed(2) : odds;
+
+    // Populate 18-grid score cells
+    var grid = document.getElementById('scoreGrid');
+    if (grid) {
+      var scores = ['0:0','0:1','0:2','0:3','1:0','1:1','1:2','1:3','2:0','2:1','2:2','2:3','3:0','3:1','3:2','3:3','主4+','客4+'];
+      grid.innerHTML = scores.map(function(s) {
+        return '<div class="score-cell" data-score="' + s + '" onclick="app.selectScore(\'' + s + '\')" style="display:inline-flex;align-items:center;justify-content:center;width:58px;height:40px;margin:4px;border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:14px;font-weight:600;color:var(--text);background:var(--surface)">' + s + '</div>';
+      }).join('');
+      window._selectedScore = null;
+      window._detailMatchId = matchId;
+    }
+
+    // Wire up quick-bet amounts
+    var amtBtns = document.querySelectorAll('.quick-bet-amt');
+    for (var i = 0; i < amtBtns.length; i++) {
+      amtBtns[i].onclick = function() {
+        var btns = document.querySelectorAll('.quick-bet-amt');
+        for (var j = 0; j < btns.length; j++) btns[j].style.background = 'var(--surface)';
+        this.style.background = 'var(--accent)';
+        this.style.color = '#fff';
+        window._selectedAmount = parseInt(this.getAttribute('data-amt'));
+      };
+    }
+    window._selectedAmount = 10; // default
+  }
+
+  function selectScore(score) {
+    window._selectedScore = score;
+    var cells = document.querySelectorAll('.score-cell');
+    for (var i = 0; i < cells.length; i++) {
+      cells[i].style.background = 'var(--surface)';
+      cells[i].style.borderColor = 'var(--border)';
+    }
+    var el = document.querySelector('.score-cell[data-score="' + score + '"]');
+    if (el) { el.style.background = 'rgba(229,57,53,0.12)'; el.style.borderColor = 'var(--accent)'; }
+  }
+
+  document.getElementById('placeBetBtn').onclick = function() {
+    if (!walletAddress) { showToast('请先连接钱包'); return; }
+    if (!window._selectedScore) { showToast('请选择比分'); return; }
+    var amount = window._selectedAmount || 10;
+    var matchId = window._detailMatchId;
+    if (!matchId) { showToast('赛事数据异常'); return; }
+    showConfirm('确认投注',
+      '赛事 #' + matchId + ' | 反波胆 ' + window._selectedScore + ' | ' + amount + ' USDT',
+      function() { placeAntiBet(matchId, window._selectedScore, amount); }
+    );
+  };
+
+  async function placeAntiBet(matchId, score, amount) {
+    try {
+      var res = await apiFetch('/anti-bet/place', {
+        method: 'POST',
+        body: JSON.stringify({
+          match_id: matchId,
+          selected_score: score,
+          amount: amount,
+          wallet_address: walletAddress,
+          tx_hash: 'browser_' + Date.now()
+        })
+      });
+      if (res && res.code === 0) {
+        showToast('✅ 投注成功! #' + (res.data && res.data.bet_id || '') + ' 比分:' + score + ' | ' + amount + ' USDT');
+        if (currentPage === 'records') renderRecords();
+      } else {
+        showToast('❌ ' + (res ? res.msg : '投注失败'));
+      }
+    } catch(e) { showToast('网络错误，请重试'); }
   }
 
   function findMatch(id) {
@@ -1140,6 +1538,17 @@
     copyInviteCode: copyInviteCode,
     claimInviteRewards: claimInviteRewards,
     shareInvite: shareInvite,
+    // Cancel + Agent
+    cancelBet: cancelBet,
+    loadAgentEarnings: loadAgentEarnings,
+    // AI + Transactions
+    toggleAIHosting: toggleAIHosting,
+    navigateTo: navigateTo,
+    // Betting
+    selectScore: selectScore,
+    openMatch: openMatch,
+    // Retry
+    retryConnection: retryConnection,
   };
 
   // ===== INIT =====
@@ -1147,7 +1556,6 @@
     loadData();
     setupTouchFeedback();
     setupBanner();
-    startWorldCupCountdown();
     setupDappListeners();
 
     // Wallet button listener

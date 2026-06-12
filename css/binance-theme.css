@@ -1,0 +1,301 @@
+/* ============================================================
+   Binance Theme — 对标币安官网
+   Dark pro trading aesthetic for 19888 platform
+   ============================================================ */
+
+/* ---- Override CSS Variables ---- */
+:root{
+  --primary:#F0B90B;
+  --primary-dark:#C9970A;
+  --primary-light:#F8D33A;
+  --blue:#F0B90B;
+  
+  --accent:#F0B90B;
+  --accent-deep:#C9970A;
+  --accent-grad:linear-gradient(135deg,#F0B90B 0%,#F8D33A 100%);
+  --accent-grad-rev:linear-gradient(225deg,#F8D33A 0%,#F0B90B 100%);
+  --accent-ring:rgba(240,185,11,0.18);
+  --accent-glow:rgba(240,185,11,0.08);
+  --accent-glass:rgba(240,185,11,0.06);
+  
+  --red:#F6465D;
+  --red-soft:rgba(246,70,93,0.10);
+  --gold:#F0B90B;
+  --green:#0ECB81;
+  --green-soft:rgba(14,203,129,0.10);
+  
+  --bg:#0B0E11;
+  --bg-alt:#0B0E11;
+  --surface:#1E2329;
+  --surface-hover:#2B3139;
+  --surface-glass:rgba(30,35,41,0.95);
+  --surface-raised:linear-gradient(160deg,#1E2329 0%,#252A32 100%);
+  
+  --text:#EAECEF;
+  --text-light:#848E9C;
+  --text-muted:#5E6673;
+  --text-inverse:#0B0E11;
+  --border:#2B3139;
+  --border-light:#1E2329;
+  --border-glass:rgba(255,255,255,0.04);
+  
+  --shadow-xs:0 1px 2px rgba(0,0,0,0.3);
+  --shadow-sm:0 1px 4px rgba(0,0,0,0.4);
+  --shadow:0 2px 8px rgba(0,0,0,0.5);
+  --shadow-md:0 4px 16px rgba(0,0,0,0.6);
+  --shadow-card:0 1px 0 rgba(255,255,255,0.04);
+  --shadow-card-hover:0 2px 8px rgba(0,0,0,0.5);
+}
+
+/* ---- Body Base ---- */
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+}
+body::before{display:none}
+.main{background:var(--bg)}
+
+/* ---- Header — Binance-style dark bar ---- */
+.header{
+  background:var(--surface-glass);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  box-shadow:none;
+  height:48px;
+}
+body.index .header .global-lang-switch-btn{left:12px;top:12px}
+body.index .header .global-lang-switch-btn img{filter:brightness(0) invert(1)}
+.header .logo img{height:26px}
+
+/* ---- Wallet Button ---- */
+.wallet-connect{
+  background:var(--surface-hover);
+  border:1px solid var(--border);
+  border-radius:6px;padding:6px 14px;
+}
+.wallet-connect:hover{background:#363C45}
+.wallet-connect.connected{
+  background:rgba(240,185,11,0.12);
+  border-color:rgba(240,185,11,0.3);
+  box-shadow:none;
+}
+.wallet-icon{filter:brightness(0) invert(1)}
+.wallet-address{color:var(--text)}
+
+/* ---- Banner — Binance dark gradient ---- */
+.banner{
+  padding:0;margin:0;
+  background:linear-gradient(180deg,#1E2329 0%,#0B0E11 100%);
+}
+.banner .item{
+  height:140px;
+  background:linear-gradient(135deg,#1A1E24 0%,#252A32 50%,#1A1E24 100%) !important;
+  border-radius:0;
+  border-bottom:1px solid var(--border);
+}
+.banner .item::before{
+  background:radial-gradient(circle,rgba(240,185,11,0.06) 0%,transparent 60%);
+}
+
+/* ---- Notice Bar ---- */
+.m-notice{
+  background:linear-gradient(135deg,rgba(240,185,11,0.08) 0%,rgba(240,185,11,0.03) 100%);
+  border:1px solid rgba(240,185,11,0.12);
+  color:#F8D33A;
+  border-radius:4px;
+  box-shadow:none;
+  margin:12px;
+}
+.m-notice .icon{filter:brightness(0) saturate(100%) invert(72%) sepia(78%) saturate(1237%) hue-rotate(2deg) brightness(103%) contrast(96%)}
+.m-notice .notice{color:#F8D33A}
+
+/* ---- Tab Header ---- */
+.ul-tabs_b1 li a{color:var(--text-light);font-size:14px}
+.ul-tabs_b1 li.on a{color:var(--accent)}
+.ul-tabs_b1 li.on a::after{
+  background:var(--accent);
+  box-shadow:0 0 12px rgba(240,185,11,0.4);
+}
+.more-link{color:var(--accent)}
+.more-link:hover{color:#F8D33A}
+
+/* ---- Match Cards — Binance card style ---- */
+.ul-info li .con{
+  background:var(--surface) !important;
+  border:1px solid var(--border);
+  border-radius:4px;
+  box-shadow:none;
+  min-height:120px;
+}
+.ul-info li .con:hover{
+  border-color:var(--accent);
+  box-shadow:0 0 20px rgba(240,185,11,0.08);
+  transform:none;
+}
+.ul-info li::before,.ul-info li::after{display:none}
+
+/* League badge */
+.ul-info li .league-name{
+  background:rgba(240,185,11,0.06);
+  border-radius:0 0 4px 4px;
+  backdrop-filter:none;
+  margin:-15px auto 12px auto;
+}
+.ul-info li .league-name::before,.ul-info li .league-name::after{display:none}
+.ul-info li .league-name .p1{color:var(--accent);text-shadow:none;font-size:11px}
+
+/* Team logos */
+.ul-info li .team-logo{
+  background:var(--surface-hover);
+  border:1px solid var(--border);
+}
+.ul-info li .team-name{color:var(--text);font-size:13px}
+.ul-info li .match-time .time{color:#EAECEF}
+.ul-info li .match-time .date{color:var(--text-light)}
+
+/* ---- Tabbar Footer ---- */
+.ul-tabbar{
+  background:var(--surface);
+  box-shadow:0 -1px 0 var(--border);
+  border-top:1px solid var(--border);
+  height:56px;
+  padding-bottom:6px;
+}
+.ul-tabbar li a{color:var(--text-light)}
+.ul-tabbar .on p{color:var(--accent)}
+.ul-tabbar p{color:var(--text-light)}
+
+/* Update tabbar icon colors for dark theme */
+.ul-tabbar li .icon_home{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23848E9C'%3E%3Cpath d='M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z'/%3E%3C/svg%3E")}
+.ul-tabbar li .icon_ai{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23848E9C'%3E%3Cpath d='M9.5 2c-.7 0-1.3.5-1.5 1.2L6.3 8H2.1c-.8 0-1.3.9-.8 1.5L6 14l-1.7 5c-.3.8.5 1.5 1.3 1L12 16l6.4 4c.8.5 1.6-.2 1.3-1L18 14l4.7-4.5c.5-.6 0-1.5-.8-1.5h-4.2L16 3.2c-.2-.7-.8-1.2-1.5-1.2H9.5z'/%3E%3C/svg%3E")}
+.ul-tabbar li .icon_match{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23848E9C'%3E%3Ccircle cx='12' cy='12' r='10' fill='none' stroke='%23848E9C' stroke-width='1.5'/%3E%3Cpath d='M7 7h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2zM7 11h2v2H7zm4 2h2v2h-2zm4 0h2v2h-2zm-4 4h2v2h-2z'/%3E%3C/svg%3E")}
+.ul-tabbar li .icon_record{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23848E9C'%3E%3Cpath d='M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z'/%3E%3C/svg%3E")}
+.ul-tabbar li .icon_user{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23848E9C'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E")}
+.ul-tabbar .on .icon_home{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23F0B90B'%3E%3Cpath d='M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z'/%3E%3C/svg%3E")}
+.ul-tabbar .on .icon_ai{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23F0B90B'%3E%3Cpath d='M9.5 2c-.7 0-1.3.5-1.5 1.2L6.3 8H2.1c-.8 0-1.3.9-.8 1.5L6 14l-1.7 5c-.3.8.5 1.5 1.3 1L12 16l6.4 4c.8.5 1.6-.2 1.3-1L18 14l4.7-4.5c.5-.6 0-1.5-.8-1.5h-4.2L16 3.2c-.2-.7-.8-1.2-1.5-1.2H9.5z'/%3E%3C/svg%3E")}
+.ul-tabbar .on .icon_match{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23F0B90B'%3E%3Ccircle cx='12' cy='12' r='10' fill='none' stroke='%23F0B90B' stroke-width='1.5'/%3E%3Cpath d='M7 7h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2zM7 11h2v2H7zm4 2h2v2h-2zm4 0h2v2h-2zm-4 4h2v2h-2z'/%3E%3C/svg%3E")}
+.ul-tabbar .on .icon_record{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23F0B90B'%3E%3Cpath d='M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z'/%3E%3C/svg%3E")}
+.ul-tabbar .on .icon_user{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23F0B90B'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E")}
+
+/* ---- Dialogs / Modals ---- */
+.dialog-overlay{background:rgba(0,0,0,0.7);backdrop-filter:blur(4px)}
+.dialog-box{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:8px;
+  box-shadow:0 8px 40px rgba(0,0,0,0.6);
+}
+.dialog-title{background:linear-gradient(135deg,#1E2329,#252A32);border-bottom:1px solid var(--border);color:var(--text)}
+.custom-confirm{background:var(--surface);border:1px solid var(--border);color:var(--text)}
+.custom-confirm-title{color:var(--text)}
+.custom-confirm-content{color:var(--text-light)}
+.confirm-cancel-btn{background:var(--surface-hover);color:var(--text);border:1px solid var(--border)}
+.confirm-ok-btn{background:var(--accent);color:#0B0E11;font-weight:700}
+
+/* ---- Toast ---- */
+.custom-toast{background:var(--surface);border:1px solid var(--border);color:var(--text);box-shadow:0 4px 24px rgba(0,0,0,0.6)}
+
+/* ---- Buttons ---- */
+.bet-btn{
+  background:var(--accent);
+  color:#0B0E11;
+  box-shadow:none;
+  font-weight:700;
+  border-radius:4px;
+}
+.bet-btn:hover{background:#F8D33A}
+.bet-champion{background:var(--accent);color:#0B0E11}
+.bet-runner-up{background:var(--surface-hover);color:var(--text);border:1px solid var(--border)}
+
+/* ---- Inputs ---- */
+input{
+  background:var(--surface);
+  border:1px solid var(--border);
+  color:var(--text);
+  border-radius:4px;
+}
+input:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(240,185,11,0.15)}
+
+/* ---- Profile Cards ---- */
+.balance-card{
+  background:var(--surface) !important;
+  border:1px solid var(--border);
+  border-radius:4px;
+}
+.vip-card{border:1px solid rgba(240,185,11,0.15) !important}
+
+/* ---- Scrollbar ---- */
+::-webkit-scrollbar-thumb{background:var(--border)}
+::-webkit-scrollbar-thumb:hover{background:var(--text-muted)}
+
+/* ---- Champion Bet Section ---- */
+.team-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:4px;
+  box-shadow:none;
+}
+.team-card:hover{border-color:var(--accent);box-shadow:0 0 16px rgba(240,185,11,0.06)}
+.team-card .t-logo{background:var(--surface-hover)}
+
+/* ---- Record Items ---- */
+.record-item{border-bottom:1px solid var(--border) !important}
+
+/* ---- Global Lang Modal ---- */
+.global-lang-modal-content{background:var(--surface);border:1px solid var(--border)}
+.global-lang-modal-header{background:linear-gradient(135deg,#1E2329,#252A32);border-bottom:1px solid var(--border)}
+.global-lang-option{color:var(--text);border-bottom:1px solid var(--border)}
+.global-lang-option:active{background:var(--surface-hover)}
+.global-lang-option.selected{background:rgba(240,185,11,0.08);color:var(--accent)}
+
+/* ---- Platform Intro / Partners ---- */
+.platform-intro{
+  background:var(--surface);
+  border:1px solid var(--border);
+  box-shadow:none;
+}
+.official-partners{
+  background:var(--surface);
+  border:1px solid var(--border);
+  box-shadow:none;
+}
+.intro-content{background:var(--bg);color:var(--text-light);box-shadow:none}
+.section-title{color:var(--text);border-bottom-color:var(--accent)}
+.section-title::before{background:var(--accent)}
+
+/* ---- Partners Grid ---- */
+.partners-grid-dark{
+  display:flex;justify-content:space-around;align-items:center;
+  gap:8px;padding:16px 12px;margin:12px;
+  background:var(--surface);border:1px solid var(--border);border-radius:4px;
+}
+.partners-grid-dark img{filter:grayscale(100%) brightness(0.7);opacity:0.5}
+.partners-grid-dark .partner-item{background:transparent;box-shadow:none;border:none}
+
+/* ---- Filter Buttons ---- */
+.filter-btn{
+  background:var(--surface);
+  border:1px solid var(--border);
+  color:var(--text-light);
+  border-radius:4px;
+}
+.filter-btn.active{background:var(--accent);color:#0B0E11;border-color:var(--accent)}
+.filter-btn:hover{background:var(--surface-hover);color:var(--text)}
+
+/* ---- Bet Type Labels ---- */
+.status-pending{background:rgba(240,185,11,0.12);color:var(--accent)}
+.status-won{background:rgba(14,203,129,0.12);color:var(--green)}
+.status-lost{background:rgba(246,70,93,0.12);color:var(--red)}
+
+/* ---- Quick Amount Buttons ---- */
+.quick-amount{
+  background:var(--surface);
+  border:1px solid var(--border);
+  color:var(--text-light);
+}
+.quick-amount:hover{background:var(--surface-hover);border-color:var(--accent);color:var(--accent)}
+
+/* ---- Empty States ---- */
+.empty-state{color:var(--text-muted)}

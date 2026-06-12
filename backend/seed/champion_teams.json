@@ -1,0 +1,386 @@
+[
+  {
+    "id": 1,
+    "name": "美国",
+    "flag": "🇺🇸",
+    "champion_odds": 15.0,
+    "runner_odds": 10.0,
+    "group": "A"
+  },
+  {
+    "id": 2,
+    "name": "墨西哥",
+    "flag": "🇲🇽",
+    "champion_odds": 25.0,
+    "runner_odds": 18.0,
+    "group": "A"
+  },
+  {
+    "id": 3,
+    "name": "挪威",
+    "flag": "🇳🇴",
+    "champion_odds": 20.0,
+    "runner_odds": 14.0,
+    "group": "A"
+  },
+  {
+    "id": 4,
+    "name": "新西兰",
+    "flag": "🇳🇿",
+    "champion_odds": 300.0,
+    "runner_odds": 200.0,
+    "group": "A"
+  },
+  {
+    "id": 5,
+    "name": "巴西",
+    "flag": "🇧🇷",
+    "champion_odds": 5.5,
+    "runner_odds": 4.0,
+    "group": "B"
+  },
+  {
+    "id": 6,
+    "name": "德国",
+    "flag": "🇩🇪",
+    "champion_odds": 7.0,
+    "runner_odds": 5.0,
+    "group": "B"
+  },
+  {
+    "id": 7,
+    "name": "波兰",
+    "flag": "🇵🇱",
+    "champion_odds": 50.0,
+    "runner_odds": 35.0,
+    "group": "B"
+  },
+  {
+    "id": 8,
+    "name": "喀麦隆",
+    "flag": "🇨🇲",
+    "champion_odds": 150.0,
+    "runner_odds": 100.0,
+    "group": "B"
+  },
+  {
+    "id": 9,
+    "name": "法国",
+    "flag": "🇫🇷",
+    "champion_odds": 6.0,
+    "runner_odds": 4.5,
+    "group": "C"
+  },
+  {
+    "id": 10,
+    "name": "荷兰",
+    "flag": "🇳🇱",
+    "champion_odds": 11.0,
+    "runner_odds": 8.0,
+    "group": "C"
+  },
+  {
+    "id": 11,
+    "name": "哥伦比亚",
+    "flag": "🇨🇴",
+    "champion_odds": 30.0,
+    "runner_odds": 22.0,
+    "group": "C"
+  },
+  {
+    "id": 12,
+    "name": "马里",
+    "flag": "🇲🇱",
+    "champion_odds": 250.0,
+    "runner_odds": 180.0,
+    "group": "C"
+  },
+  {
+    "id": 13,
+    "name": "阿根廷",
+    "flag": "🇦🇷",
+    "champion_odds": 6.5,
+    "runner_odds": 5.0,
+    "group": "D"
+  },
+  {
+    "id": 14,
+    "name": "英格兰",
+    "flag": "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+    "champion_odds": 7.5,
+    "runner_odds": 5.5,
+    "group": "D"
+  },
+  {
+    "id": 15,
+    "name": "日本",
+    "flag": "🇯🇵",
+    "champion_odds": 35.0,
+    "runner_odds": 25.0,
+    "group": "D"
+  },
+  {
+    "id": 16,
+    "name": "伊朗",
+    "flag": "🇮🇷",
+    "champion_odds": 200.0,
+    "runner_odds": 130.0,
+    "group": "D"
+  },
+  {
+    "id": 17,
+    "name": "西班牙",
+    "flag": "🇪🇸",
+    "champion_odds": 9.0,
+    "runner_odds": 6.5,
+    "group": "E"
+  },
+  {
+    "id": 18,
+    "name": "意大利",
+    "flag": "🇮🇹",
+    "champion_odds": 13.0,
+    "runner_odds": 9.0,
+    "group": "E"
+  },
+  {
+    "id": 19,
+    "name": "澳大利亚",
+    "flag": "🇦🇺",
+    "champion_odds": 80.0,
+    "runner_odds": 55.0,
+    "group": "E"
+  },
+  {
+    "id": 20,
+    "name": "突尼斯",
+    "flag": "🇹🇳",
+    "champion_odds": 350.0,
+    "runner_odds": 250.0,
+    "group": "E"
+  },
+  {
+    "id": 21,
+    "name": "葡萄牙",
+    "flag": "🇵🇹",
+    "champion_odds": 10.0,
+    "runner_odds": 7.0,
+    "group": "F"
+  },
+  {
+    "id": 22,
+    "name": "比利时",
+    "flag": "🇧🇪",
+    "champion_odds": 15.0,
+    "runner_odds": 10.0,
+    "group": "F"
+  },
+  {
+    "id": 23,
+    "name": "韩国",
+    "flag": "🇰🇷",
+    "champion_odds": 60.0,
+    "runner_odds": 40.0,
+    "group": "F"
+  },
+  {
+    "id": 24,
+    "name": "埃及",
+    "flag": "🇪🇬",
+    "champion_odds": 200.0,
+    "runner_odds": 130.0,
+    "group": "F"
+  },
+  {
+    "id": 25,
+    "name": "摩洛哥",
+    "flag": "🇲🇦",
+    "champion_odds": 30.0,
+    "runner_odds": 20.0,
+    "group": "G"
+  },
+  {
+    "id": 26,
+    "name": "塞内加尔",
+    "flag": "🇸🇳",
+    "champion_odds": 40.0,
+    "runner_odds": 28.0,
+    "group": "G"
+  },
+  {
+    "id": 27,
+    "name": "智利",
+    "flag": "🇨🇱",
+    "champion_odds": 60.0,
+    "runner_odds": 40.0,
+    "group": "G"
+  },
+  {
+    "id": 28,
+    "name": "阿尔及利亚",
+    "flag": "🇩🇿",
+    "champion_odds": 180.0,
+    "runner_odds": 120.0,
+    "group": "G"
+  },
+  {
+    "id": 29,
+    "name": "乌拉圭",
+    "flag": "🇺🇾",
+    "champion_odds": 20.0,
+    "runner_odds": 14.0,
+    "group": "H"
+  },
+  {
+    "id": 30,
+    "name": "丹麦",
+    "flag": "🇩🇰",
+    "champion_odds": 28.0,
+    "runner_odds": 20.0,
+    "group": "H"
+  },
+  {
+    "id": 31,
+    "name": "厄瓜多尔",
+    "flag": "🇪🇨",
+    "champion_odds": 100.0,
+    "runner_odds": 70.0,
+    "group": "H"
+  },
+  {
+    "id": 32,
+    "name": "伊拉克",
+    "flag": "🇮🇶",
+    "champion_odds": 400.0,
+    "runner_odds": 300.0,
+    "group": "H"
+  },
+  {
+    "id": 33,
+    "name": "克罗地亚",
+    "flag": "🇭🇷",
+    "champion_odds": 25.0,
+    "runner_odds": 18.0,
+    "group": "I"
+  },
+  {
+    "id": 34,
+    "name": "瑞士",
+    "flag": "🇨🇭",
+    "champion_odds": 40.0,
+    "runner_odds": 28.0,
+    "group": "I"
+  },
+  {
+    "id": 35,
+    "name": "加拿大",
+    "flag": "🇨🇦",
+    "champion_odds": 22.0,
+    "runner_odds": 15.0,
+    "group": "I"
+  },
+  {
+    "id": 36,
+    "name": "沙特阿拉伯",
+    "flag": "🇸🇦",
+    "champion_odds": 350.0,
+    "runner_odds": 250.0,
+    "group": "I"
+  },
+  {
+    "id": 37,
+    "name": "科特迪瓦",
+    "flag": "🇨🇮",
+    "champion_odds": 80.0,
+    "runner_odds": 55.0,
+    "group": "J"
+  },
+  {
+    "id": 38,
+    "name": "加纳",
+    "flag": "🇬🇭",
+    "champion_odds": 120.0,
+    "runner_odds": 80.0,
+    "group": "J"
+  },
+  {
+    "id": 39,
+    "name": "尼日利亚",
+    "flag": "🇳🇬",
+    "champion_odds": 90.0,
+    "runner_odds": 60.0,
+    "group": "J"
+  },
+  {
+    "id": 40,
+    "name": "南非",
+    "flag": "🇿🇦",
+    "champion_odds": 250.0,
+    "runner_odds": 180.0,
+    "group": "J"
+  },
+  {
+    "id": 41,
+    "name": "塞尔维亚",
+    "flag": "🇷🇸",
+    "champion_odds": 60.0,
+    "runner_odds": 40.0,
+    "group": "K"
+  },
+  {
+    "id": 42,
+    "name": "瑞典",
+    "flag": "🇸🇪",
+    "champion_odds": 35.0,
+    "runner_odds": 25.0,
+    "group": "K"
+  },
+  {
+    "id": 43,
+    "name": "秘鲁",
+    "flag": "🇵🇪",
+    "champion_odds": 100.0,
+    "runner_odds": 70.0,
+    "group": "K"
+  },
+  {
+    "id": 44,
+    "name": "中国",
+    "flag": "🇨🇳",
+    "champion_odds": 500.0,
+    "runner_odds": 400.0,
+    "group": "K"
+  },
+  {
+    "id": 45,
+    "name": "乌克兰",
+    "flag": "🇺🇦",
+    "champion_odds": 50.0,
+    "runner_odds": 35.0,
+    "group": "L"
+  },
+  {
+    "id": 46,
+    "name": "土耳其",
+    "flag": "🇹🇷",
+    "champion_odds": 45.0,
+    "runner_odds": 30.0,
+    "group": "L"
+  },
+  {
+    "id": 47,
+    "name": "巴拉圭",
+    "flag": "🇵🇾",
+    "champion_odds": 180.0,
+    "runner_odds": 130.0,
+    "group": "L"
+  },
+  {
+    "id": 48,
+    "name": "阿联酋",
+    "flag": "🇦🇪",
+    "champion_odds": 500.0,
+    "runner_odds": 400.0,
+    "group": "L"
+  }
+]

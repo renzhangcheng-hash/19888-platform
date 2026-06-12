@@ -1,0 +1,226 @@
+/* ============================================================
+   Sports Red Theme — 运动活力红
+   Vibrant sports betting aesthetic for 19888 platform
+   ============================================================ */
+
+:root{
+  --primary:#E53935;
+  --primary-dark:#C62828;
+  --primary-light:#FF5252;
+  --blue:#E53935;
+  --accent:#E53935;
+  --accent-deep:#C62828;
+  --accent-grad:linear-gradient(135deg,#E53935 0%,#FF5252 100%);
+  --accent-grad-rev:linear-gradient(225deg,#FF5252 0%,#E53935 100%);
+  --accent-ring:rgba(229,57,53,0.18);
+  --accent-glow:rgba(229,57,53,0.08);
+  --accent-glass:rgba(229,57,53,0.06);
+  --red:#E53935;
+  --red-soft:rgba(229,57,53,0.10);
+  --gold:#FF6D00;
+  --green:#00C853;
+  --green-soft:rgba(0,200,83,0.10);
+  --bg:#0D0D0D;
+  --bg-alt:#0D0D0D;
+  --surface:#1A1A1A;
+  --surface-hover:#242424;
+  --surface-glass:rgba(26,26,26,0.95);
+  --surface-raised:linear-gradient(160deg,#1A1A1A 0%,#222 100%);
+  --text:#F5F5F5;
+  --text-light:#999;
+  --text-muted:#666;
+  --text-inverse:#0D0D0D;
+  --border:#2A2A2A;
+  --border-light:#1A1A1A;
+  --border-glass:rgba(255,255,255,0.04);
+  --shadow-xs:0 1px 2px rgba(0,0,0,0.4);
+  --shadow-sm:0 1px 4px rgba(0,0,0,0.5);
+  --shadow:0 2px 8px rgba(0,0,0,0.6);
+  --shadow-md:0 4px 16px rgba(0,0,0,0.7);
+  --shadow-card:0 1px 0 rgba(229,57,53,0.06);
+  --shadow-card-hover:0 2px 16px rgba(229,57,53,0.15);
+}
+
+/* ===== BASE BACKGROUNDS ===== */
+body{background:var(--bg);color:var(--text)}
+body::before{display:none}
+.main{background:var(--bg)}
+.wp{background:transparent}
+
+/* ===== HEADER ===== */
+.header{
+  background:#141414;backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);box-shadow:none;height:48px;
+}
+body.index .header .global-lang-switch-btn{left:12px;top:12px}
+
+/* ===== WALLET ===== */
+.wallet-connect{background:var(--surface-hover);border:1px solid var(--border);border-radius:6px;padding:6px 14px}
+.wallet-connect:hover{background:#303030}
+.wallet-connect.connected{background:rgba(229,57,53,0.12);border-color:rgba(229,57,53,0.3);box-shadow:none}
+.wallet-icon{filter:brightness(0) invert(1)}
+.wallet-address{color:var(--text)}
+
+/* ===== BANNER ===== */
+.banner{padding:0;margin:0}
+.banner .item{
+  height:150px;
+  background:linear-gradient(135deg,#1A0A0A 0%,#2D1010 40%,#1F0808 70%,#1A0A0A 100%) !important;
+  border-radius:0;border-bottom:1px solid var(--border);
+  position:relative;overflow:hidden;
+}
+.banner .item::before{
+  content:'';position:absolute;top:-50%;right:-20%;
+  width:350px;height:350px;
+  background:radial-gradient(circle,rgba(229,57,53,0.12) 0%,transparent 60%);
+  border-radius:50%;animation:bannerOrb1 8s ease-in-out infinite;
+}
+@keyframes bannerOrb1{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(-20px,15px) scale(1.1)}66%{transform:translate(10px,-10px) scale(.95)}}
+
+/* ===== NOTICE BAR ===== */
+.m-notice{
+  background:linear-gradient(135deg,rgba(229,57,53,0.08) 0%,rgba(229,57,53,0.03) 100%);
+  border:1px solid rgba(229,57,53,0.12);color:#FF5252;
+  border-radius:6px;box-shadow:none;margin:12px;
+}
+.m-notice .notice{color:#FF5252}
+.m-notice .icon{filter:brightness(0) saturate(100%) invert(28%) sepia(89%) saturate(2807%) hue-rotate(345deg)}
+
+/* ===== TABS ===== */
+.tab-header-wrapper{padding:0 12px}
+.ul-tabs_b1 li a{color:var(--text-light)}
+.ul-tabs_b1 li.on a{color:var(--accent)}
+.ul-tabs_b1 li.on a::after{background:var(--accent);box-shadow:0 0 14px rgba(229,57,53,0.5)}
+.more-link{color:var(--accent)}
+
+/* ===== MATCH CARDS ===== */
+.ul-info li .con{
+  background:var(--surface) !important;border:1px solid var(--border);
+  border-radius:6px;box-shadow:none;min-height:120px;
+}
+.ul-info li:nth-child(even) .con{background:var(--surface) !important}
+.ul-info li .con:hover{border-color:var(--accent);box-shadow:0 0 24px rgba(229,57,53,0.12);transform:none}
+.ul-info li::before,.ul-info li::after{display:none}
+.ul-info li .league-name{background:rgba(229,57,53,0.06);border-radius:0 0 6px 6px;backdrop-filter:none;margin:-15px auto 12px auto}
+.ul-info li .league-name::before,.ul-info li .league-name::after{display:none}
+.ul-info li .league-name .p1{color:var(--accent);text-shadow:none;font-size:11px}
+.ul-info li .team-logo{background:var(--surface-hover);border:1px solid var(--border)}
+.ul-info li .team-name{color:var(--text);font-size:13px}
+.ul-info li .match-time .time{color:#F5F5F5}
+.ul-info li .match-time .date{color:var(--text-light)}
+
+/* ===== FOOTER ===== */
+.ul-tabbar{background:#141414;box-shadow:0 -1px 0 var(--border);border-top:1px solid var(--border);height:56px;padding-bottom:6px}
+.ul-tabbar li a{color:var(--text-light)}
+.ul-tabbar .on p{color:var(--accent)}
+.ul-tabbar p{color:var(--text-light)}
+
+/* ===== TAB ICONS gray/active red ===== */
+.ul-tabbar li .icon_home{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23999'%3E%3Cpath d='M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z'/%3E%3C/svg%3E")}
+.ul-tabbar li .icon_ai{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23999'%3E%3Cpath d='M9.5 2c-.7 0-1.3.5-1.5 1.2L6.3 8H2.1c-.8 0-1.3.9-.8 1.5L6 14l-1.7 5c-.3.8.5 1.5 1.3 1L12 16l6.4 4c.8.5 1.6-.2 1.3-1L18 14l4.7-4.5c.5-.6 0-1.5-.8-1.5h-4.2L16 3.2c-.2-.7-.8-1.2-1.5-1.2H9.5z'/%3E%3C/svg%3E")}
+.ul-tabbar li .icon_match{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23999'%3E%3Ccircle cx='12' cy='12' r='10' fill='none' stroke='%23999' stroke-width='1.5'/%3E%3Cpath d='M7 7h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2zM7 11h2v2H7zm4 2h2v2h-2zm4 0h2v2h-2zm-4 4h2v2h-2z'/%3E%3C/svg%3E")}
+.ul-tabbar li .icon_record{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23999'%3E%3Cpath d='M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z'/%3E%3C/svg%3E")}
+.ul-tabbar li .icon_user{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23999'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E")}
+.ul-tabbar .on .icon_home{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23E53935'%3E%3Cpath d='M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z'/%3E%3C/svg%3E")}
+.ul-tabbar .on .icon_ai{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23E53935'%3E%3Cpath d='M9.5 2c-.7 0-1.3.5-1.5 1.2L6.3 8H2.1c-.8 0-1.3.9-.8 1.5L6 14l-1.7 5c-.3.8.5 1.5 1.3 1L12 16l6.4 4c.8.5 1.6-.2 1.3-1L18 14l4.7-4.5c.5-.6 0-1.5-.8-1.5h-4.2L16 3.2c-.2-.7-.8-1.2-1.5-1.2H9.5z'/%3E%3C/svg%3E")}
+.ul-tabbar .on .icon_match{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23E53935'%3E%3Ccircle cx='12' cy='12' r='10' fill='none' stroke='%23E53935' stroke-width='1.5'/%3E%3Cpath d='M7 7h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2zM7 11h2v2H7zm4 2h2v2h-2zm4 0h2v2h-2zm-4 4h2v2h-2z'/%3E%3C/svg%3E")}
+.ul-tabbar .on .icon_record{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23E53935'%3E%3Cpath d='M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z'/%3E%3C/svg%3E")}
+.ul-tabbar .on .icon_user{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23E53935'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E")}
+
+/* ===== DIALOGS ===== */
+.dialog-overlay{background:rgba(0,0,0,0.75);backdrop-filter:blur(4px)}
+.dialog-box{background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,0.8)}
+.dialog-title{background:linear-gradient(135deg,#1F1F1F,#242424);border-bottom:1px solid var(--border);color:var(--text)}
+.custom-confirm{background:var(--surface);border:1px solid var(--border);color:var(--text);box-shadow:0 8px 32px rgba(0,0,0,0.8)}
+.custom-confirm-title{color:var(--text)}
+.custom-confirm-content{color:var(--text-light)}
+.confirm-cancel-btn{background:#2A2A2A;color:var(--text);border:1px solid var(--border)}
+.confirm-cancel-btn:hover{background:#333}
+.confirm-ok-btn{background:var(--accent-grad);color:#fff;font-weight:700}
+.custom-toast{background:#1F1F1F;border:1px solid var(--border);color:var(--text);box-shadow:0 4px 24px rgba(0,0,0,0.8)}
+
+/* ===== BUTTONS ===== */
+.bet-btn{background:var(--accent-grad);color:#fff;box-shadow:0 2px 12px rgba(229,57,53,0.3);font-weight:700;border-radius:6px}
+.bet-btn:hover{box-shadow:0 4px 20px rgba(229,57,53,0.5);transform:translateY(-1px)}
+.bet-champion{background:var(--accent-grad);color:#fff}
+.bet-runner-up{background:var(--surface-hover);color:var(--text);border:1px solid var(--border)}
+
+/* ===== INPUTS ===== */
+input{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:6px}
+input::placeholder{color:var(--text-muted)}
+input:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(229,57,53,0.15)}
+
+/* ===== PROFILE ===== */
+.balance-card{background:var(--surface) !important;border:1px solid var(--border);border-radius:6px}
+.vip-card{background:linear-gradient(135deg,#1F0A0A 0%,#2A1010 100%) !important;border:1px solid rgba(229,57,53,0.15) !important}
+.pnl-panel{background:var(--surface);border:1px solid var(--border);border-radius:6px}
+.profile-actions button{transition:all 0.2s}
+.recent-bets-section{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:12px}
+
+/* ===== PROFILE MENU ===== */
+.profile-menu{background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden}
+.profile-menu .menu-item{color:var(--text);border-bottom:1px solid var(--border);padding:14px 16px}
+.profile-menu .menu-item:last-child{border-bottom:none}
+.profile-menu .menu-item:active{background:var(--surface-hover)}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar-thumb{background:var(--border)}
+::-webkit-scrollbar-thumb:hover{background:var(--text-muted)}
+
+/* ===== CHAMPION TEAMS ===== */
+.champion-bet-section{padding:0 12px 20px}
+.team-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;box-shadow:none}
+.team-card:hover{border-color:var(--accent);box-shadow:0 0 20px rgba(229,57,53,0.10)}
+.team-card .t-logo{background:var(--surface-hover)}
+
+/* ===== RECORDS ===== */
+.record-item{border-bottom:1px solid var(--border) !important}
+
+/* ===== LANGUAGE MODAL ===== */
+.global-lang-modal-content{background:var(--surface);border:1px solid var(--border)}
+.global-lang-modal-header{background:linear-gradient(135deg,#1F1F1F,#242424);border-bottom:1px solid var(--border)}
+.global-lang-option{color:var(--text);border-bottom:1px solid var(--border)}
+.global-lang-option:active{background:var(--surface-hover)}
+.global-lang-option.selected{background:rgba(229,57,53,0.08);color:var(--accent)}
+
+/* ===== ABOUT / PARTNERS ===== */
+.platform-intro,.official-partners{background:var(--surface);border:1px solid var(--border);border-radius:6px;box-shadow:none;margin:12px}
+.intro-content{background:var(--bg);color:var(--text-light);box-shadow:none;border:1px solid var(--border);border-radius:6px}
+.section-title{color:var(--text);border-bottom-color:var(--accent)}
+.section-title::before{background:var(--accent)}
+
+.partners-grid-dark{
+  display:flex;justify-content:space-around;align-items:center;
+  gap:8px;padding:16px 12px;margin:12px;
+  background:var(--surface);border:1px solid var(--border);border-radius:6px;
+}
+.partners-grid-dark img{filter:grayscale(100%) brightness(0.5);opacity:0.5}
+
+/* ===== FILTERS ===== */
+.filter-btn{background:var(--surface);border:1px solid var(--border);color:var(--text-light);border-radius:6px}
+.filter-btn.active{background:var(--accent-grad);color:#fff;border-color:var(--accent)}
+.filter-btn:hover{background:var(--surface-hover);color:var(--text)}
+
+/* ===== STATUS ===== */
+.status-pending{background:rgba(229,57,53,0.12);color:var(--accent)}
+.status-won{background:rgba(0,200,83,0.12);color:var(--green)}
+.status-lost{background:rgba(255,77,79,0.12);color:var(--red)}
+
+/* ===== QUICK AMOUNTS ===== */
+.quick-amount{background:var(--surface);border:1px solid var(--border);color:var(--text-light)}
+.quick-amount:hover{background:var(--surface-hover);border-color:var(--accent);color:var(--accent)}
+
+/* ===== VIP ===== */
+#vipProgressBar{background:linear-gradient(90deg,#E53935,#FF5252) !important;box-shadow:0 0 12px rgba(229,57,53,0.3)}
+
+/* ===== AI PAGE ===== */
+#page-ai .stats-grid > div{background:var(--surface);border:1px solid var(--border);border-radius:6px}
+
+/* ===== EMPTY STATES ===== */
+.empty-state,.empty-tips{color:var(--text-muted)}
+
+/* ===== BET DIALOG ===== */
+.bet-amount-dialog .dialog-box{background:var(--surface)}
+.odds-display{background:var(--bg);border:1px solid var(--border);border-radius:6px}
+.form-group label{color:var(--text-light)}

@@ -32,7 +32,9 @@ const PORT = process.env.PORT || 3088;
 const DATA_DIR = path.join(__dirname, 'data');
 
 // ── JWT Config ──────────────────────────────────
-const JWT_SECRET = process.env.JWT_SECRET || require('crypto').randomBytes(32).toString('hex');
+// FP-V19888-2: Never use randomBytes as fallback — restarts invalidate all sessions.
+// Use env var or a fixed fallback. Production MUST set JWT_SECRET env.
+const JWT_SECRET = process.env.JWT_SECRET || '19888-fixed-jwt-fallback-change-in-production';
 const JWT_EXPIRY = process.env.JWT_EXPIRY || '24h';
 
 // ── Sepolia RPC for on-chain verification ───────
@@ -113,7 +115,7 @@ app.use(cors({
 // ── Rate Limiting ─────────────────────────────────
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 200,
+  max: 2000,
   standardHeaders: true,
   legacyHeaders: false,
   message: { code: 2, msg: '请求过于频繁，请15分钟后再试' },
@@ -148,10 +150,24 @@ if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 function read(name, def = []) {
   const f = path.join(DATA_DIR, name + '.json');
   if (!fs.existsSync(f)) return def;
-  try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch { return def; }
+  try {
+    const raw = fs.readFileSync(f, 'utf8');
+    if (!raw.trim()) return def;
+    return JSON.parse(raw);
+  } catch(e) {
+    console.error(`[DATA_CORRUPTION] Failed to read ${name}.json: ${e.message}. Returning default.`);
+    // Backup corrupt file for recovery
+    const backup = path.join(DATA_DIR, name + '.corrupt.' + Date.now() + '.json');
+    try { fs.copyFileSync(f, backup); } catch {}
+    return def;
+  }
 }
+// Atomic write: write to temp file first, then rename (prevents corruption on crash)
 function write(name, data) {
-  fs.writeFileSync(path.join(DATA_DIR, name + '.json'), JSON.stringify(data, null, 2));
+  const f = path.join(DATA_DIR, name + '.json');
+  const tmp = f + '.tmp';
+  fs.writeFileSync(tmp, JSON.stringify(data, null, 2));
+  fs.renameSync(tmp, f);
 }
 
 // ── Input Validation Helpers ──────────────────────
@@ -167,8 +183,8 @@ function isValidAmount(val) {
 }
 
 function isValidTeamId(val) {
-  const n = Number(val);
-  return Number.isInteger(n) && n >= 1 && n <= 32;
+  const id = parseInt(val, 10);
+  return id >= 1 && id <= 48;
 }
 
 function isValidBetType(val) {
@@ -208,6 +224,29 @@ function verifyPassword(pw, hash) {
   return hashPassword(pw) === hash;
 }
 
+// ── User factory (single source of truth for new user creation) ──
+function createUserObject(addr) {
+  return {
+    address: addr.toLowerCase(),
+    nickname: '用户' + addr.slice(2, 8).toUpperCase(),
+    avatar: '',
+    balance: 0,
+    frozen_bet: 0,
+    frozen_ai: 0,
+    ai_hosting_active: false,
+    ai_hosting_settings: {
+      max_bet_per_match: 100,
+      max_daily_bet: 500,
+      risk_level: 'medium',
+      auto_settle: true,
+      preferred_matches: 'all',
+    },
+    ai_hosting_since: null,
+    created_at: new Date().toISOString(),
+    last_login: new Date().toISOString(),
+  };
+}
+
 // ── Get user by address ──────────────────────────
 function getUser(addr) {
   const users = read('users');
@@ -219,25 +258,7 @@ function getOrCreateUser(addr) {
   const users = read('users');
   let user = users.find(u => u.address.toLowerCase() === addr.toLowerCase());
   if (!user) {
-    user = {
-      address: addr.toLowerCase(),
-      nickname: '用户' + addr.slice(2, 8).toUpperCase(),
-      avatar: '',
-      balance: 0,
-      frozen_bet: 0,
-      frozen_ai: 0,
-      ai_hosting_active: false,
-      ai_hosting_settings: {
-        max_bet_per_match: 100,
-        max_daily_bet: 500,
-        risk_level: 'medium',       // low | medium | high
-        auto_settle: true,
-        preferred_matches: 'all',   // all | league_only | custom
-      },
-      ai_hosting_since: null,
-      created_at: new Date().toISOString(),
-      last_login: new Date().toISOString(),
-    };
+    user = createUserObject(addr);
     users.push(user);
     write('users', users);
   }
@@ -286,33 +307,29 @@ function generate18Grid() {
 function seed() {
   if (read('matches').length > 0) return;
 
-  const now = new Date();
-  const matches = [
-    { id:1, league:'法甲', home:'巴黎圣日耳曼', away:'马赛', time: fmt(now,0,1,0), odds_home:1.82, odds_draw:3.50, odds_away:4.20, status:'live' },
-    { id:2, league:'英超', home:'曼城', away:'利物浦', time: fmt(now,1,0,30), odds_home:2.10, odds_draw:3.30, odds_away:3.40, status:'upcoming' },
-    { id:3, league:'西甲', home:'皇马', away:'巴萨', time: fmt(now,2,4,0), odds_home:2.40, odds_draw:3.20, odds_away:2.90, status:'upcoming' },
-    { id:4, league:'意甲', home:'尤文图斯', away:'国米', time: fmt(now,2,2,45), odds_home:2.15, odds_draw:3.10, odds_away:3.50, status:'upcoming' },
-    { id:5, league:'德甲', home:'拜仁慕尼黑', away:'多特蒙德', time: fmt(now,3,1,30), odds_home:1.95, odds_draw:3.60, odds_away:3.80, status:'upcoming' },
-    { id:6, league:'友谊赛', home:'巴西', away:'阿根廷', time: fmt(now,4,8,0), odds_home:2.50, odds_draw:3.00, odds_away:2.80, status:'upcoming' },
-    { id:7, league:'欧冠', home:'拜仁慕尼黑', away:'巴黎圣日耳曼', time: fmt(now,5,3,0), odds_home:2.20, odds_draw:3.40, odds_away:3.10, status:'upcoming' },
-    { id:8, league:'英超', home:'阿森纳', away:'切尔西', time: fmt(now,5,0,30), odds_home:2.05, odds_draw:3.25, odds_away:3.60, status:'upcoming' },
-  ];
-  write('matches', matches);
+  // Copy World Cup 2026 data from seed files
+  const seedDir = path.join(__dirname, 'seed');
+  const seedMatches = path.join(seedDir, 'matches.json');
+  const seedTeams = path.join(seedDir, 'champion_teams.json');
 
-  const teams = [
-    { id:1, name:'巴西', championship_odds:5.50, runner_up_odds:4.20 },
-    { id:2, name:'法国', championship_odds:6.00, runner_up_odds:4.50 },
-    { id:3, name:'阿根廷', championship_odds:7.50, runner_up_odds:5.50 },
-    { id:4, name:'英格兰', championship_odds:8.00, runner_up_odds:5.80 },
-    { id:5, name:'西班牙', championship_odds:9.00, runner_up_odds:6.50 },
-    { id:6, name:'德国', championship_odds:10.00, runner_up_odds:7.00 },
-    { id:7, name:'葡萄牙', championship_odds:12.00, runner_up_odds:8.00 },
-    { id:8, name:'荷兰', championship_odds:15.00, runner_up_odds:9.50 },
-  ];
-  write('champion_teams', teams);
+  if (fs.existsSync(seedMatches) && fs.existsSync(seedTeams)) {
+    fs.copyFileSync(seedMatches, path.join(DATA_DIR, 'matches.json'));
+    fs.copyFileSync(seedTeams, path.join(DATA_DIR, 'champion_teams.json'));
+    console.log('✅ World Cup 2026 seed data loaded: 48 teams, 104 matches');
+  } else {
+    // Fallback: minimal default data
+    const now = new Date();
+    write('matches', [
+      { id:1, league:'世界杯 A组·第1轮', home:'美国', away:'墨西哥', match_time: fmt(now,0,14,0), odds_home:1.65, odds_draw:3.30, odds_away:6.00, status:'upcoming' },
+    ]);
+    write('champion_teams', [
+      { id:1, name:'巴西', flag:'🇧🇷', champion_odds:5.5, runner_odds:4.0, group:'B' },
+    ]);
+  }
 
-  // Default admin account
-  write('admins', [{ username: 'admin', password: hashPassword('19888admin') }]);
+  // Default admin account (FP-V19888-5: password from env, not source)
+  const ADMIN_DEFAULT_PASS = process.env.ADMIN_PASSWORD || '19888admin-change-me';
+  write('admins', [{ username: 'admin', password: hashPassword(ADMIN_DEFAULT_PASS) }]);
 
   // Seed AI托管 pool
   write('ai_pool', { total_frozen: 0, active_users: 0 });
@@ -339,6 +356,17 @@ app.get('/api/status', asyncHandler((req, res) => {
   res.json({ status:'ok', version:'2.0.0', name:'19888 API (lucky944-compatible)' });
 }));
 
+// GET /api/tunnel-url — return current tunnel URL (used by keeper cron)
+app.get('/api/tunnel-url', asyncHandler((req, res) => {
+  const host = req.headers.host || '';
+  // If accessed via tunnel (trycloudflare.com), return the full origin
+  const proto = req.headers['x-forwarded-proto'] || 'https';
+  const tunnelUrl = host.includes('trycloudflare.com')
+    ? `${proto}://${host}/api`
+    : `https://enlargement-celtic-for-moderators.trycloudflare.com/api`;
+  res.json({ code: 0, data: { tunnel_url: tunnelUrl, host } });
+}));
+
 // ═══════════════════════════════════════════════════
 //  WALLET AUTH
 // ═══════════════════════════════════════════════════
@@ -356,25 +384,7 @@ app.post('/api/wallet/connect', asyncHandler((req, res) => {
   let type = 'login';
 
   if (!user) {
-    user = {
-      address: addr,
-      nickname: '用户' + addr.slice(2, 8).toUpperCase(),
-      avatar: '',
-      balance: 0,
-      frozen_bet: 0,
-      frozen_ai: 0,
-      ai_hosting_active: false,
-      ai_hosting_settings: {
-        max_bet_per_match: 100,
-        max_daily_bet: 500,
-        risk_level: 'medium',
-        auto_settle: true,
-        preferred_matches: 'all',
-      },
-      ai_hosting_since: null,
-      created_at: new Date().toISOString(),
-      last_login: new Date().toISOString(),
-    };
+    user = createUserObject(addr);
     users.push(user);
     type = 'register';
   } else {
@@ -954,14 +964,14 @@ app.get('/api/champion-bet/odds', asyncHandler((req, res) => {
   res.json({ code:0, data: { odds: teams, total_bet: totalBet, total_potential_win: +totalWin.toFixed(2) } });
 }));
 
-app.post('/api/champion-bet/place', asyncHandler(async (req, res) => {
+app.post('/api/champion-bet/place', riskCheck, asyncHandler(async (req, res) => {
   const { team_id, bet_type, amount, wallet_address, tx_hash } = req.body;
 
   if (!wallet_address || !isValidWallet(wallet_address)) {
     return res.status(400).json({ code:1, msg:'无效的钱包地址（需要0x开头的42位十六进制地址）' });
   }
   if (!team_id || !isValidTeamId(team_id)) {
-    return res.status(400).json({ code:1, msg:'球队ID无效（1-32）' });
+    return res.status(400).json({ code:1, msg:'球队ID无效（1-48）' });
   }
   if (!bet_type || !isValidBetType(bet_type)) {
     return res.status(400).json({ code:1, msg:'投注类型无效（1=冠军, 2=亚军）' });
@@ -1005,8 +1015,19 @@ app.post('/api/champion-bet/place', asyncHandler(async (req, res) => {
     return res.status(400).json({ code:1, msg:`余额不足，可用: ${balance.available.toFixed(2)} USDT` });
   }
 
-  const odds = btype === 1 ? team.championship_odds : team.runner_up_odds;
+  // Check for duplicate bet (same user, same team, same type, pending)
   const bets = read('bets');
+  const dupBet = bets.find(b =>
+    b.address.toLowerCase() === addr &&
+    b.team_id === tid &&
+    b.bet_type === btype &&
+    b.status === 'pending'
+  );
+  if (dupBet) {
+    return res.status(400).json({ code:1, msg:'您已对该球队下过相同类型的投注，请等待结算' });
+  }
+
+  const odds = btype === 1 ? team.championship_odds : team.runner_up_odds;
   const bet = {
     id: (bets[bets.length - 1]?.id || 0) + 1,
     address: addr,
@@ -1038,7 +1059,7 @@ app.post('/api/champion-bet/place', asyncHandler(async (req, res) => {
 
 // POST /api/bet/confirm — confirm a bet with on-chain tx hash
 // Used when frontend first creates bet via blockchain tx, then confirms here
-app.post('/api/bet/confirm', asyncHandler(async (req, res) => {
+app.post('/api/bet/confirm', riskCheck, asyncHandler(async (req, res) => {
   const { bet_id, wallet_address, tx_hash, amount, game_type, match_id, cell_score, team_id, bet_type } = req.body;
 
   if (!wallet_address || !isValidWallet(wallet_address)) {
@@ -1112,7 +1133,7 @@ app.post('/api/bet/confirm', asyncHandler(async (req, res) => {
 //  ANTI-SCORE BETS (existing — backward compat)
 // ═══════════════════════════════════════════════════
 
-app.post('/api/anti-bet/place', asyncHandler((req, res) => {
+app.post('/api/anti-bet/place', riskCheck, asyncHandler((req, res) => {
   const { match_id, cell_score, amount, wallet_address } = req.body;
 
   if (!wallet_address || !isValidWallet(wallet_address)) {
@@ -1182,7 +1203,7 @@ app.post('/api/anti-bet/place', asyncHandler((req, res) => {
 //  SCORE BETS (existing — backward compat)
 // ═══════════════════════════════════════════════════
 
-app.post('/api/score-bet/place', asyncHandler((req, res) => {
+app.post('/api/score-bet/place', riskCheck, asyncHandler((req, res) => {
   const { match_id, cell_score, amount, wallet_address } = req.body;
 
   if (!wallet_address || !isValidWallet(wallet_address)) {
@@ -1823,8 +1844,83 @@ app.post('/api/invite/claim-reward', asyncHandler((req, res) => {
 }));
 
 // ═══════════════════════════════════════════════════
-//  DEPOSIT TRACKING
+//  DEPOSIT & WITHDRAW
 // ═══════════════════════════════════════════════════
+
+// POST /api/withdraw — withdraw USDT from user balance
+app.post('/api/withdraw', asyncHandler((req, res) => {
+  const { wallet_address, amount, withdraw_address } = req.body;
+
+  if (!wallet_address || !isValidWallet(wallet_address)) {
+    return res.status(400).json({ code: 1, msg: '无效的钱包地址' });
+  }
+  if (!withdraw_address || !isValidWallet(withdraw_address)) {
+    return res.status(400).json({ code: 1, msg: '无效的提现地址' });
+  }
+  if (!isValidAmount(amount)) {
+    return res.status(400).json({ code: 1, msg: '提现金额必须是正数（不超过10000）' });
+  }
+  if (Number(amount) < 1) {
+    return res.status(400).json({ code: 1, msg: '最小提现金额 1 USDT' });
+  }
+
+  const addr = wallet_address.toLowerCase().trim();
+  const amt = Number(amount);
+  const toAddr = withdraw_address.toLowerCase().trim();
+
+  const users = read('users');
+  const user = users.find(u => u.address.toLowerCase() === addr);
+  if (!user) {
+    return res.status(404).json({ code: 1, msg: '用户不存在，请先连接钱包' });
+  }
+
+  const balance = computeBalance(user);
+  if (balance.available < amt) {
+    return res.status(400).json({ code: 1, msg: `余额不足。可用: ${balance.available} USDT` });
+  }
+
+  // Deduct balance
+  user.balance = +(user.balance - amt).toFixed(4);
+  write('users', users);
+
+  // Record withdrawal
+  const withdrawals = read('withdrawals');
+  const withdrawal = {
+    id: (withdrawals[withdrawals.length - 1]?.id || 0) + 1,
+    address: addr,
+    to_address: toAddr,
+    amount: amt,
+    status: 'pending',   // pending → processing → completed/failed
+    created_at: new Date().toISOString(),
+  };
+  withdrawals.push(withdrawal);
+  write('withdrawals', withdrawals);
+
+  console.log(`[Withdraw] ${addr.slice(0,10)}... → ${toAddr.slice(0,10)}... ${amt} USDT`);
+
+  res.json({
+    code: 0,
+    msg: '提现申请已提交',
+    data: {
+      withdraw_id: withdrawal.id,
+      amount: amt,
+      to_address: toAddr,
+      new_balance: computeBalance(user),
+    }
+  });
+}));
+
+// GET /api/withdraw/history?wallet=0x...
+app.get('/api/withdraw/history', asyncHandler((req, res) => {
+  const addr = (req.query.wallet || '').toLowerCase().trim();
+  if (!isValidWallet(addr)) {
+    return res.status(400).json({ code: 1, msg: '无效的钱包地址' });
+  }
+  const withdrawals = read('withdrawals')
+    .filter(w => w.address.toLowerCase() === addr)
+    .reverse();
+  res.json({ code: 0, data: withdrawals });
+}));
 
 // POST /api/deposit — record a deposit and credit user balance
 // Uses on-chain tx verification before crediting
@@ -1956,7 +2052,8 @@ app.get('/api/user/pnl', asyncHandler((req, res) => {
   const lostBets = bets.filter(b => b.status === 'lost');
   const total_won = wonBets.reduce((s, b) => s + (b.potential_win || 0), 0);
   const total_lost = lostBets.reduce((s, b) => s + (b.amount || 0), 0);
-  const pnl = +(total_won - total_wagered).toFixed(4);
+  // PnL = winnings - losses (FP fix: was total_won - total_wagered, which double-counts losses)
+  const pnl = +(total_won - total_lost).toFixed(4);
   const roi = total_wagered > 0 ? +((pnl / total_wagered) * 100).toFixed(2) : 0;
 
   // Breakdown by game type
@@ -2001,6 +2098,350 @@ app.get('/api/user/pnl', asyncHandler((req, res) => {
 }));
 
 // ═══════════════════════════════════════════════════
+//  VIP SYSTEM
+// ═══════════════════════════════════════════════════
+
+const VIP_LEVELS = [
+  { level:0, name:'普通', min_wagered:0, cashback:0, withdraw_priority:false, odds_boost:0 },
+  { level:1, name:'青铜', min_wagered:500, cashback:0.005, withdraw_priority:false, odds_boost:0 },
+  { level:2, name:'白银', min_wagered:2000, cashback:0.01, withdraw_priority:false, odds_boost:0 },
+  { level:3, name:'黄金', min_wagered:10000, cashback:0.02, withdraw_priority:true, odds_boost:0.02 },
+  { level:4, name:'铂金', min_wagered:50000, cashback:0.03, withdraw_priority:true, odds_boost:0.05 },
+  { level:5, name:'钻石', min_wagered:200000, cashback:0.05, withdraw_priority:true, odds_boost:0.10 },
+];
+
+function computeVIPLevel(totalWagered) {
+  let lvl = 0;
+  for (const v of VIP_LEVELS) {
+    if (totalWagered >= v.min_wagered) lvl = v.level;
+  }
+  return lvl;
+}
+
+// GET /api/vip/status?wallet=0x...
+app.get('/api/vip/status', asyncHandler((req, res) => {
+  const addr = (req.query.wallet || '').toLowerCase().trim();
+  if (!isValidWallet(addr)) return res.status(400).json({ code:1, msg:'无效的钱包地址' });
+  const user = getUser(addr);
+  if (!user) return res.json({ code:0, data: { level:0, name:'普通', total_wagered:0 } });
+
+  const bets = read('bets').filter(b => b.address.toLowerCase() === addr);
+  const totalWagered = bets.reduce((s, b) => s + (b.amount || 0), 0);
+  const currentLevel = computeVIPLevel(totalWagered);
+  const vip = VIP_LEVELS[currentLevel];
+  const nextVip = VIP_LEVELS.find(v => v.level > currentLevel);
+
+  res.json({
+    code:0,
+    data: {
+      level: vip.level,
+      name: vip.name,
+      total_wagered: +totalWagered.toFixed(2),
+      cashback: vip.cashback,
+      odds_boost: vip.odds_boost,
+      withdraw_priority: vip.withdraw_priority,
+      next_level: nextVip ? { level:nextVip.level, name:nextVip.name, need:+(nextVip.min_wagered - totalWagered).toFixed(2) } : null,
+    }
+  });
+}));
+
+// GET /api/vip/levels — static level config
+app.get('/api/vip/levels', asyncHandler((req, res) => {
+  res.json({ code:0, data: VIP_LEVELS });
+}));
+
+// ═══════════════════════════════════════════════════
+//  RISK CONTROL SYSTEM (L5-L7)
+// ═══════════════════════════════════════════════════
+
+let riskConfig = {
+  max_single_bet: 1000,
+  max_daily_bet: 5000,
+  max_daily_loss: 2000,
+  large_withdraw_threshold: 500,
+  abnormal_freq_per_hour: 50,
+  circuit_breaker: false,
+  circuit_reason: '',
+  circuit_since: null,
+};
+
+let riskAlerts = [];
+
+function addRiskAlert(type, severity, message, data) {
+  const alert = {
+    id: (riskAlerts[riskAlerts.length-1]?.id || 0) + 1,
+    type, severity, message, data,
+    created_at: new Date().toISOString(),
+    acknowledged: false,
+  };
+  riskAlerts.unshift(alert);
+  if (riskAlerts.length > 200) riskAlerts.length = 200;
+  console.warn(`[RISK_ALERT] [${severity}] ${type}: ${message}`);
+  return alert;
+}
+
+// Risk middleware: check circuit breaker on all bet endpoints
+function riskCheck(req, res, next) {
+  if (riskConfig.circuit_breaker) {
+    return res.status(503).json({
+      code: 99,
+      msg: `系统熔断中: ${riskConfig.circuit_reason}`,
+      data: { circuit_since: riskConfig.circuit_since }
+    });
+  }
+  next();
+}
+
+// GET /api/admin/risk/alerts
+app.get('/api/admin/risk/alerts', adminAuth, asyncHandler((req, res) => {
+  const limit = Math.min(parseInt(req.query.limit) || 50, 200);
+  res.json({ code:0, data: riskAlerts.slice(0, limit) });
+}));
+
+// POST /api/admin/risk/circuit-break
+app.post('/api/admin/risk/circuit-break', adminAuth, asyncHandler((req, res) => {
+  const { action, reason } = req.body;
+  if (action === 'engage') {
+    riskConfig.circuit_breaker = true;
+    riskConfig.circuit_reason = reason || '管理员手动熔断';
+    riskConfig.circuit_since = new Date().toISOString();
+    addRiskAlert('circuit_break', 'critical', `熔断已启用: ${riskConfig.circuit_reason}`);
+  } else if (action === 'release') {
+    riskConfig.circuit_breaker = false;
+    riskConfig.circuit_reason = '';
+    riskConfig.circuit_since = null;
+    addRiskAlert('circuit_release', 'info', '熔断已解除');
+  } else {
+    return res.status(400).json({ code:1, msg:'action 必须是 engage 或 release' });
+  }
+  res.json({ code:0, msg: action === 'engage' ? '熔断已启用' : '熔断已解除', data: riskConfig });
+}));
+
+// GET /api/admin/risk/config
+app.get('/api/admin/risk/config', adminAuth, asyncHandler((req, res) => {
+  res.json({ code:0, data: { ...riskConfig, alerts_count: riskAlerts.length } });
+}));
+
+// POST /api/admin/risk/config — update limits
+app.post('/api/admin/risk/config', adminAuth, asyncHandler((req, res) => {
+  const { max_single_bet, max_daily_bet, max_daily_loss, large_withdraw_threshold, abnormal_freq_per_hour } = req.body;
+  if (max_single_bet !== undefined) riskConfig.max_single_bet = Number(max_single_bet);
+  if (max_daily_bet !== undefined) riskConfig.max_daily_bet = Number(max_daily_bet);
+  if (max_daily_loss !== undefined) riskConfig.max_daily_loss = Number(max_daily_loss);
+  if (large_withdraw_threshold !== undefined) riskConfig.large_withdraw_threshold = Number(large_withdraw_threshold);
+  if (abnormal_freq_per_hour !== undefined) riskConfig.abnormal_freq_per_hour = Number(abnormal_freq_per_hour);
+  addRiskAlert('config_change', 'info', '风控配置已更新');
+  res.json({ code:0, msg:'配置已更新', data: riskConfig });
+}));
+
+// ═══════════════════════════════════════════════════
+//  AGENT LEVELS + AUTO SETTLE
+// ═══════════════════════════════════════════════════
+
+const AGENT_LEVELS = [
+  { level:0, name:'普通会员', min_invites:0, commission_l1:0.03, commission_l2:0 },
+  { level:1, name:'青铜代理', min_invites:3, commission_l1:0.05, commission_l2:0.01 },
+  { level:2, name:'白银代理', min_invites:10, commission_l1:0.07, commission_l2:0.02 },
+  { level:3, name:'黄金代理', min_invites:30, commission_l1:0.10, commission_l2:0.03 },
+  { level:4, name:'铂金代理', min_invites:100, commission_l1:0.12, commission_l2:0.05 },
+  { level:5, name:'钻石代理', min_invites:500, commission_l1:0.15, commission_l2:0.07 },
+];
+
+function computeAgentLevel(inviteCount) {
+  let lvl = 0;
+  for (const a of AGENT_LEVELS) {
+    if (inviteCount >= a.min_invites) lvl = a.level;
+  }
+  return lvl;
+}
+
+// GET /api/invite/levels
+app.get('/api/invite/levels', asyncHandler((req, res) => {
+  res.json({ code:0, data: AGENT_LEVELS });
+}));
+
+// GET /api/invite/earnings?wallet=0x...
+app.get('/api/invite/earnings', asyncHandler((req, res) => {
+  const addr = (req.query.wallet || '').toLowerCase().trim();
+  if (!isValidWallet(addr)) return res.status(400).json({ code:1, msg:'无效的钱包地址' });
+  const user = getUser(addr);
+  if (!user) return res.json({ code:0, data: { level:0, total_earned:0, invite_count:0 } });
+
+  const users = read('users');
+  const inviteCount = user.invite_count || 0;
+  const agentLevel = computeAgentLevel(inviteCount);
+  const agent = AGENT_LEVELS[agentLevel];
+
+  // Calculate total earned from invite rewards
+  const bets = read('bets');
+  const invitedUsers = users.filter(u => u.invited_by === user.invite_code);
+  const invitedAddresses = invitedUsers.map(u => u.address.toLowerCase());
+  const invitedBets = bets.filter(b => invitedAddresses.includes(b.address.toLowerCase()));
+  const totalVolume = invitedBets.reduce((s, b) => s + (b.amount || 0), 0);
+  const totalEarned = +((user.balance || 0) - 0).toFixed(4); // simplified
+
+  res.json({
+    code:0,
+    data: {
+      level: agent.level,
+      name: agent.name,
+      invite_count: inviteCount,
+      commission_l1: agent.commission_l1,
+      commission_l2: agent.commission_l2,
+      total_volume: +totalVolume.toFixed(2),
+      last_claimed: user.last_claimed_reward || null,
+      next_level: AGENT_LEVELS.find(a => a.level > agentLevel) || null,
+    }
+  });
+}));
+
+// ═══════════════════════════════════════════════════
+//  FINANCIAL SYSTEM
+// ═══════════════════════════════════════════════════
+
+// GET /api/finance/daily-report?date=YYYY-MM-DD
+app.get('/api/finance/daily-report', adminAuth, asyncHandler((req, res) => {
+  const dateStr = req.query.date || new Date().toISOString().slice(0, 10);
+  const dayStart = dateStr + 'T00:00:00.000Z';
+  const dayEnd = dateStr + 'T23:59:59.999Z';
+
+  const bets = read('bets').filter(b => {
+    const t = b.created_at || b.settled_at;
+    return t && t >= dayStart && t <= dayEnd;
+  });
+  const deposits = read('deposits').filter(d => d.created_at >= dayStart && d.created_at <= dayEnd);
+  const withdrawals = read('withdrawals').filter(w => w.created_at >= dayStart && w.created_at <= dayEnd);
+
+  const totalBets = bets.length;
+  const totalVolume = bets.reduce((s, b) => s + (b.amount || 0), 0);
+  const wonBets = bets.filter(b => b.status === 'won');
+  const lostBets = bets.filter(b => b.status === 'lost');
+  const totalPayout = wonBets.reduce((s, b) => s + (b.potential_win || 0), 0);
+  const totalLost = lostBets.reduce((s, b) => s + (b.amount || 0), 0);
+  const platformPnL = +(totalVolume - totalPayout).toFixed(2);
+  const totalDeposits = deposits.filter(d => d.status === 'confirmed').reduce((s, d) => s + (d.amount || 0), 0);
+  const totalWithdrawals = withdrawals.reduce((s, w) => s + (w.amount || 0), 0);
+  const newUsers = read('users').filter(u => u.created_at >= dayStart && u.created_at <= dayEnd).length;
+
+  res.json({
+    code:0,
+    data: {
+      date: dateStr,
+      bets: { total: totalBets, volume: +totalVolume.toFixed(2), won: wonBets.length, lost: lostBets.length },
+      finance: { deposits: +totalDeposits.toFixed(2), withdrawals: +totalWithdrawals.toFixed(2), platform_pnl: platformPnL },
+      users: { new: newUsers, total: read('users').length },
+      payout: +totalPayout.toFixed(2),
+    }
+  });
+}));
+
+// GET /api/finance/pool-status
+app.get('/api/finance/pool-status', asyncHandler((req, res) => {
+  const users = read('users');
+  const totalBalance = users.reduce((s, u) => s + (u.balance || 0), 0);
+  const totalFrozen = users.reduce((s, u) => s + (u.frozen_bet || 0) + (u.frozen_ai || 0), 0);
+  const deposits = read('deposits').filter(d => d.status === 'confirmed');
+  const totalDeposited = deposits.reduce((s, d) => s + (d.amount || 0), 0);
+  const withdrawals = read('withdrawals');
+  const totalWithdrawn = withdrawals.reduce((s, w) => s + (w.amount || 0), 0);
+  const pendingWithdrawals = withdrawals.filter(w => w.status === 'pending');
+  const bets = read('bets');
+  const totalPendingBets = bets.filter(b => b.status === 'pending').length;
+
+  res.json({
+    code:0,
+    data: {
+      total_balance: +totalBalance.toFixed(2),
+      total_frozen: +totalFrozen.toFixed(2),
+      total_deposited: +totalDeposited.toFixed(2),
+      total_withdrawn: +totalWithdrawn.toFixed(2),
+      pending_withdrawals: pendingWithdrawals.length,
+      pending_bets: totalPendingBets,
+      user_count: users.length,
+    }
+  });
+}));
+
+// ═══════════════════════════════════════════════════
+//  ORDER SYSTEM: CANCEL + TRANSACTION HISTORY
+// ═══════════════════════════════════════════════════
+
+// POST /api/bets/:id/cancel — cancel a pending bet
+app.post('/api/bets/:id/cancel', asyncHandler((req, res) => {
+  const betId = parseInt(req.params.id);
+  if (!Number.isInteger(betId) || betId < 1) {
+    return res.status(400).json({ code:1, msg:'无效的投注ID' });
+  }
+  const { wallet_address } = req.body;
+  if (!wallet_address || !isValidWallet(wallet_address)) {
+    return res.status(400).json({ code:1, msg:'无效的钱包地址' });
+  }
+
+  const addr = wallet_address.toLowerCase().trim();
+  const bets = read('bets');
+  const bet = bets.find(b => b.id === betId && b.address.toLowerCase() === addr);
+  if (!bet) return res.status(404).json({ code:1, msg:'投注不存在或不属于您' });
+  if (bet.status !== 'pending') return res.status(400).json({ code:1, msg:'只能取消待结算的投注' });
+
+  // Refund to balance
+  const users = read('users');
+  const user = users.find(u => u.address.toLowerCase() === addr);
+  if (user) {
+    user.balance = (user.balance || 0) + (bet.amount || 0);
+    user.frozen_bet = Math.max(0, (user.frozen_bet || 0) - (bet.amount || 0));
+    write('users', users);
+  }
+
+  bet.status = 'cancelled';
+  bet.cancelled_at = new Date().toISOString();
+  write('bets', bets);
+
+  res.json({ code:0, msg:'投注已取消，金额已退回', data: { bet_id: betId, refunded: bet.amount } });
+}));
+
+// GET /api/user/transactions?wallet=0x...&type=all|deposit|withdraw|bet
+app.get('/api/user/transactions', asyncHandler((req, res) => {
+  const addr = (req.query.wallet || '').toLowerCase().trim();
+  if (!isValidWallet(addr)) return res.status(400).json({ code:1, msg:'无效的钱包地址' });
+  const type = req.query.type || 'all';
+  const limit = Math.min(parseInt(req.query.limit) || 50, 200);
+
+  const txs = [];
+
+  // Deposits
+  if (type === 'all' || type === 'deposit') {
+    read('deposits').filter(d => d.address.toLowerCase() === addr).forEach(d => {
+      txs.push({ type:'deposit', id:d.id, amount:d.amount, status:d.status, tx_hash:d.tx_hash, created_at:d.created_at });
+    });
+  }
+
+  // Withdrawals
+  if (type === 'all' || type === 'withdraw') {
+    read('withdrawals').filter(w => w.address.toLowerCase() === addr).forEach(w => {
+      txs.push({ type:'withdraw', id:w.id, amount:-w.amount, status:w.status, to_address:w.to_address, created_at:w.created_at });
+    });
+  }
+
+  // Bets
+  if (type === 'all' || type === 'bet') {
+    read('bets').filter(b => b.address.toLowerCase() === addr).forEach(b => {
+      const result = b.status === 'won' ? b.potential_win : (b.status === 'lost' || b.status === 'cancelled' ? -(b.amount || 0) : 0);
+      txs.push({
+        type:'bet', id:b.id, game_type:b.game_type, team_name:b.team_name,
+        amount: b.status === 'pending' ? -(b.amount || 0) : result,
+        status:b.status, odds:b.odds, created_at:b.created_at, settled_at:b.settled_at,
+      });
+    });
+  }
+
+  // Sort by time desc, limit
+  txs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  const sliced = txs.slice(0, limit);
+
+  res.json({ code:0, data: { transactions: sliced, total: txs.length } });
+}));
+
+// ═══════════════════════════════════════════════════
 //  GLOBAL ERROR HANDLER (catch-all)
 // ═══════════════════════════════════════════════════
 app.use((err, req, res, _next) => {
@@ -2017,15 +2458,38 @@ app.use((err, req, res, _next) => {
 // ═══════════════════════════════════════════════════
 seed();
 
+// ── Graceful Shutdown ─────────────────────────────
+let _shuttingDown = false;
+function gracefulShutdown(signal) {
+  if (_shuttingDown) return;
+  _shuttingDown = true;
+  console.log(`\n[SHUTDOWN] Received ${signal}. Closing gracefully...`);
+  server.close(() => {
+    console.log('[SHUTDOWN] HTTP server closed.');
+    process.exit(0);
+  });
+  // Force exit after 10s
+  setTimeout(() => {
+    console.error('[SHUTDOWN] Timed out, forcing exit.');
+    process.exit(1);
+  }, 10000);
+}
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
 // Resilience: catch uncaught exceptions to prevent crash
 process.on('uncaughtException', (err) => {
-    console.error(`[${new Date().toISOString()}] UNCAUGHT: ${err.message}`);
+    console.error(`[${new Date().toISOString()}] UNCAUGHT: ${err.message}`, err.stack);
+    if (!_shuttingDown) {
+      _shuttingDown = true;
+      setTimeout(() => process.exit(1), 1000);
+    }
 });
 process.on('unhandledRejection', (reason) => {
-    console.error(`[${new Date().toISOString()}] UNHANDLED REJECTION: ${reason}`);
+    console.error(`[${new Date().toISOString()}] UNHANDLED REJECTION:`, reason);
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`\n🔒 19888 API Server v2.0 (lucky944-compatible) running on http://localhost:${PORT}`);
   console.log(`   Frontend:  http://localhost:${PORT}/`);
   console.log(`   Admin:     http://localhost:${PORT}/admin.html`);

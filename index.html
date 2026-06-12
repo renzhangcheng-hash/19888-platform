@@ -12,7 +12,7 @@
     <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
     <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="css/lucky944.css" />
-    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/sunshine.css" />
     <script src="js/vendor/ethers-6.13.umd.min.js"></script>
     <script src="js/web3.js"></script>
 </head>
@@ -126,13 +126,6 @@
         <a href="javascript:;" class="item" style="background-image: url(img/banner.svg)"></a>
     </div>
     <div class="wp">
-        <div class="m-notice">
-            <i class="icon"></i>
-            <div class="notice">
-                <span id="worldCupCountdown">距离世界杯开幕还有...</span>
-            </div>
-        </div>
-
         <div class="tab-header-wrapper">
             <ul class="ul-tabs_b1 slick_tab_btn">
                 <li class="on"><a href="javascript:;">推荐赛事</a></li>
@@ -232,6 +225,33 @@
                         </div>
                     </div>
 
+                    <!-- VIP 卡片 -->
+                    <div class="vip-card" id="vipCard" style="background:linear-gradient(135deg,#1a1a2e 0%,#2d2d44 100%);border-radius:12px;padding:14px 18px;margin-bottom:12px;color:#fff;display:none">
+                        <div style="display:flex;justify-content:space-between;align-items:center">
+                            <div>
+                                <div style="font-size:10px;color:#888;margin-bottom:4px">VIP 等级</div>
+                                <div style="font-size:22px;font-weight:800" id="vipLevelName">普通</div>
+                            </div>
+                            <div style="text-align:right">
+                                <div style="font-size:10px;color:#888;margin-bottom:4px">累计投注</div>
+                                <div style="font-size:16px;font-weight:700" id="vipWagered">0</div>
+                            </div>
+                        </div>
+                        <div style="margin-top:10px">
+                            <div style="display:flex;justify-content:space-between;font-size:10px;color:#888;margin-bottom:4px">
+                                <span id="vipProgressLabel">距下一级还需</span>
+                                <span id="vipNextLevel">-</span>
+                            </div>
+                            <div style="height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden">
+                                <div id="vipProgressBar" style="height:100%;background:linear-gradient(90deg,#DAA520,#FFD700);border-radius:3px;width:0%;transition:width 0.5s"></div>
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:8px;margin-top:10px;font-size:10px">
+                            <span style="background:rgba(218,165,32,0.2);color:#DAA520;padding:2px 8px;border-radius:10px" id="vipCashback">返佣0%</span>
+                            <span style="background:rgba(102,126,234,0.2);color:#8B9CF7;padding:2px 8px;border-radius:10px" id="vipOdds">赔率+0%</span>
+                        </div>
+                    </div>
+
                     <!-- PnL 面板 -->
                     <div class="pnl-panel">
                         <div class="pnl-item">
@@ -269,6 +289,11 @@
 
                     <!-- 菜单 -->
                     <div class="profile-menu">
+                        <div class="menu-item" onclick="app.navigateTo('transactions')">
+                            <i class="menu-icon icon-record"></i>
+                            <span>交易流水</span>
+                            <i class="arrow"></i>
+                        </div>
                         <div class="menu-item" onclick="app.navigateTo('records')">
                             <i class="menu-icon icon-record"></i>
                             <span>投注记录</span>
@@ -371,6 +396,12 @@
             <a href="javascript:;" onclick="app.navigateTo('records')">
                 <i class="icon_record"></i>
                 <p>投注记录</p>
+            </a>
+        </li>
+        <li>
+            <a href="javascript:;" onclick="app.navigateTo('transactions')">
+                <i class="icon_record"></i>
+                <p>流水</p>
             </a>
         </li>
         <li>

@@ -1,0 +1,250 @@
+/* ============================================================
+   Tech Blue Theme — 科技活力蓝
+   Vibrant blue pro trading aesthetic for 19888 platform
+   ============================================================ */
+
+/* ---- CSS Variables Override ---- */
+:root{
+  --primary:#1677FF;
+  --primary-dark:#0958D9;
+  --primary-light:#4096FF;
+  --blue:#1677FF;
+  
+  --accent:#1677FF;
+  --accent-deep:#0958D9;
+  --accent-grad:linear-gradient(135deg,#1677FF 0%,#4096FF 100%);
+  --accent-grad-rev:linear-gradient(225deg,#4096FF 0%,#1677FF 100%);
+  --accent-ring:rgba(22,119,255,0.18);
+  --accent-glow:rgba(22,119,255,0.08);
+  --accent-glass:rgba(22,119,255,0.06);
+  
+  --red:#FF4D4F;
+  --red-soft:rgba(255,77,79,0.10);
+  --gold:#4096FF;
+  --green:#00C9A7;
+  --green-soft:rgba(0,201,167,0.10);
+  
+  --bg:#0A0E27;
+  --bg-alt:#0A0E27;
+  --surface:#141832;
+  --surface-hover:#1A2040;
+  --surface-glass:rgba(20,24,50,0.95);
+  --surface-raised:linear-gradient(160deg,#141832 0%,#1A2045 100%);
+  
+  --text:#E8ECF4;
+  --text-light:#7B89A8;
+  --text-muted:#4A5580;
+  --text-inverse:#0A0E27;
+  --border:#1E2848;
+  --border-light:#141832;
+  --border-glass:rgba(255,255,255,0.04);
+  
+  --shadow-xs:0 1px 2px rgba(0,0,0,0.3);
+  --shadow-sm:0 1px 4px rgba(0,0,0,0.4);
+  --shadow:0 2px 8px rgba(0,0,0,0.5);
+  --shadow-md:0 4px 16px rgba(0,0,0,0.6);
+  --shadow-card:0 1px 0 rgba(22,119,255,0.06);
+  --shadow-card-hover:0 2px 16px rgba(22,119,255,0.12);
+}
+
+/* ---- Body ---- */
+body{background:var(--bg);color:var(--text)}
+.main{background:var(--bg)}
+
+/* ---- Header ---- */
+.header{
+  background:var(--surface-glass);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  box-shadow:none;
+  height:48px;
+}
+
+/* ---- Wallet Button ---- */
+.wallet-connect{
+  background:var(--surface-hover);
+  border:1px solid var(--border);
+  border-radius:6px;padding:6px 14px;
+}
+.wallet-connect:hover{background:#222850}
+.wallet-connect.connected{
+  background:rgba(22,119,255,0.12);
+  border-color:rgba(22,119,255,0.3);
+  box-shadow:none;
+}
+.wallet-icon{filter:brightness(0) invert(1)}
+.wallet-address{color:var(--text)}
+
+/* ---- Banner ---- */
+.banner{padding:0;margin:0}
+.banner .item{
+  height:150px;
+  background:linear-gradient(135deg,#0D1230 0%,#141D45 40%,#0F1650 70%,#0D1230 100%) !important;
+  border-radius:0;
+  border-bottom:1px solid var(--border);
+  position:relative;overflow:hidden;
+}
+.banner .item::before{
+  content:'';position:absolute;
+  top:-50%;right:-20%;
+  width:350px;height:350px;
+  background:radial-gradient(circle,rgba(22,119,255,0.10) 0%,transparent 60%);
+  border-radius:50%;animation:bannerOrb1 8s ease-in-out infinite;
+}
+.banner .item::after{
+  content:'';position:absolute;
+  bottom:-40%;left:-15%;
+  width:280px;height:280px;
+  background:radial-gradient(circle,rgba(64,150,255,0.06) 0%,transparent 60%);
+  border-radius:50%;animation:bannerOrb2 10s ease-in-out infinite;
+}
+@keyframes bannerOrb1{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(-20px,15px) scale(1.1)}66%{transform:translate(10px,-10px) scale(.95)}}
+@keyframes bannerOrb2{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,-15px) scale(1.15)}}
+
+/* ---- Notice Bar ---- */
+.m-notice{
+  background:linear-gradient(135deg,rgba(22,119,255,0.08) 0%,rgba(22,119,255,0.03) 100%);
+  border:1px solid rgba(22,119,255,0.12);
+  color:#4096FF;
+  border-radius:4px;box-shadow:none;margin:12px;
+}
+.m-notice .notice{color:#4096FF}
+
+/* ---- Tab Header ---- */
+.ul-tabs_b1 li.on a{color:var(--accent)}
+.ul-tabs_b1 li.on a::after{
+  background:var(--accent);
+  box-shadow:0 0 14px rgba(22,119,255,0.5);
+}
+.more-link{color:var(--accent)}
+
+/* ---- Match Cards ---- */
+.ul-info li .con{
+  background:var(--surface) !important;
+  border:1px solid var(--border);
+  border-radius:6px;box-shadow:none;min-height:120px;
+}
+.ul-info li .con:hover{
+  border-color:var(--accent);
+  box-shadow:0 0 24px rgba(22,119,255,0.10);
+  transform:none;
+}
+.ul-info li::before,.ul-info li::after{display:none}
+.ul-info li .league-name{
+  background:rgba(22,119,255,0.06);
+  border-radius:0 0 6px 6px;backdrop-filter:none;
+  margin:-15px auto 12px auto;
+}
+.ul-info li .league-name::before,.ul-info li .league-name::after{display:none}
+.ul-info li .league-name .p1{color:var(--accent);text-shadow:none;font-size:11px}
+.ul-info li .team-logo{background:var(--surface-hover);border:1px solid var(--border)}
+.ul-info li .team-name{color:var(--text);font-size:13px}
+.ul-info li .match-time .time{color:#E8ECF4}
+
+/* ---- Footer ---- */
+.ul-tabbar{
+  background:var(--surface);
+  box-shadow:0 -1px 0 var(--border);
+  border-top:1px solid var(--border);
+  height:56px;padding-bottom:6px;
+}
+.ul-tabbar li a{color:var(--text-light)}
+.ul-tabbar .on p{color:var(--accent)}
+.ul-tabbar p{color:var(--text-light)}
+
+/* Update tabbar SVG icons */
+.ul-tabbar li .icon_home{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%237B89A8'%3E%3Cpath d='M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z'/%3E%3C/svg%3E")}
+.ul-tabbar li .icon_ai{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%237B89A8'%3E%3Cpath d='M9.5 2c-.7 0-1.3.5-1.5 1.2L6.3 8H2.1c-.8 0-1.3.9-.8 1.5L6 14l-1.7 5c-.3.8.5 1.5 1.3 1L12 16l6.4 4c.8.5 1.6-.2 1.3-1L18 14l4.7-4.5c.5-.6 0-1.5-.8-1.5h-4.2L16 3.2c-.2-.7-.8-1.2-1.5-1.2H9.5z'/%3E%3C/svg%3E")}
+.ul-tabbar li .icon_match{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%237B89A8'%3E%3Ccircle cx='12' cy='12' r='10' fill='none' stroke='%237B89A8' stroke-width='1.5'/%3E%3Cpath d='M7 7h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2zM7 11h2v2H7zm4 2h2v2h-2zm4 0h2v2h-2zm-4 4h2v2h-2z'/%3E%3C/svg%3E")}
+.ul-tabbar li .icon_record{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%237B89A8'%3E%3Cpath d='M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z'/%3E%3C/svg%3E")}
+.ul-tabbar li .icon_user{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%237B89A8'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E")}
+.ul-tabbar .on .icon_home{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%231677FF'%3E%3Cpath d='M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z'/%3E%3C/svg%3E")}
+.ul-tabbar .on .icon_ai{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%231677FF'%3E%3Cpath d='M9.5 2c-.7 0-1.3.5-1.5 1.2L6.3 8H2.1c-.8 0-1.3.9-.8 1.5L6 14l-1.7 5c-.3.8.5 1.5 1.3 1L12 16l6.4 4c.8.5 1.6-.2 1.3-1L18 14l4.7-4.5c.5-.6 0-1.5-.8-1.5h-4.2L16 3.2c-.2-.7-.8-1.2-1.5-1.2H9.5z'/%3E%3C/svg%3E")}
+.ul-tabbar .on .icon_match{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%231677FF'%3E%3Ccircle cx='12' cy='12' r='10' fill='none' stroke='%231677FF' stroke-width='1.5'/%3E%3Cpath d='M7 7h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2zM7 11h2v2H7zm4 2h2v2h-2zm4 0h2v2h-2zm-4 4h2v2h-2z'/%3E%3C/svg%3E")}
+.ul-tabbar .on .icon_record{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%231677FF'%3E%3Cpath d='M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z'/%3E%3C/svg%3E")}
+.ul-tabbar .on .icon_user{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%231677FF'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E")}
+
+/* ---- Dialogs ---- */
+.dialog-overlay{background:rgba(0,0,0,0.7);backdrop-filter:blur(4px)}
+.dialog-box{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,0.6);
+}
+.dialog-title{background:linear-gradient(135deg,var(--surface),var(--surface-hover));border-bottom:1px solid var(--border);color:var(--text)}
+.custom-confirm{background:var(--surface);border:1px solid var(--border);color:var(--text)}
+.custom-confirm-title{color:var(--text)}
+.custom-confirm-content{color:var(--text-light)}
+.confirm-cancel-btn{background:var(--surface-hover);color:var(--text);border:1px solid var(--border)}
+.confirm-ok-btn{background:var(--accent-grad);color:#fff;font-weight:700}
+
+/* ---- Toast ---- */
+.custom-toast{background:var(--surface);border:1px solid var(--border);color:var(--text);box-shadow:0 4px 24px rgba(0,0,0,0.6)}
+
+/* ---- Buttons ---- */
+.bet-btn{background:var(--accent-grad);color:#fff;box-shadow:0 2px 12px rgba(22,119,255,0.3);font-weight:700;border-radius:6px}
+.bet-btn:hover{box-shadow:0 4px 20px rgba(22,119,255,0.5);transform:translateY(-1px)}
+.bet-champion{background:var(--accent-grad);color:#fff}
+.bet-runner-up{background:var(--surface-hover);color:var(--text);border:1px solid var(--border)}
+
+/* ---- Inputs ---- */
+input{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:6px}
+input:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(22,119,255,0.15)}
+
+/* ---- Profile Cards ---- */
+.balance-card{background:var(--surface) !important;border:1px solid var(--border);border-radius:6px}
+.vip-card{
+  background:linear-gradient(135deg,#0D1A40 0%,#142050 100%) !important;
+  border:1px solid rgba(22,119,255,0.15) !important;
+}
+
+/* ---- Scrollbar ---- */
+::-webkit-scrollbar-thumb{background:var(--border)}
+::-webkit-scrollbar-thumb:hover{background:var(--text-muted)}
+
+/* ---- Champion Teams ---- */
+.team-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;box-shadow:none}
+.team-card:hover{border-color:var(--accent);box-shadow:0 0 20px rgba(22,119,255,0.08)}
+.team-card .t-logo{background:var(--surface-hover)}
+
+/* ---- Records ---- */
+.record-item{border-bottom:1px solid var(--border) !important}
+
+/* ---- Lang Modal ---- */
+.global-lang-modal-content{background:var(--surface);border:1px solid var(--border)}
+.global-lang-modal-header{background:linear-gradient(135deg,var(--surface),var(--surface-hover));border-bottom:1px solid var(--border)}
+.global-lang-option{color:var(--text);border-bottom:1px solid var(--border)}
+.global-lang-option:active{background:var(--surface-hover)}
+.global-lang-option.selected{background:rgba(22,119,255,0.08);color:var(--accent)}
+
+/* ---- Platform Intro ---- */
+.platform-intro,.official-partners{background:var(--surface);border:1px solid var(--border);box-shadow:none}
+.intro-content{background:var(--bg);color:var(--text-light);box-shadow:none}
+.section-title{color:var(--text);border-bottom-color:var(--accent)}
+.section-title::before{background:var(--accent)}
+
+/* ---- Partners ---- */
+.partners-grid-dark{
+  display:flex;justify-content:space-around;align-items:center;
+  gap:8px;padding:16px 12px;margin:12px;
+  background:var(--surface);border:1px solid var(--border);border-radius:6px;
+}
+.partners-grid-dark img{filter:grayscale(100%) brightness(0.5);opacity:0.5}
+
+/* ---- Filter Buttons ---- */
+.filter-btn{background:var(--surface);border:1px solid var(--border);color:var(--text-light);border-radius:6px}
+.filter-btn.active{background:var(--accent-grad);color:#fff;border-color:var(--accent)}
+.filter-btn:hover{background:var(--surface-hover);color:var(--text)}
+
+/* ---- Status Labels ---- */
+.status-pending{background:rgba(22,119,255,0.12);color:var(--accent)}
+.status-won{background:rgba(0,201,167,0.12);color:var(--green)}
+.status-lost{background:rgba(255,77,79,0.12);color:var(--red)}
+
+/* ---- Quick Amounts ---- */
+.quick-amount{background:var(--surface);border:1px solid var(--border);color:var(--text-light)}
+.quick-amount:hover{background:var(--surface-hover);border-color:var(--accent);color:var(--accent)}
+
+/* ---- VIP Progress Bar ---- */
+#vipProgressBar{background:linear-gradient(90deg,#1677FF,#4096FF) !important;box-shadow:0 0 12px rgba(22,119,255,0.3)}
