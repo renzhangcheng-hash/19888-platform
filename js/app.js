@@ -710,12 +710,21 @@
       '</div>' +
 
       // ---- Recent Bet History ----
-      '<div style="background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.05)">' +
+      '<div style="background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.05);margin-bottom:12px">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
           '<span style="font-size:14px;font-weight:700;color:#1a1a2e">📋 近期投注</span>' +
           '<a href="javascript:;" onclick="app.navigateTo(\'records\')" style="font-size:12px;color:#667eea;text-decoration:none">查看全部 →</a>' +
         '</div>' +
         '<div id="profileRecentBets" style="font-size:13px;color:#999;text-align:center;padding:10px">加载中...</div>' +
+      '</div>' +
+
+      // ---- Quick Actions ----
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">' +
+        '<button onclick="app.navigateTo(\'transactions\')" style="background:#fff;border:1px solid #e8eaed;border-radius:10px;padding:12px;font-size:12px;color:#666;cursor:pointer">📊 交易流水</button>' +
+        '<button onclick="app.loadDepositHistory()" style="background:#fff;border:1px solid #e8eaed;border-radius:10px;padding:12px;font-size:12px;color:#666;cursor:pointer">📥 充值记录</button>' +
+        '<button onclick="app.loadWithdrawHistory()" style="background:#fff;border:1px solid #e8eaed;border-radius:10px;padding:12px;font-size:12px;color:#666;cursor:pointer">📤 提现记录</button>' +
+        (document.getElementById('vipCard') && document.getElementById('vipCard').style.display !== 'none' ? 
+          '<button onclick="app.checkVIPUpgrade()" style="background:#fff;border:1px solid #FF6B35;border-radius:10px;padding:12px;font-size:12px;color:#FF6B35;cursor:pointer">⭐ VIP升级</button>' : '') +
       '</div>' +
 
       '</div>';
@@ -1069,7 +1078,59 @@
     } catch(e) { showToast('网络错误，请重试'); }
   }
 
-  // ===== DAPP EVENT LISTENERS =====
+  // ===== DEPOSIT/WITHDRAW HISTORY =====
+  async function loadDepositHistory() {
+    if (!walletAddress) { showToast('请先连接钱包'); return; }
+    try {
+      var res = await apiFetch('/deposit/history?wallet=' + encodeURIComponent(walletAddress));
+      var data = (res && res.data) ? (Array.isArray(res.data) ? res.data : (res.data.transactions || [])) : [];
+      if (data.length === 0) { showToast('暂无充值记录'); return; }
+      var html = data.slice(0, 5).map(function(d) {
+        return '📥 +' + Number(d.amount || 0).toFixed(2) + ' USDT | ' + (d.tx_hash ? d.tx_hash.slice(0,8) + '...' : '') + ' | ' + (d.created_at ? new Date(d.created_at).toLocaleDateString() : '');
+      }).join('\n');
+      showConfirm('充值记录 (' + data.length + '条)', html, function(){ app.navigateTo('transactions'); });
+    } catch(e) { showToast('加载失败'); }
+  }
+
+  async function loadWithdrawHistory() {
+    if (!walletAddress) { showToast('请先连接钱包'); return; }
+    try {
+      var res = await apiFetch('/withdraw/history?wallet=' + encodeURIComponent(walletAddress));
+      var data = (res && res.data) ? (Array.isArray(res.data) ? res.data : (res.data.transactions || [])) : [];
+      if (data.length === 0) { showToast('暂无提现记录'); return; }
+      var html = data.slice(0, 5).map(function(d) {
+        return '📤 -' + Number(d.amount || 0).toFixed(2) + ' USDT | ' + (d.target_address ? d.target_address.slice(0,8) + '...' : '') + ' | ' + (d.status || '');
+      }).join('\n');
+      showConfirm('提现记录 (' + data.length + '条)', html, function(){ app.navigateTo('transactions'); });
+    } catch(e) { showToast('加载失败'); }
+  }
+
+  async function checkVIPUpgrade() {
+    if (!walletAddress) return;
+    try {
+      var res = await apiFetch('/vip/check-upgrade', {
+        method: 'POST',
+        body: JSON.stringify({ wallet_address: walletAddress })
+      });
+      if (res && res.code === 0) {
+        showToast('VIP升级检查: ' + (res.data.can_upgrade ? '✅ 可升级到 ' + res.data.next_level : '当前已是最高等级'));
+      }
+    } catch(e) {}
+  }
+
+  // ===== AI HOSTING HISTORY =====
+  async function loadAIHistory() {
+    if (!walletAddress) { showToast('请先连接钱包'); return; }
+    try {
+      var res = await apiFetch('/ai-hosting/history?address=' + encodeURIComponent(walletAddress));
+      var data = (res && res.data) || [];
+      if (data.length === 0) { showToast('暂无AI托管记录'); return; }
+      var html = data.slice(0, 5).map(function(h) {
+        return '🤖 ' + (h.action || '') + ' | ' + Number(h.amount || 0).toFixed(2) + ' USDT | ' + (h.created_at ? new Date(h.created_at).toLocaleDateString() : '');
+      }).join('\n');
+      showConfirm('AI托管记录', html);
+    } catch(e) { showToast('加载失败'); }
+  }
   function setupDappListeners() {
     // Listen for tx status updates from dapp
     window.addEventListener('dapp:txStatus', function(e) {
@@ -1549,6 +1610,11 @@
     openMatch: openMatch,
     // Retry
     retryConnection: retryConnection,
+    // History
+    loadDepositHistory: loadDepositHistory,
+    loadWithdrawHistory: loadWithdrawHistory,
+    checkVIPUpgrade: checkVIPUpgrade,
+    loadAIHistory: loadAIHistory,
   };
 
   // ===== INIT =====
