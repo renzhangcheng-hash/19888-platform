@@ -2040,23 +2040,28 @@ app.post('/api/withdraw', asyncHandler(async (req, res) => {
       if (!user) throw { code: 404, msg: '用户不存在' };
 
       const available = (user.balance || 0) - (user.frozen_bet || 0) - (user.frozen_ai || 0);
+
+      // Large withdraw: pending review (don't deduct yet)
+      const isLarge = amt >= (riskConfig.large_withdraw_threshold || 500);
+      if (isLarge) {
+        // Freeze amount instead of deducting
+        user.frozen_withdraw = (user.frozen_withdraw || 0) + amt;
+        addRiskAlert('large_withdraw', 'warning',
+          `${addr.slice(0, 10)}... 提现 ${amt} USDT → ${toAddr.slice(0, 10)}... [待审核]`);
+        return { user, users, delayed: true };
+      }
+
       if (available < amt) {
         throw { code: 400, msg: `余额不足。可用: ${available.toFixed(2)} USDT` };
       }
 
       // Balance floor
       user.balance = Math.max(0, +(user.balance - amt).toFixed(4));
-
-      // Risk: large withdraw alert
-      if (amt >= (riskConfig.large_withdraw_threshold || 500)) {
-        addRiskAlert('large_withdraw', 'warning',
-          `${addr.slice(0, 10)}... 提现 ${amt} USDT → ${toAddr.slice(0, 10)}...`);
-      }
-
-      return { user, users };
+      return { user, users, delayed: false };
     });
 
     // Record withdrawal (separate lock for withdrawals file)
+    const withdrawStatus = result.delayed ? 'pending_review' : 'pending';
     const wResult = await lockedUpdate('withdrawals', (withdrawals) => {
       const withdrawal = {
         id: (withdrawals[withdrawals.length - 1]?.id || 0) + 1,
@@ -2064,22 +2069,24 @@ app.post('/api/withdraw', asyncHandler(async (req, res) => {
         to_address: toAddr,
         amount: amt,
         tx_hash: tx_hash || null,
-        status: 'pending',
+        status: withdrawStatus,
         created_at: new Date().toISOString(),
       };
       withdrawals.push(withdrawal);
       return withdrawal;
     });
 
-    console.log(`[Withdraw] ${addr.slice(0, 10)}... → ${toAddr.slice(0, 10)}... ${amt} USDT`);
+    const logTag = result.delayed ? '[Withdraw REVIEW]' : '[Withdraw]';
+    console.log(`${logTag} ${addr.slice(0, 10)}... → ${toAddr.slice(0, 10)}... ${amt} USDT (${withdrawStatus})`);
 
     res.json({
       code: 0,
-      msg: '提现申请已提交',
+      msg: result.delayed ? `大额提现(${amt} USDT)已提交审核，24小时内处理` : '提现申请已提交',
       data: {
         withdraw_id: wResult.id,
         amount: amt,
         to_address: toAddr,
+        status: withdrawStatus,
       }
     });
   } catch (e) {
@@ -2088,7 +2095,53 @@ app.post('/api/withdraw', asyncHandler(async (req, res) => {
   }
 }));
 
-// GET /api/withdraw/history?wallet=0x...
+// POST /api/admin/withdrawals/review — approve/reject pending review withdrawals
+app.post('/api/admin/withdrawals/review', authenticateAdmin, asyncHandler(async (req, res) => {
+  const { withdraw_id, action } = req.body; // action: 'approve' or 'reject'
+
+  if (!withdraw_id || !['approve', 'reject'].includes(action)) {
+    return res.status(400).json({ code: 1, msg: '参数错误' });
+  }
+
+  const result = await lockedUpdate('withdrawals', (withdrawals) => {
+    const w = withdrawals.find(wd => wd.id === Number(withdraw_id));
+    if (!w) throw { code: 404, msg: '提现记录不存在' };
+    if (w.status !== 'pending_review') throw { code: 400, msg: `状态错误: ${w.status}` };
+
+    if (action === 'approve') {
+      w.status = 'pending';
+      w.reviewed_at = new Date().toISOString();
+      w.reviewed_by = 'admin';
+      // Unfreeze + deduct balance
+      lockedUpdate('users', (users) => {
+        const user = users.find(u => u.address.toLowerCase() === w.address.toLowerCase());
+        if (user) {
+          user.frozen_withdraw = Math.max(0, (user.frozen_withdraw || 0) - w.amount);
+          user.balance = Math.max(0, +(user.balance - w.amount).toFixed(4));
+        }
+        return null;
+      }).catch(e => console.error('[Review] balance deduction failed:', e.message));
+    } else {
+      w.status = 'rejected';
+      w.reviewed_at = new Date().toISOString();
+      w.reviewed_by = 'admin';
+      // Unfreeze amount back
+      lockedUpdate('users', (users) => {
+        const user = users.find(u => u.address.toLowerCase() === w.address.toLowerCase());
+        if (user) {
+          user.frozen_withdraw = Math.max(0, (user.frozen_withdraw || 0) - w.amount);
+        }
+        return null;
+      }).catch(e => console.error('[Review] unfreeze failed:', e.message));
+    }
+    return w;
+  });
+
+  console.log(`[Admin] Withdraw #${withdraw_id} ${action}d`);
+  res.json({ code: 0, msg: `提现 #${withdraw_id} 已${action === 'approve' ? '批准' : '拒绝'}`, data: result });
+}));
+
+// GET /api/admin/withdrawals/pending — list pending review withdrawals
 app.get('/api/withdraw/history', asyncHandler((req, res) => {
   const addr = (req.query.wallet || '').toLowerCase().trim();
   if (!isValidWallet(addr)) {
