@@ -436,6 +436,13 @@
       return;
     }
 
+    // Toggle home-specific sections
+    var homeSections = ['liveStatsBar', 'announceBar', 'aiRecCard', 'trustSignalsBar'];
+    for (var s = 0; s < homeSections.length; s++) {
+      var sec = document.getElementById(homeSections[s]);
+      if (sec) sec.style.display = (page === 'home') ? '' : 'none';
+    }
+
     // Show target page (create if needed)
     var target = document.getElementById('page-' + page);
     if (target) {
