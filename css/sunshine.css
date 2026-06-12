@@ -480,3 +480,105 @@ button, a, .quick-amount, .score-cell, .filter-btn, .action-btn, .load-more-btn,
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
+
+/* ===== ACCESSIBILITY: FOCUS INDICATORS ===== */
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ===== MICRO-INTERACTIONS ===== */
+.match-card:active, .team-card:active {
+  transform: scale(0.98);
+  transition: transform .1s ease;
+}
+.bet-btn:active, .action-btn:active, .quick-amount:active, .score-cell:active {
+  transform: scale(0.95);
+  transition: transform .1s ease;
+}
+.footer .ul-tabbar li a:active {
+  transform: scale(0.92);
+  transition: transform .1s ease;
+}
+
+/* ===== DIALOG ANIMATIONS ===== */
+.dialog-overlay {
+  opacity: 0;
+  transition: opacity .2s ease;
+  pointer-events: none;
+}
+  opacity: 1;
+  pointer-events: auto;
+}
+.dialog-box {
+  transform: translateY(20px) scale(0.96);
+  transition: transform .25s cubic-bezier(.34,1.56,.64,1);
+}
+.dialog-overlay.show .dialog-box {
+  transform: translateY(0) scale(1);
+}
+
+/* ===== TOAST ANIMATION ===== */
+.custom-toast {
+  animation: toastIn .3s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(-12px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ===== CARD HOVER ELEVATION ===== */
+.match-card:hover, .team-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  transition: box-shadow .2s ease;
+}
+.match-card, .team-card {
+  transition: box-shadow .2s ease, transform .1s ease;
+}
+
+/* ===== SHIMMER SKELETON ENHANCEMENT ===== */
+.skeleton-row, .skeleton-kline, .skeleton-orderbook, .skeleton-record {
+  position: relative;
+  overflow: hidden;
+}
+.skeleton-row::after, .skeleton-kline::after, .skeleton-orderbook::after, .skeleton-record::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.5) 50%, transparent 100%);
+  animation: shimmer 2s infinite;
+}
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.skeleton-row:nth-child(2)::after, .skeleton-record:nth-child(2)::after { animation-delay: .15s; }
+.skeleton-row:nth-child(3)::after { animation-delay: .3s; }
+.skeleton-row:nth-child(4)::after { animation-delay: .45s; }
+
+/* ===== DIALOG ANIMATIONS (class-based) ===== */
+.dialog-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.dialog-overlay .dialog-box {
+  transform: translateY(20px) scale(0.96);
+  transition: transform .25s cubic-bezier(.34,1.56,.64,1);
+}
+.dialog-overlay.show .dialog-box {
+  transform: translateY(0) scale(1);
+}
+
+/* ===== CONFIRM DIALOG ===== */
+.custom-confirm-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.custom-confirm.show {
+  transform: translateY(0) scale(1);
+}
+.custom-confirm {
+  transform: translateY(20px) scale(0.96);
+  transition: transform .25s cubic-bezier(.34,1.56,.64,1);
+}

@@ -172,7 +172,9 @@
     document.getElementById('confirmContent').textContent = content;
     overlay.style.display = 'block';
     dialog.style.display = 'block';
-    function hide() { overlay.style.display = 'none'; dialog.style.display = 'none'; }
+    overlay.classList.add('show');
+    dialog.classList.add('show');
+    function hide() { overlay.style.display = 'none'; dialog.style.display = 'none'; overlay.classList.remove('show'); dialog.classList.remove('show'); }
     const ok = document.getElementById('confirmOkBtn');
     const cancel = document.getElementById('confirmCancelBtn');
     const nOk = ok.cloneNode(true), nCancel = cancel.cloneNode(true), nOverlay = overlay.cloneNode(true);
@@ -1626,7 +1628,7 @@
       dapp.showDepositModal();
     } else {
       var modal = document.getElementById('depositModal');
-      if (modal) modal.style.display = 'flex';
+      if (modal) { modal.style.display = 'flex'; modal.classList.add('show'); }
     }
   }
 
@@ -1635,7 +1637,7 @@
       dapp.hideDepositModal();
     } else {
       var modal = document.getElementById('depositModal');
-      if (modal) modal.style.display = 'none';
+      if (modal) { modal.style.display = 'none'; modal.classList.remove('show'); }
     }
   }
 
@@ -1736,7 +1738,7 @@
       if (res && res.code === 0) {
         showToast('✅ 提现申请已提交: ' + amount + ' USDT → ' + toAddress.slice(0,6) + '...');
         var modal = document.getElementById('withdrawModal');
-        if (modal) modal.style.display = 'none';
+        if (modal) { modal.style.display = 'none'; modal.classList.remove('show'); }
         if (currentPage === 'profile') renderProfile();
       } else {
         showToast('❌ ' + (res ? res.msg : '提现失败'));
@@ -1787,6 +1789,7 @@
     if (levelsEl) levelsEl.innerHTML = '<div class="skeleton-invite-row" style="width:70%"></div>';
 
     modal.style.display = 'flex';
+    modal.classList.add('show');
 
     // Load invite data + agent earnings + invite levels
     Promise.all([loadInviteData(), loadAgentEarnings(), loadInviteLevels()]).then(function() {
