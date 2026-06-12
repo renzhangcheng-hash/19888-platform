@@ -19,18 +19,18 @@
       },
     },
     mainnet: {
-      chainId: 1,
-      chainIdHex: '0x1',
-      name: 'Ethereum Mainnet',
-      rpcUrl: 'https://eth.llamarpc.com',
-      explorer: 'https://etherscan.io',
-      currency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+      chainId: 56,
+      chainIdHex: '0x38',
+      name: 'BSC Mainnet',
+      rpcUrl: 'https://bsc-dataseed.binance.org',
+      explorer: 'https://bscscan.com',
+      currency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
       contracts: {
-        // TODO: Deploy contracts to mainnet and update addresses here
-        MockUSDT:  '',
-        LuckyPool: '',
-        AntiScoreBet: '',
-        ChampionBet: '',
+        // BSC Mainnet — deployed 2026-06-13
+        MockUSDT:  '0x55d398326f99059fF775485246999027B3197955', // BSC real USDT
+        LuckyPool: '0x07Dbf04Db72Ebd0D6a9488cC90934B046C2092e2',
+        AntiScoreBet: '0xc7aE31441B72D40F7EAc9AFBc6adC30D8692caEd',
+        ChampionBet: '0xeBF0EcF53c420C3cA85e20f51e13eb5C51BfCF3a',
       },
     },
   };
