@@ -304,6 +304,7 @@ function createUserObject(addr) {
     balance: 0,
     frozen_bet: 0,
     frozen_ai: 0,
+    frozen_withdraw: 0,
     ai_hosting_active: false,
     ai_hosting_settings: {
       max_bet_per_match: 100,
@@ -2096,7 +2097,7 @@ app.post('/api/withdraw', asyncHandler(async (req, res) => {
 }));
 
 // POST /api/admin/withdrawals/review — approve/reject pending review withdrawals
-app.post('/api/admin/withdrawals/review', authenticateAdmin, asyncHandler(async (req, res) => {
+app.post('/api/admin/withdrawals/review', adminAuth, asyncHandler(async (req, res) => {
   const { withdraw_id, action } = req.body; // action: 'approve' or 'reject'
 
   if (!withdraw_id || !['approve', 'reject'].includes(action)) {

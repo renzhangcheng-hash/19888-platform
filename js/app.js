@@ -507,6 +507,10 @@
     if (currentPage === page) return;
     currentPage = page;
 
+    // Update page title
+    var titles = { home:'首页', ai:'AI预测', matches:'赛事列表', market:'行情', profile:'我的', records:'投注记录', transactions:'交易流水', detail:'赛事详情', about:'关于我们' };
+    document.title = '19888 | ' + (titles[page] || page);
+
     // Auto-refresh management
     if (page === 'profile') startProfileAutoRefresh();
     else stopProfileAutoRefresh();
@@ -2403,6 +2407,11 @@
   }
 
   function findMatch(id) {
+    // Search API-loaded data first, then mock fallback
+    if (_homeMatchesData && _homeMatchesData.length > 0) {
+      var apiMatch = _homeMatchesData.find(function(m) { return m.id === id; });
+      if (apiMatch) return apiMatch;
+    }
     var found = mockMatches.find(function(m) { return m.id === id; });
     if (!found && id >= 1 && id <= mockMatches.length) found = mockMatches[id - 1];
     return found || mockMatches[0];
