@@ -173,14 +173,19 @@ td{padding:9px 10px;font-size:12px;border-top:1px solid var(--border);color:var(
 
 <script>
 // ===== CONFIG =====
-const API = '/api/admin';
+const DEFAULT_API = 'https://one9888-api.onrender.com/api/admin';
+function resolveApi() {
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') return '/api/admin';
+  return DEFAULT_API;
+}
+const API = resolveApi();
 let JWT = '';
 
 // ===== AUTH =====
 async function doLogin() {
   const pass = document.getElementById('loginPass').value;
   try {
-    const r = await fetch('/api/admin/login', {
+    const r = await fetch(API + '/login', {
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({username:'admin',password:pass})
     });
@@ -212,7 +217,7 @@ async function loadStats() {
   try {
     const [users, bets, pool, risk] = await Promise.all([
       apiFetch(API+'/users'), apiFetch(API+'/bets'),
-      apiFetch('/api/finance/pool-status'), apiFetch(API+'/risk/config')
+      apiFetch(DEFAULT_API.replace('/admin','')+'/finance/pool-status'), apiFetch(API+'/risk/config')
     ]);
     const uData = users.data || [];
     const bData = bets.data || [];
