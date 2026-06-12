@@ -351,7 +351,7 @@
     return '<img src="' + src + '" width="' + s + '" height="' + s + '" style="border-radius:50%;object-fit:contain;background:#F0E8E0;flex-shrink:0" alt="' + name + '" onerror="var t=this;if(t.src.indexOf(\'.png\')!==-1){t.src=t.src.replace(\'.png\',\'.svg\')}else{t.onerror=null;t.src=\'' + fallback + '\'}">';
   }
 
-  // ===== MATCH CARD (lucky944 DOM) =====
+  // ===== MATCH CARD (lucky944 DOM — enhanced with odds) =====
   function matchCardHTML(m) {
     var t = m.time || m.match_time || '';
     var parts = t.split(' ');
@@ -360,6 +360,15 @@
     var home = m.home || m.home_team || '';
     var away = m.away || m.away_team || '';
     var league = m.league || m.league_name || '';
+    var hO = Number(m.odds_home || m.home_odds || 0);
+    var dO = Number(m.odds_draw || m.draw_odds || 0);
+    var aO = Number(m.odds_away || m.away_odds || 0);
+    var oddsRow = '</div>' +
+      '<div class="odds-row" style="display:flex;justify-content:center;gap:12px;padding:4px 0;font-size:11px;border-top:1px solid #f0f0f0;margin-top:4px">' +
+        '<span style="color:#03A66D;font-weight:600">主 ' + (hO ? hO.toFixed(2) : '—') + '</span>' +
+        '<span style="color:#999">平 ' + (dO ? dO.toFixed(2) : '—') + '</span>' +
+        '<span style="color:#E53935;font-weight:600">客 ' + (aO ? aO.toFixed(2) : '—') + '</span>' +
+      '</div>';
     return '<li><a href="javascript:;" class="con" onclick="app.openMatch(' + m.id + ')">' +
       '<div class="league-name"><p class="p1">' + league + '</p></div>' +
       '<div class="match-content">' +
@@ -375,7 +384,7 @@
           '<div class="team-logo">' + teamLogoImg(away, 44) + '</div>' +
           '<div class="team-name">' + away + '</div>' +
         '</div>' +
-      '</div>' +
+        oddsRow +
     '</a></li>';
   }
 
@@ -413,8 +422,8 @@
   }
 
   // ===== NAVIGATION =====
-  var tabPageMap = { 'home': 0, 'ai': 1, 'matches': 2, 'records': 3, 'transactions': 3, 'profile': 4 };
-  var tabNames = ['home', 'ai', 'matches', 'records', 'transactions', 'profile'];
+  var tabPageMap = { 'home': 0, 'ai': 1, 'matches': 2, 'records': 3, 'transactions': 4, 'profile': 6 };
+  var tabNames = ['home', 'ai', 'matches', 'records', 'transactions', null, 'profile'];
 
   function navigateTo(page) {
     if (currentPage === page) return;
@@ -437,7 +446,7 @@
     }
 
     // Toggle home-specific sections
-    var homeSections = ['liveStatsBar', 'announceBar', 'aiRecCard', 'trustSignalsBar'];
+    var homeSections = ['liveStatsBar', 'announceBar', 'aiRecCard', 'trustSignalsBar', 'tabHeaderWrapper'];
     for (var s = 0; s < homeSections.length; s++) {
       var sec = document.getElementById(homeSections[s]);
       if (sec) sec.style.display = (page === 'home') ? '' : 'none';
