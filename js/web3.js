@@ -97,13 +97,13 @@
     getChains() { return CHAINS; },
 
     // Switch active chain (persists to localStorage)
-    switchNetwork(network) {
+    async switchNetwork(network) {
       if (!CHAINS[network]) return false;
       activeChain = network;
       localStorage.setItem('19888_chain', network);
       // Reload contracts with new config
       if (walletAddress) {
-        this._initContracts();
+        await this._initContracts();
       }
       window.dispatchEvent(new CustomEvent('dapp:networkChanged', { detail: { network } }));
       return true;
@@ -125,7 +125,8 @@
         walletAddress = accounts[0];
         currentChainId = parseInt(await walletProvider.request({ method: 'eth_chainId' }), 16);
 
-        this._initContracts();
+        // Wait for contract init (ethers v6 BrowserProvider)
+        await this._initContracts();
 
         walletProvider.on('accountsChanged', function(acc) {
           walletAddress = acc[0] || null;
@@ -145,17 +146,20 @@
       }
     },
 
-    _initContracts() {
+    async _initContracts() {
       if (!walletProvider || !walletAddress) return;
       const cfg = getConfig();
-      // Only init if contract addresses are set (mainnet will have empty strings until deployed)
       if (!cfg.contracts.MockUSDT) return;
-      walletProvider.getSigner().then(function(signer) {
+      try {
+        const ethersProvider = new ethers.BrowserProvider(walletProvider);
+        const signer = await ethersProvider.getSigner();
         contracts.usdt = new ethers.Contract(cfg.contracts.MockUSDT, ERC20_ABI, signer);
         contracts.pool = new ethers.Contract(cfg.contracts.LuckyPool, LuckyPool_ABI, signer);
         contracts.bet = new ethers.Contract(cfg.contracts.AntiScoreBet, AntiScoreBet_ABI, signer);
         contracts.champion = new ethers.Contract(cfg.contracts.ChampionBet, ChampionBet_ABI, signer);
-      }).catch(function(){});
+      } catch(e) {
+        console.error('合约初始化失败:', e.message);
+      }
     },
 
     // Switch wallet to target chain
