@@ -310,36 +310,41 @@ function generate18Grid() {
 
 // ── Seed Data ─────────────────────────────────────
 function seed() {
-  if (read('matches').length > 0) return;
+  const hasMatches = read('matches').length > 0;
 
-  // Copy World Cup 2026 data from seed files
-  const seedDir = path.join(__dirname, 'seed');
-  const seedMatches = path.join(seedDir, 'matches.json');
-  const seedTeams = path.join(seedDir, 'champion_teams.json');
+  if (!hasMatches) {
+    // Copy World Cup 2026 data from seed files
+    const seedDir = path.join(__dirname, 'seed');
+    const seedMatches = path.join(seedDir, 'matches.json');
+    const seedTeams = path.join(seedDir, 'champion_teams.json');
 
-  if (fs.existsSync(seedMatches) && fs.existsSync(seedTeams)) {
-    fs.copyFileSync(seedMatches, path.join(DATA_DIR, 'matches.json'));
-    fs.copyFileSync(seedTeams, path.join(DATA_DIR, 'champion_teams.json'));
-    console.log('✅ World Cup 2026 seed data loaded: 48 teams, 104 matches');
-  } else {
-    // Fallback: minimal default data
-    const now = new Date();
-    write('matches', [
-      { id:1, league:'世界杯 A组·第1轮', home:'美国', away:'墨西哥', match_time: fmt(now,0,14,0), odds_home:1.65, odds_draw:3.30, odds_away:6.00, status:'upcoming' },
-    ]);
-    write('champion_teams', [
-      { id:1, name:'巴西', flag:'🇧🇷', champion_odds:5.5, runner_odds:4.0, group:'B' },
-    ]);
+    if (fs.existsSync(seedMatches) && fs.existsSync(seedTeams)) {
+      fs.copyFileSync(seedMatches, path.join(DATA_DIR, 'matches.json'));
+      fs.copyFileSync(seedTeams, path.join(DATA_DIR, 'champion_teams.json'));
+      console.log('✅ World Cup 2026 seed data loaded');
+    } else {
+      const now = new Date();
+      write('matches', [
+        { id:1, league:'世界杯 A组·第1轮', home:'美国', away:'墨西哥', match_time: fmt(now,0,14,0), odds_home:1.65, odds_draw:3.30, odds_away:6.00, status:'upcoming' },
+      ]);
+      write('champion_teams', [
+        { id:1, name:'巴西', flag:'🇧🇷', champion_odds:5.5, runner_odds:4.0, group:'B' },
+      ]);
+    }
   }
 
-  // Default admin account (FP-V19888-5: password from env, not source)
-  const ADMIN_DEFAULT_PASS = process.env.ADMIN_PASSWORD || '19888admin-change-me';
-  write('admins', [{ username: 'admin', password: hashPassword(ADMIN_DEFAULT_PASS) }]);
+  // Always seed admin account if it doesn't exist (FP fix)
+  const admins = read('admins');
+  if (admins.length === 0) {
+    const ADMIN_DEFAULT_PASS = process.env.ADMIN_PASSWORD || '19888admin-change-me';
+    write('admins', [{ username: 'admin', password: hashPassword(ADMIN_DEFAULT_PASS) }]);
+    console.log('✅ Admin account created');
+  }
 
-  // Seed AI托管 pool
-  write('ai_pool', { total_frozen: 0, active_users: 0 });
-
-  console.log('Seed data created');
+  // Always seed AI pool if missing
+  if (!read('ai_pool').total_frozen && read('ai_pool').total_frozen !== 0) {
+    write('ai_pool', { total_frozen: 0, active_users: 0 });
+  }
 }
 
 function fmt(date, addDays, hour, min) {
