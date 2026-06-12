@@ -339,11 +339,12 @@ function getOrCreateUser(addr) {
 
 // ── Helper: compute user's balance breakdown ──────
 function computeBalance(user) {
-  const available = Math.max(0, (user.balance || 0) - (user.frozen_bet || 0) - (user.frozen_ai || 0));
+  const available = Math.max(0, (user.balance || 0) - (user.frozen_bet || 0) - (user.frozen_ai || 0) - (user.frozen_withdraw || 0));
   return {
     available: +available.toFixed(4),
     frozen_bet: +(user.frozen_bet || 0).toFixed(4),
     frozen_ai: +(user.frozen_ai || 0).toFixed(4),
+    frozen_withdraw: +(user.frozen_withdraw || 0).toFixed(4),
     total: +(user.balance || 0).toFixed(4),
   };
 }
@@ -1167,14 +1168,19 @@ app.post('/api/champion-bet/place', riskCheck, asyncHandler(async (req, res) => 
     console.warn(`[ChampionBet] No tx_hash provided - deducting immediately (two-phase recommended for security)`);
   }
 
-  // Check user balance
-  const users = read('users');
-  const user = users.find(u => u.address.toLowerCase() === addr);
-  if (!user) return res.status(404).json({ code:1, msg:'用户不存在，请先连接钱包' });
-  const balance = computeBalance(user);
-  if (amt > balance.available) {
-    return res.status(400).json({ code:1, msg:`余额不足，可用: ${balance.available.toFixed(2)} USDT` });
-  }
+  // Atomic balance check via lockedUpdate
+  const result = await lockedUpdate('users', (users) => {
+    const user = users.find(u => u.address.toLowerCase() === addr);
+    if (!user) throw { code: 404, msg: '用户不存在，请先连接钱包' };
+    const balance = computeBalance(user);
+    if (amt > balance.available) {
+      throw { code: 400, msg: `余额不足，可用: ${balance.available.toFixed(2)} USDT` };
+    }
+    user.balance = Math.max(0, +(user.balance - amt).toFixed(4));
+    user.frozen_bet = (user.frozen_bet || 0) + amt;
+    return user;
+  });
+  if (result.error) return res.status(result.code || 400).json({ code:1, msg: result.msg || result.error });
 
   // Check for duplicate bet (same user, same team, same type, pending)
   const bets = read('bets');
@@ -1204,12 +1210,7 @@ app.post('/api/champion-bet/place', riskCheck, asyncHandler(async (req, res) => 
     created_at: new Date().toISOString(),
   };
   bets.push(bet);
-  write('bets', bets);
-
-  // Deduct from available balance (freeze for bet)
-  user.balance = Math.max(0, +(user.balance - amt).toFixed(4));
-  user.frozen_bet = (user.frozen_bet || 0) + amt;
-  write('users', users);
+  write('bets', bets);  // balance already deducted in lockedUpdate above
 
   res.json({ code:0, msg:'投注成功！', data: { bet_id: bet.id, potential_win: bet.potential_win } });
 }));
@@ -1294,7 +1295,7 @@ app.post('/api/bet/confirm', riskCheck, asyncHandler(async (req, res) => {
 //  ANTI-SCORE BETS (existing — backward compat)
 // ═══════════════════════════════════════════════════
 
-app.post('/api/anti-bet/place', riskCheck, asyncHandler((req, res) => {
+app.post('/api/anti-bet/place', riskCheck, asyncHandler(async (req, res) => {
   const { match_id, cell_score, amount, wallet_address } = req.body;
 
   if (!wallet_address || !isValidWallet(wallet_address)) {
@@ -1322,14 +1323,19 @@ app.post('/api/anti-bet/place', riskCheck, asyncHandler((req, res) => {
   const match = matches.find(m => m.id === mid);
   if (!match) return res.status(404).json({ code:1, msg:'比赛不存在' });
 
-  // Check user balance
-  const users = read('users');
-  const user = users.find(u => u.address.toLowerCase() === addr);
-  if (!user) return res.status(404).json({ code:1, msg:'用户不存在，请先连接钱包' });
-  const balance = computeBalance(user);
-  if (amt > balance.available) {
-    return res.status(400).json({ code:1, msg:`余额不足，可用: ${balance.available.toFixed(2)} USDT` });
-  }
+  // Atomic balance check via lockedUpdate
+  const result = await lockedUpdate('users', (users) => {
+    const user = users.find(u => u.address.toLowerCase() === addr);
+    if (!user) throw { code: 404, msg: '用户不存在，请先连接钱包' };
+    const balance = computeBalance(user);
+    if (amt > balance.available) {
+      throw { code: 400, msg: `余额不足，可用: ${balance.available.toFixed(2)} USDT` };
+    }
+    user.balance = Math.max(0, +(user.balance - amt).toFixed(4));
+    user.frozen_bet = (user.frozen_bet || 0) + amt;
+    return user;
+  });
+  if (result.error) return res.status(result.code || 400).json({ code:1, msg: result.msg || result.error });
 
   const grid = generate18Grid();
   const cellData = grid.find(c => c.score === cell);
@@ -1350,12 +1356,7 @@ app.post('/api/anti-bet/place', riskCheck, asyncHandler((req, res) => {
     created_at: new Date().toISOString(),
   };
   bets.push(bet);
-  write('bets', bets);
-
-  // Deduct from available balance
-  user.balance = Math.max(0, +(user.balance - amt).toFixed(4));
-  user.frozen_bet = (user.frozen_bet || 0) + amt;
-  write('users', users);
+  write('bets', bets);  // balance already deducted in lockedUpdate above
 
   res.json({ code:0, msg:'反波膽投注成功！', data: { bet_id: bet.id, potential_win: bet.potential_win } });
 }));
@@ -1364,7 +1365,7 @@ app.post('/api/anti-bet/place', riskCheck, asyncHandler((req, res) => {
 //  SCORE BETS (existing — backward compat)
 // ═══════════════════════════════════════════════════
 
-app.post('/api/score-bet/place', riskCheck, asyncHandler((req, res) => {
+app.post('/api/score-bet/place', riskCheck, asyncHandler(async (req, res) => {
   const { match_id, cell_score, amount, wallet_address } = req.body;
 
   if (!wallet_address || !isValidWallet(wallet_address)) {
@@ -1392,14 +1393,19 @@ app.post('/api/score-bet/place', riskCheck, asyncHandler((req, res) => {
   const match = matches.find(m => m.id === mid);
   if (!match) return res.status(404).json({ code:1, msg:'比赛不存在' });
 
-  // Check user balance
-  const users = read('users');
-  const user = users.find(u => u.address.toLowerCase() === addr);
-  if (!user) return res.status(404).json({ code:1, msg:'用户不存在，请先连接钱包' });
-  const balance = computeBalance(user);
-  if (amt > balance.available) {
-    return res.status(400).json({ code:1, msg:`余额不足，可用: ${balance.available.toFixed(2)} USDT` });
-  }
+  // Atomic balance check via lockedUpdate
+  const result = await lockedUpdate('users', (users) => {
+    const user = users.find(u => u.address.toLowerCase() === addr);
+    if (!user) throw { code: 404, msg: '用户不存在，请先连接钱包' };
+    const balance = computeBalance(user);
+    if (amt > balance.available) {
+      throw { code: 400, msg: `余额不足，可用: ${balance.available.toFixed(2)} USDT` };
+    }
+    user.balance = Math.max(0, +(user.balance - amt).toFixed(4));
+    user.frozen_bet = (user.frozen_bet || 0) + amt;
+    return user;
+  });
+  if (result.error) return res.status(result.code || 400).json({ code:1, msg: result.msg || result.error });
 
   const grid = generate18Grid();
   const cellData = grid.find(c => c.score === cell);
@@ -2098,11 +2104,21 @@ app.post('/api/withdraw', asyncHandler(async (req, res) => {
 
 // POST /api/admin/withdrawals/review — approve/reject pending review withdrawals
 app.post('/api/admin/withdrawals/review', adminAuth, asyncHandler(async (req, res) => {
-  const { withdraw_id, action } = req.body; // action: 'approve' or 'reject'
+  const { withdraw_id, action } = req.body;
 
   if (!withdraw_id || !['approve', 'reject'].includes(action)) {
     return res.status(400).json({ code: 1, msg: '参数错误' });
   }
+
+  // Pre-read withdraw amount before entering lock
+  const wInfo = (() => {
+    const wds = read('withdrawals');
+    const w = wds.find(wd => wd.id === Number(withdraw_id));
+    if (!w) return null;
+    return { address: w.address, amount: w.amount, status: w.status };
+  })();
+  if (!wInfo) return res.status(404).json({ code: 1, msg: '提现记录不存在' });
+  if (wInfo.status !== 'pending_review') return res.status(400).json({ code: 1, msg: `状态错误: ${wInfo.status}` });
 
   const result = await lockedUpdate('withdrawals', (withdrawals) => {
     const w = withdrawals.find(wd => wd.id === Number(withdraw_id));
@@ -2113,33 +2129,38 @@ app.post('/api/admin/withdrawals/review', adminAuth, asyncHandler(async (req, re
       w.status = 'pending';
       w.reviewed_at = new Date().toISOString();
       w.reviewed_by = 'admin';
-      // Unfreeze + deduct balance
-      lockedUpdate('users', (users) => {
-        const user = users.find(u => u.address.toLowerCase() === w.address.toLowerCase());
-        if (user) {
-          user.frozen_withdraw = Math.max(0, (user.frozen_withdraw || 0) - w.amount);
-          user.balance = Math.max(0, +(user.balance - w.amount).toFixed(4));
-        }
-        return null;
-      }).catch(e => console.error('[Review] balance deduction failed:', e.message));
+      return 'approve';
     } else {
       w.status = 'rejected';
       w.reviewed_at = new Date().toISOString();
       w.reviewed_by = 'admin';
-      // Unfreeze amount back
-      lockedUpdate('users', (users) => {
-        const user = users.find(u => u.address.toLowerCase() === w.address.toLowerCase());
-        if (user) {
-          user.frozen_withdraw = Math.max(0, (user.frozen_withdraw || 0) - w.amount);
-        }
-        return null;
-      }).catch(e => console.error('[Review] unfreeze failed:', e.message));
+      return 'reject';
     }
-    return w;
   });
 
+  // Update user balance outside withdrawals lock (avoids nested lock)
+  if (result === 'approve') {
+    await lockedUpdate('users', (users) => {
+      const user = users.find(u => u.address.toLowerCase() === wInfo.address.toLowerCase());
+      if (user) {
+        user.frozen_withdraw = Math.max(0, (user.frozen_withdraw || 0) - wInfo.amount);
+        user.balance = Math.max(0, +(user.balance - wInfo.amount).toFixed(4));
+      }
+      return null;
+    }).catch(e => console.error('[Review] balance deduction failed:', e.message));
+  } else {
+    // Reject — unfreeze balance
+    await lockedUpdate('users', (users) => {
+      const user = users.find(u => u.address.toLowerCase() === wInfo.address.toLowerCase());
+      if (user) {
+        user.frozen_withdraw = Math.max(0, (user.frozen_withdraw || 0) - wInfo.amount);
+      }
+      return null;
+    }).catch(e => console.error('[Review] unfreeze failed:', e.message));
+  }
+
   console.log(`[Admin] Withdraw #${withdraw_id} ${action}d`);
-  res.json({ code: 0, msg: `提现 #${withdraw_id} 已${action === 'approve' ? '批准' : '拒绝'}`, data: result });
+  res.json({ code: 0, msg: `提现${action === 'approve' ? '已批准' : '已拒绝'}` });
 }));
 
 // GET /api/admin/withdrawals/pending — list pending review withdrawals
