@@ -421,8 +421,8 @@
   }
 
   // ===== NAVIGATION =====
-  var tabPageMap = { 'home': 0, 'ai': 1, 'matches': 2, 'records': 3, 'transactions': 4, 'profile': 6 };
-  var tabNames = ['home', 'ai', 'matches', 'records', 'transactions', null, 'profile'];
+  var tabPageMap = { 'home': 0, 'ai': 1, 'matches': 2, 'profile': 4 };
+  var tabNames = ['home', 'ai', 'matches', null, 'profile'];
 
   function navigateTo(page) {
     if (currentPage === page) return;
@@ -745,6 +745,7 @@
 
       // ---- Quick Actions ----
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">' +
+        '<button onclick="app.navigateTo(\'records\')" style="background:#fff;border:1px solid #e8eaed;border-radius:10px;padding:12px;font-size:12px;color:#666;cursor:pointer">📋 投注记录</button>' +
         '<button onclick="app.navigateTo(\'transactions\')" style="background:#fff;border:1px solid #e8eaed;border-radius:10px;padding:12px;font-size:12px;color:#666;cursor:pointer">📊 交易流水</button>' +
         '<button onclick="app.loadDepositHistory()" style="background:#fff;border:1px solid #e8eaed;border-radius:10px;padding:12px;font-size:12px;color:#666;cursor:pointer">📥 充值记录</button>' +
         '<button onclick="app.loadWithdrawHistory()" style="background:#fff;border:1px solid #e8eaed;border-radius:10px;padding:12px;font-size:12px;color:#666;cursor:pointer">📤 提现记录</button>' +
