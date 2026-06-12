@@ -347,7 +347,7 @@
     var slug = name.replace(/[^a-zA-Z\u4e00-\u9fff]/g, '_').toLowerCase();
     var fallback = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="50" fill="#F0E8E0"/><text x="50" y="60" text-anchor="middle" font-size="32" fill="#FF6B35" font-family="Arial" font-weight="bold">' + name.charAt(0) + '</text></svg>');
     var src = 'img/teams/' + name + '.png';
-    return '<img src="' + src + '" width="' + s + '" height="' + s + '" style="border-radius:50%;object-fit:contain;background:#F0E8E0;flex-shrink:0" alt="' + name + '" onerror="var t=this;if(t.src.indexOf(\'.png\')!==-1){t.src=t.src.replace(\'.png\',\'.svg\')}else{t.onerror=null;t.src=\'' + fallback + '\'}">';
+    return '<img src="' + src + '" width="' + s + '" height="' + s + '" style="border-radius:50%;object-fit:contain;background:#F0E8E0;flex-shrink:0" alt="' + name + '" loading="lazy" onerror="var t=this;if(t.src.indexOf(\'.png\')!==-1){t.src=t.src.replace(\'.png\',\'.svg\')}else{t.onerror=null;t.src=\'' + fallback + '\'}">';
   }
 
   // ===== MATCH CARD (lucky944 DOM — enhanced with odds) =====
@@ -509,6 +509,10 @@
   }
 
   // ===== PAGE: HOME - Matches =====
+  var _homeMatchesData = [];
+  var _homeMatchPage = 1;
+  var _homeMatchPageSize = 10;
+
   async function renderMatchCards() {
     var container = document.getElementById('matchList');
     if (!container) return;
@@ -517,9 +521,27 @@
     if (!data || data.length === 0) {
       container.innerHTML = '<li><div class="con" style="padding:30px;text-align:center;color:#999">暂无赛事数据</div></li>';
     } else {
-      container.innerHTML = data.map(function(m) { return matchCardHTML(m); }).join('');
+      _homeMatchesData = data;
+      _homeMatchPage = 1;
+      renderHomeMatchPage();
     }
   }
+
+  function renderHomeMatchPage() {
+    var container = document.getElementById('matchList');
+    if (!container) return;
+    var total = _homeMatchesData.length;
+    var end = Math.min(_homeMatchPage * _homeMatchPageSize, total);
+    var slice = _homeMatchesData.slice(0, end);
+    var hasMore = end < total;
+    container.innerHTML = slice.map(function(m) { return matchCardHTML(m); }).join('') +
+      (hasMore ? '<li class="load-more-li"><a href="javascript:;" class="load-more-btn" onclick="app.loadMoreMatches()">▼ 加载更多 (' + (total - end) + ')</a></li>' : '');
+  }
+
+  window.app.loadMoreMatches = function() {
+    _homeMatchPage++;
+    renderHomeMatchPage();
+  };
 
   // ===== PAGE: HOME - Champion Bet =====
   async function renderChampionBet() {
@@ -550,7 +572,7 @@
     }).join('');
   }
 
-  // ===== PAGE: MATCHES (full list with odds) =====
+  // ===== PAGE: MATCHES (grouped by league) =====
   async function renderMatchesPage() {
     var container = document.getElementById('matchesPageList');
     if (!container) {
@@ -573,7 +595,24 @@
     if (!data || data.length === 0) {
       container.innerHTML = '<li><div class="con" style="padding:30px;text-align:center;color:#999">暂无赛事数据</div></li>';
     } else {
-      container.innerHTML = data.map(function(m) { return matchesPageCardHTML(m); }).join('');
+      // Group by league letter, sort groups
+      var groups = {};
+      data.forEach(function(m) {
+        var league = m.league || m.league_name || '';
+        var letter = league.match(/^(\S+)/);
+        var key = letter ? letter[1] : league;
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(m);
+      });
+      var keys = Object.keys(groups).sort();
+      var html = '';
+      keys.forEach(function(k) {
+        if (html) html += '<li class="league-group-header"><div class="con" style="padding:6px 12px;text-align:center"><span class="load-more-btn" style="cursor:default;padding:6px 16px;font-size:12px">' + k + '</span></div></li>';
+        groups[k].forEach(function(m) {
+          html += matchesPageCardHTML(m);
+        });
+      });
+      container.innerHTML = html;
     }
   }
 

@@ -1,13 +1,15 @@
 // 19888 Service Worker — Network-First for HTML, Cache-First for assets
 // v10: Fix stale cache + offline fallback + 404 handling
-const CACHE_NAME = "19888-v12-ux-ultimate";
+const CACHE_NAME = "19888-v13-ux-optimized";
 const CACHE_ASSETS = [
   '/',
   '/index.html',
   '/offline.html',
   '/404.html',
   '/css/lucky944.css',
+  '/css/sunshine.css',
   '/js/app.js',
+  '/js/web3.js',
   '/js/vendor/ethers-6.13.umd.min.js',
   '/manifest.json',
   '/robots.txt'
