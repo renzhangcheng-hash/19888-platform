@@ -441,6 +441,12 @@
     if (page === 'detail') {
       var detailPage = document.getElementById('page-detail');
       if (detailPage) detailPage.style.display = 'block';
+      // Hide home sections
+      var homeSecs = ['liveStatsBar', 'announceBar', 'aiRecCard', 'trustSignalsBar', 'tabHeaderWrapper'];
+      for (var s = 0; s < homeSecs.length; s++) {
+        var sec = document.getElementById(homeSecs[s]);
+        if (sec) sec.style.display = 'none';
+      }
       return;
     }
 
@@ -1428,6 +1434,7 @@
 
     // Navigate to detail page and populate
     navigateTo('detail');
+
     var home = match.home || match.home_team || '';
     var away = match.away || match.away_team || '';
     var time = match.time || match.match_time || '';
@@ -1648,15 +1655,15 @@
   // ===== LIVE STATS =====
   async function loadLiveStats() {
     try {
-      var res = await apiFetch('/admin/stats');
-      if (res && res.code === 0) {
+      var res = await apiFetch('/finance/pool-status');
+      if (res && res.code === 0 && res.data) {
         var d = res.data;
         var bets = document.getElementById('statBets');
         var users = document.getElementById('statUsers');
         var payout = document.getElementById('statPayout');
-        if (bets) bets.textContent = d.total_bets || d.bet_count || 0;
-        if (users) users.textContent = d.total_users || 0;
-        if (payout) payout.textContent = '$' + Number(d.total_payout || 0).toLocaleString();
+        if (bets) bets.textContent = d.pending_bets || d.user_count || 0;
+        if (users) users.textContent = d.user_count || 0;
+        if (payout) payout.textContent = '$' + Number(d.total_balance || 0).toLocaleString();
       }
     } catch(e) {}
     var online = document.getElementById('statOnline');
