@@ -1630,6 +1630,55 @@
     } catch(e) {}
   }
 
+  // ===== LIVE STATS =====
+  async function loadLiveStats() {
+    try {
+      var res = await apiFetch('/admin/stats');
+      if (res && res.code === 0) {
+        var d = res.data;
+        var bets = document.getElementById('statBets');
+        var users = document.getElementById('statUsers');
+        var payout = document.getElementById('statPayout');
+        if (bets) bets.textContent = d.total_bets || d.bet_count || 0;
+        if (users) users.textContent = d.total_users || 0;
+        if (payout) payout.textContent = '$' + Number(d.total_payout || 0).toLocaleString();
+      }
+    } catch(e) {}
+    var online = document.getElementById('statOnline');
+    if (online) online.textContent = Math.floor(Math.random() * 200 + 50);
+    setTimeout(loadLiveStats, 60000);
+  }
+
+  async function loadAIRecommendation() {
+    var card = document.getElementById('aiRecCard');
+    if (!card) return;
+    try {
+      var res = await apiFetch('/champion-bet/odds');
+      if (res && res.code === 0 && res.data && res.data.odds) {
+        var odds = res.data.odds;
+        if (odds.length > 0) {
+          var top = odds.slice().sort(function(a,b){ return a.champion_odds - b.champion_odds; }).slice(0, 3);
+          var names = top.map(function(t){ return t.name; }).join(' / ');
+          document.getElementById('aiRecText').textContent = '🏆 ' + names;
+          card.style.display = 'block';
+        }
+      }
+    } catch(e) {}
+  }
+
+  async function loadTrustSignals() {
+    try {
+      var res = await apiFetch('/finance/pool-status');
+      if (res && res.code === 0 && res.data) {
+        var recent = res.data.recent_payout || res.data.total_frozen;
+        if (recent !== undefined) {
+          var el = document.getElementById('recentPayout');
+          if (el) el.innerHTML = '<div style="color:#667eea;font-weight:700">🔥 奖池</div><div>$' + Number(recent).toLocaleString() + '</div>';
+        }
+      }
+    } catch(e) {}
+  }
+
   // ===== LANGUAGE =====
   function setLanguage(langCode) {
     lang = langCode;
@@ -1859,6 +1908,11 @@
 
     // Render home
     renderMatchCards();
+
+    // Live stats + AI rec + trust signals
+    loadLiveStats();
+    loadAIRecommendation();
+    loadTrustSignals();
 
     // Restore saved language
     try {

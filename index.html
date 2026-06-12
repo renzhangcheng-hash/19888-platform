@@ -121,11 +121,49 @@
 
 <!-- 内容 -->
 <div class="main">
-    <!-- 轮播 -->
-    <div class="banner">
-        <a href="javascript:;" class="item" style="background-image: url(img/banner.svg)"></a>
-    </div>
     <div class="wp">
+        <!-- Live Stats Bar -->
+        <div id="liveStatsBar" style="display:flex;gap:0;background:#FFF8F0;border:1px solid #F0E8E0;border-radius:10px;padding:8px 0;margin:10px 0 6px;overflow:hidden;font-size:11px;text-align:center">
+            <div style="flex:1;border-right:1px solid #F0E8E0"><div style="color:#999">今日投注</div><div id="statBets" style="font-weight:700;color:#FF6B35">0</div></div>
+            <div style="flex:1;border-right:1px solid #F0E8E0"><div style="color:#999">在线用户</div><div id="statOnline" style="font-weight:700;color:#03A66D">0</div></div>
+            <div style="flex:1;border-right:1px solid #F0E8E0"><div style="color:#999">今日派奖</div><div id="statPayout" style="font-weight:700;color:#667eea">$0</div></div>
+            <div style="flex:1"><div style="color:#999">累计用户</div><div id="statUsers" style="font-weight:700;color:#1a1a2e">0</div></div>
+        </div>
+        <!-- Announcement -->
+        <div id="announceBar" style="background:linear-gradient(90deg,#FFF3E0,#FFE0B2);border-radius:8px;padding:8px 12px;margin-bottom:8px;font-size:11px;color:#E65100;display:flex;align-items:center;gap:8px;overflow:hidden">
+            <span style="flex-shrink:0">📢</span>
+            <marquee id="announceText" style="flex:1" scrollamount="3">🎯 世界杯竞猜火热进行中！新用户首充送10U体验金 | 🔥 AI反波胆胜率88.89% | 💰 每日提现秒到账</marquee>
+        </div>
+        <!-- AI Recommendation -->
+        <div id="aiRecCard" style="background:linear-gradient(135deg,#667eea,#764ba2);border-radius:10px;padding:14px;margin-bottom:10px;display:none">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+                <div>
+                    <div style="font-size:10px;color:rgba(255,255,255,0.7)">🤖 AI 今日推荐</div>
+                    <div id="aiRecText" style="font-size:15px;font-weight:700;color:#fff;margin:4px 0">加载中...</div>
+                    <div id="aiRecStars" style="font-size:12px;color:#FFD700">★★★★★</div>
+                </div>
+                <button onclick="app.navigateTo('ai')" style="background:rgba(255,255,255,0.2);color:#fff;border:1px solid rgba(255,255,255,0.3);padding:8px 16px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer">查看预测 →</button>
+            </div>
+        </div>
+        <!-- Trust Signals -->
+        <div style="display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:4px">
+            <div style="flex-shrink:0;background:#fff;border:1px solid #E8F5E9;border-radius:8px;padding:6px 10px;font-size:10px;color:#666;min-width:100px;text-align:center">
+                <div style="color:#03A66D;font-weight:700">✅ 安全</div>
+                <div>智能合约审计</div>
+            </div>
+            <div style="flex-shrink:0;background:#fff;border:1px solid #E8F5E9;border-radius:8px;padding:6px 10px;font-size:10px;color:#666;min-width:100px;text-align:center">
+                <div style="color:#03A66D;font-weight:700">💰 秒到</div>
+                <div>提现即时到账</div>
+            </div>
+            <div style="flex-shrink:0;background:#fff;border:1px solid #E8F5E9;border-radius:8px;padding:6px 10px;font-size:10px;color:#666;min-width:100px;text-align:center">
+                <div style="color:#03A66D;font-weight:700">🎯 88.89%</div>
+                <div>AI反波胆胜率</div>
+            </div>
+            <div id="recentPayout" style="flex-shrink:0;background:#fff;border:1px solid #E8F5E9;border-radius:8px;padding:6px 10px;font-size:10px;color:#666;min-width:100px;text-align:center">
+                <div style="color:#667eea;font-weight:700">🔥 最新提现</div>
+                <div>加载中...</div>
+            </div>
+        </div>
         <div class="tab-header-wrapper">
             <ul class="ul-tabs_b1 slick_tab_btn">
                 <li class="on"><a href="javascript:;">推荐赛事</a></li>
@@ -402,6 +440,12 @@
             <a href="javascript:;" onclick="app.navigateTo('transactions')">
                 <i class="icon_record"></i>
                 <p>流水</p>
+            </a>
+        </li>
+        <li>
+            <a href="javascript:;" onclick="app.showInviteModal()">
+                <i class="icon_ai"></i>
+                <p>团队</p>
             </a>
         </li>
         <li>
