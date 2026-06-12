@@ -1,6 +1,7 @@
 /* ============================================================
    Sunshine Theme — 阳光亮色调
    Warm, bright, sporty light aesthetic for 19888 platform
+   Merged: critical structural CSS from lucky944.css
    ============================================================ */
 
 :root{
@@ -33,11 +34,22 @@
   --shadow-md:0 4px 20px rgba(0,0,0,0.08);
 }
 
-/* ===== BASE ===== */
-body{background:var(--bg);color:var(--text)}
+/* ============ BASE ============ */
+*{outline:0;box-sizing:border-box}
+body{
+  font:14px/1.5 "微软雅黑","Microsoft Yahei",-apple-system,sans-serif;
+  background:var(--bg);color:var(--text);
+  max-width:750px;margin:0 auto;padding-top:45px;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
 body::before{display:none}
-.main{background:var(--bg)}
-.wp{background:transparent}
+body.index{padding-top:0}
+a{text-decoration:none;color:#FF6B35;transition:all 0.3s ease}
+a:hover{color:#E55A2B}
+img{max-width:100%}
+.wp{padding:0 12px;background:transparent}
+.main{background:var(--bg);padding-top:45px;padding-bottom:70px}
 
 /* ===== HEADER ===== */
 .header{
@@ -78,11 +90,25 @@ body.index .header .global-lang-switch-btn{
 }
 .m-notice .notice{color:#FF6B35}
 
+/* ===== SPA NAVIGATION (tab_con/page display) ===== */
+.tab_con{display:none}
+.tab_con.show,.tab_con.active{display:block}
+.page{display:none}
+.page.active{display:block}
+
 /* ===== TABS ===== */
-.ul-tabs_b1 li a{color:var(--text-light)}
-.ul-tabs_b1 li.on a{color:var(--accent)}
-.ul-tabs_b1 li.on a::after{background:var(--accent)}
-.more-link{color:var(--accent)}
+.ul-tabs_b1{overflow-x:auto;-webkit-overflow-scrolling:touch;font-size:0;background:transparent}
+.ul-tabs_b1 li{display:inline-block}
+.ul-tabs_b1 li a{color:var(--text-light);display:block;font-size:16px;margin-right:25px;padding-bottom:5px;transition:all 0.3s ease}
+.ul-tabs_b1 li.on a{color:var(--accent);font-weight:bold;position:relative}
+.ul-tabs_b1 li.on a::after{background:var(--accent);content:"";display:block;width:16px;height:3px;border-radius:3px;position:absolute;bottom:0;left:50%;margin-left:-11px}
+.tab-header-wrapper{position:relative;margin-bottom:5px;padding:0 12px}
+.more-link{
+  position:absolute;right:15px;top:50%;transform:translateY(-50%);
+  color:var(--accent);font-size:16px;text-decoration:none;
+  display:flex;align-items:center;gap:3px;transition:all 0.3s ease;z-index:10;
+}
+.more-link::after{content:'»';font-size:16px;font-weight:bold}
 
 /* ===== MATCH CARDS ===== */
 .ul-info li .con{
@@ -100,11 +126,32 @@ body.index .header .global-lang-switch-btn{
 .ul-info li .match-time .time{color:#2D2D2D}
 .ul-info li .match-time .date{color:var(--text-light)}
 
+/* ===== MATCH CARD INNER LAYOUT ===== */
+.ul-info li{position:relative}
+.ul-info li::before,.ul-info li::after{display:none}
+.ul-info .con .pic,.ul-info .info,.ul-info .info .top,.ul-info .info .bot,.ul-info .info .date{display:none}
+.ul-info{padding-bottom:30px}
+.ul-info li .match-content{display:flex;align-items:center;justify-content:space-between;flex:1;width:100%;padding:10px 5px}
+.ul-info li .team-left,.ul-info li .team-right{flex:1;display:flex;flex-direction:column;align-items:center;text-align:center}
+.ul-info li .match-time{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 15px}
+
 /* ===== FOOTER ===== */
-.ul-tabbar{background:var(--surface);border-top:1px solid var(--border);box-shadow:0 -1px 4px rgba(0,0,0,0.03);height:56px}
-.ul-tabbar li a{color:var(--text-light)}
-.ul-tabbar .on p{color:var(--accent)}
-.ul-tabbar p{color:var(--text-light)}
+.ul-tabbar{
+  position:fixed;bottom:0;left:0;width:100%;height:56px;
+  display:flex;justify-content:space-between;
+  background:var(--surface);
+  border-top:1px solid var(--border);box-shadow:0 -1px 4px rgba(0,0,0,0.03);
+  z-index:99999;padding-bottom:10px;
+}
+.ul-tabbar li{flex:1;text-align:center}
+.ul-tabbar li a{
+  display:flex;width:100%;height:100%;padding-top:2px;
+  flex-direction:column;align-items:center;justify-content:center;
+  font-size:10px;color:var(--text-light);
+}
+.ul-tabbar p{color:var(--text-light);font-size:10px;margin:0;transition:color 0.3s}
+.ul-tabbar .on p{color:var(--accent);font-weight:600}
+.footer{z-index:99999;position:fixed}
 
 /* Tabbar icons - gray */
 .ul-tabbar li .icon_home{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23B5A89A'%3E%3Cpath d='M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z'/%3E%3C/svg%3E")}
@@ -160,7 +207,27 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,107,53,0.12
 .recent-bets-section{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px}
 
 /* ===== RECORDS ===== */
-.record-item{border-bottom:1px solid var(--border) !important}
+.record-item{padding:12px;border-bottom:1px solid var(--border) !important}
+.record-item .record-header{display:flex;justify-content:space-between;margin-bottom:4px}
+.record-item .record-label{font-size:12px;color:var(--text-muted)}
+.record-item .record-team{font-weight:600;margin-bottom:4px}
+.record-item .record-footer{display:flex;justify-content:space-between;align-items:center}
+.record-item .record-amount{font-size:13px}
+.record-item .record-status{font-size:12px;font-weight:600}
+.record-item .cancel-bet-btn{background:none;border:1px solid var(--red);color:var(--red);padding:4px 10px;border-radius:12px;font-size:11px;cursor:pointer}
+
+/* Record pagination */
+.pagination-bar{display:flex;justify-content:center;align-items:center;gap:12px;padding:12px;font-size:12px;color:#666}
+.pagination-btn{background:var(--accent);color:#fff;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:11px}
+.pagination-btn:hover{opacity:0.9}
+
+/* ===== PROFILE ACTION BUTTONS ===== */
+.profile-actions{display:flex;gap:10px;margin-bottom:12px}
+.action-btn{flex:1;padding:10px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;border:none;text-align:center}
+.action-btn:active{opacity:0.8}
+.deposit-btn{background:var(--accent-grad);color:#fff;box-shadow:0 2px 8px rgba(255,107,53,0.2)}
+.withdraw-btn{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+.invite-btn{background:var(--surface);color:var(--accent);border:1px solid var(--border)}
 
 /* ===== LANG MODAL ===== */
 .global-lang-modal-content{background:var(--surface);border:1px solid var(--border)}
@@ -196,6 +263,10 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,107,53,0.12
 
 /* ===== EMPTY STATES ===== */
 .empty-state,.empty-tips{color:var(--text-muted)}
+.empty-state{padding:40px;text-align:center}
+
+/* ===== ODDS ROW (used in match cards) ===== */
+.odds-row{display:flex;justify-content:center;gap:12px;padding:4px 0;font-size:11px;border-top:1px solid var(--border);margin-top:4px}
 
 /* ===== BET DIALOG ===== */
 .bet-amount-dialog .dialog-box{background:var(--surface)}
@@ -207,6 +278,35 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,107,53,0.12
 .load-more-btn{display:block;text-align:center;padding:14px;color:var(--accent);font-size:14px;font-weight:600;text-decoration:none;background:var(--surface);border:1px dashed var(--border);border-radius:8px;transition:all .2s}
 .load-more-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
 
+/* ===== LEAGUE GROUP HEADER ===== */
+.league-group-header{list-style:none;margin:8px 0}
+.league-group-header .con{background:rgba(255,107,53,0.06);border:1px solid var(--border);border-radius:6px;padding:4px 0 !important;text-align:center}
+.league-group-header .con span{display:inline-block;background:var(--accent);color:#fff;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:1px}
+
+/* ===== SECTION TITLE ===== */
+.section-title{font-size:20px;font-weight:bold;color:var(--text);margin-bottom:20px;padding-bottom:12px;border-bottom:3px solid var(--accent);position:relative;padding-left:15px}
+.section-title::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:5px;height:24px;background:var(--accent-grad);border-radius:3px}
+
+/* ===== SECTION HEADER ===== */
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
+.section-header h4{font-size:14px}
+
+/* ===== RESPONSIVE BREAKPOINTS ===== */
+@media (max-width:400px){
+  .ul-info li .match-time .time{font-size:28px}
+  .ul-info li .team-logo{width:50px;height:50px}
+  .ul-info li .team-name{font-size:12px}
+  .ul-info li .league-name .p1{font-size:12px}
+  .ul-info li .league-name{margin:-12px auto 12px auto;padding:8px 12px;width:40%}
+  .ul-info li .con{padding:12px 15px;min-height:120px}
+  .wallet-connect{padding:4px 8px}
+  .wallet-icon{width:16px;height:16px}
+  .wallet-address{font-size:11px}
+}
+
+/* ===== LOADING STATES ===== */
+.loading-text{text-align:center;padding:40px;color:var(--text-muted)}
+
 /* ===== SKELETON LOADING ===== */
 @keyframes skeleton-pulse{0%{opacity:.6}50%{opacity:.2}100%{opacity:.6}}
 .skeleton-loading{display:flex;flex-direction:column;gap:12px;padding:16px;list-style:none}
@@ -216,7 +316,13 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,107,53,0.12
 .skeleton-row:nth-child(4){animation-delay:.6s}
 .skeleton-row:nth-child(5){animation-delay:.8s}
 
-/* ===== LEAGUE GROUP HEADER ===== */
-.league-group-header{list-style:none;margin:8px 0}
-.league-group-header .con{background:rgba(255,107,53,0.06);border:1px solid var(--border);border-radius:6px;padding:4px 0}
-.league-group-header .con span{display:inline-block;background:var(--accent);color:#fff;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:1px}
+/* Skeleton for market page (kline + orderbook) */
+.skeleton-market{display:flex;flex-direction:column;gap:12px;padding:16px}
+.skeleton-kline{height:280px;background:var(--surface);border:1px solid var(--border);border-radius:10px;animation:skeleton-pulse 1.5s ease-in-out infinite}
+.skeleton-orderbook{height:200px;background:var(--surface);border:1px solid var(--border);border-radius:10px;animation:skeleton-pulse 1.5s ease-in-out infinite;animation-delay:.3s}
+
+/* Skeleton for records */
+.skeleton-record{height:80px;background:var(--surface);border:1px solid var(--border);border-radius:8px;animation:skeleton-pulse 1.5s ease-in-out infinite}
+
+/* Skeleton for invite modal */
+.skeleton-invite-row{height:20px;background:#f0f0f0;border-radius:4px;animation:skeleton-pulse 1.5s ease-in-out infinite}

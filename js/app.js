@@ -126,7 +126,10 @@
       var base = urls[idx];
       var url = base + endpoint;
       var ctrl = new AbortController();
-      var timer = setTimeout(function() { ctrl.abort(); }, 10000);
+      var timer = setTimeout(function() {
+        ctrl.abort();
+        showToast('请求超时');
+      }, 25000);
       return fetch(url, {
         method: opts.method || 'GET',
         headers: { 'Content-Type': 'application/json' },
@@ -140,6 +143,9 @@
         return r.json();
       }).catch(function(err) {
         clearTimeout(timer);
+        if (err.name === 'AbortError') {
+          return { code: -1, msg: 'timeout' };
+        }
         return tryUrl(idx + 1);
       });
     }
@@ -402,7 +408,7 @@
     var dO = Number(m.odds_draw || m.draw_odds || 0);
     var aO = Number(m.odds_away || m.away_odds || 0);
     var oddsRow = '</div>' +
-      '<div class="odds-row" style="display:flex;justify-content:center;gap:12px;padding:4px 0;font-size:11px;border-top:1px solid #f0f0f0;margin-top:4px">' +
+      '<div class="odds-row">' +
         '<span style="color:#03A66D;font-weight:600">主 ' + (hO ? hO.toFixed(2) : '—') + '</span>' +
         '<span style="color:#999">平 ' + (dO ? dO.toFixed(2) : '—') + '</span>' +
         '<span style="color:#E53935;font-weight:600">客 ' + (aO ? aO.toFixed(2) : '—') + '</span>' +
@@ -412,7 +418,7 @@
       '<div class="match-content">' +
         '<div class="team-left">' +
           '<div class="team-logo">' + teamLogoImg(home, 44) + '</div>' +
-          '<div class="team-name">' + home + '</div>' +
+          '<div class="team-name"><a href="javascript:;" onclick="event.stopPropagation();app.openTeamDetail(\'' + home.replace(/'/g, "\\'") + '\')" style="color:inherit;text-decoration:none">' + home + '</a></div>' +
         '</div>' +
         '<div class="match-center">' +
           '<div class="time">' + timeStr + '</div>' +
@@ -420,7 +426,7 @@
         '</div>' +
         '<div class="team-right">' +
           '<div class="team-logo">' + teamLogoImg(away, 44) + '</div>' +
-          '<div class="team-name">' + away + '</div>' +
+          '<div class="team-name"><a href="javascript:;" onclick="event.stopPropagation();app.openTeamDetail(\'' + away.replace(/'/g, "\\'") + '\')" style="color:inherit;text-decoration:none">' + away + '</a></div>' +
         '</div>' +
         oddsRow +
     '</a></li>';
@@ -440,7 +446,7 @@
       '<div class="match-content">' +
         '<div class="team-left">' +
           '<div class="team-logo">' + teamLogoImg(home, 44) + '</div>' +
-          '<div class="team-name">' + home + '</div>' +
+          '<div class="team-name"><a href="javascript:;" onclick="event.stopPropagation();app.openTeamDetail(\'' + home.replace(/'/g, "\\'") + '\')" style="color:inherit;text-decoration:none">' + home + '</a></div>' +
         '</div>' +
         '<div class="match-center">' +
           '<div class="time">' + timeStr + '</div>' +
@@ -448,7 +454,7 @@
         '</div>' +
         '<div class="team-right">' +
           '<div class="team-logo">' + teamLogoImg(away, 44) + '</div>' +
-          '<div class="team-name">' + away + '</div>' +
+          '<div class="team-name"><a href="javascript:;" onclick="event.stopPropagation();app.openTeamDetail(\'' + away.replace(/'/g, "\\'") + '\')" style="color:inherit;text-decoration:none">' + away + '</a></div>' +
         '</div>' +
       '</div>' +
       '<div class="match-odds">' +
@@ -667,7 +673,7 @@
     var container = document.getElementById('marketContent');
     if (!container) return;
 
-    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)">加载行情数据...</div>';
+    container.innerHTML = '<div class="skeleton-market"><div class="skeleton-kline"></div><div class="skeleton-orderbook"></div></div>';
 
     // Fetch kline + orderbook in parallel
     var klineData = await loadWithFallback('/market/kline', generateMockKline(50));
@@ -1047,81 +1053,185 @@
   // ===== WEBSOCKET CLIENT =====
   var _wsConnected = false;
   var _wsSocket = null;
+  var _wsReconnectAttempts = 0;
+  var _wsReconnectTimer = null;
+  var _wsMaxRetries = 10;
+  var _wsReconnectDelay = 1000; // starts at 1s, doubles each attempt
+
+  function resolveWsUrl() {
+    // Derive WebSocket URL from API base
+    var apiBase = resolveApiBase();
+    if (apiBase.indexOf('https://') === 0) {
+      return apiBase.replace('https://', 'wss://').replace('/api', '');
+    }
+    if (apiBase.indexOf('http://') === 0) {
+      return apiBase.replace('http://', 'ws://').replace('/api', '');
+    }
+    // Fallback: same origin WS
+    var proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    return proto + '//' + window.location.host;
+  }
 
   function initWebSocket() {
-    // Load socket.io from CDN
-    if (typeof io === 'undefined') {
-      var script = document.createElement('script');
-      script.src = 'https://cdn.socket.io/4.5.0/socket.io.min.js';
-      script.onload = function() { connectSocket(); };
-      script.onerror = function() { console.warn('[19888] Socket.IO CDN failed, fallback to polling'); startLongPolling(); };
-      document.body.appendChild(script);
-    } else {
-      connectSocket();
+    // Reset retry state
+    _wsReconnectAttempts = 0;
+    _wsReconnectDelay = 1000;
+    connectWebSocket();
+  }
+
+  function connectWebSocket() {
+    if (_wsSocket) {
+      try { _wsSocket.close(); } catch(e) {}
+      _wsSocket = null;
+    }
+
+    var url = resolveWsUrl();
+    console.log('[19888] WS connecting to', url);
+
+    try {
+      // Use Socket.IO if CDN loaded (it has built-in reconnection)
+      if (typeof io !== 'undefined') {
+        _wsSocket = io(url, {
+          transports: ['websocket', 'polling'],
+          reconnection: false, // we handle reconnection ourselves
+          timeout: 20000
+        });
+
+        _wsSocket.on('connect', function() {
+          console.log('[19888] WebSocket connected');
+          _wsConnected = true;
+          _wsReconnectAttempts = 0;
+          _wsReconnectDelay = 1000;
+          stopMarketPolling();
+        });
+
+        _wsSocket.on('kline_update', function(data) {
+          if (data && data.klines && typeof renderMarketKline === 'function') {
+            renderMarketKline(data.klines);
+          } else if (data && data.candles && currentPage === 'market') {
+            _marketKlineData = Array.isArray(data.candles) ? data.candles : _marketKlineData;
+            if (typeof renderMarketPage === 'function') renderMarketPage();
+          }
+        });
+
+        _wsSocket.on('odds_update', function(data) {
+          if (data && data.matches) { window._lastWsOdds = data.matches; }
+          if (data && data.match_id) {
+            if (currentPage === 'home') renderMatchCards();
+            if (currentPage === 'matches') renderMatchesPage();
+          }
+        });
+
+        _wsSocket.on('pool_update', function(data) {
+          if (data && currentPage === 'profile') {
+            var poolEl = document.getElementById('profilePoolBalance');
+            if (poolEl && data.total_balance !== undefined) poolEl.textContent = Number(data.total_balance).toFixed(2) + ' USDT';
+          }
+        });
+
+        _wsSocket.on('disconnect', function(reason) {
+          console.log('[19888] WS disconnected:', reason);
+          _wsConnected = false;
+          startLongPolling();
+          scheduleReconnect();
+        });
+
+        _wsSocket.on('connect_error', function(err) {
+          console.warn('[19888] WS connect error:', err.message);
+          _wsConnected = false;
+          startLongPolling();
+          scheduleReconnect();
+        });
+      } else {
+        // Raw WebSocket fallback (Socket.IO CDN not loaded)
+        _wsSocket = new WebSocket(url);
+
+        _wsSocket.onopen = function() {
+          console.log('[19888] WebSocket connected');
+          _wsConnected = true;
+          _wsReconnectAttempts = 0;
+          _wsReconnectDelay = 1000;
+          stopMarketPolling();
+        };
+
+        _wsSocket.onmessage = function(event) {
+          var data;
+          try { data = JSON.parse(event.data); } catch(e) { return; }
+          if (!data || !data.type) return;
+
+          var msgType = data.type;
+          if (msgType === 'kline_update' || msgType === 'kline') {
+            if (currentPage === 'market' && data.candles) {
+              _marketKlineData = Array.isArray(data.candles) ? data.candles : _marketKlineData;
+              if (typeof renderMarketPage === 'function') renderMarketPage();
+            }
+          }
+          if (msgType === 'odds_update' || msgType === 'odds') {
+            if (data.match_id) {
+              if (currentPage === 'home') renderMatchCards();
+              if (currentPage === 'matches') renderMatchesPage();
+            }
+          }
+          if (msgType === 'pool_update' || msgType === 'pool') {
+            if (currentPage === 'profile') {
+              var poolEl = document.getElementById('profilePoolBalance');
+              if (poolEl && data.total_balance !== undefined) poolEl.textContent = Number(data.total_balance).toFixed(2) + ' USDT';
+            }
+          }
+        };
+
+        _wsSocket.onclose = function(event) {
+          console.log('[19888] WebSocket closed:', event.code, event.reason);
+          _wsConnected = false;
+          startLongPolling();
+          scheduleReconnect();
+        };
+
+        _wsSocket.onerror = function(err) {
+          console.warn('[19888] WebSocket error');
+        };
+      }
+    } catch(e) {
+      console.warn('[19888] WS init error:', e.message);
+      _wsConnected = false;
+      startLongPolling();
+      scheduleReconnect();
     }
   }
 
-  function connectSocket() {
-    if (typeof io === 'undefined') { startLongPolling(); return; }
-    try {
-      var origin = window.location.origin;
-      _wsSocket = io(origin, {
-        transports: ['websocket', 'polling'],
-        reconnection: true,
-        reconnectionAttempts: 5,
-        reconnectionDelay: 3000,
-        timeout: 10000
-      });
+  function scheduleReconnect() {
+    if (_wsReconnectTimer) {
+      clearTimeout(_wsReconnectTimer);
+      _wsReconnectTimer = null;
+    }
+    if (_wsReconnectAttempts >= _wsMaxRetries) {
+      console.warn('[19888] WS max retries exceeded');
+      showToast('实时推送已断开');
+      return;
+    }
+    _wsReconnectAttempts++;
+    var delay = Math.min(_wsReconnectDelay, 30000);
+    console.log('[19888] WS reconnecting in ' + (delay / 1000) + 's... (attempt ' + _wsReconnectAttempts + '/' + _wsMaxRetries + ')');
+    _wsReconnectTimer = setTimeout(function() {
+      _wsReconnectDelay = Math.min(_wsReconnectDelay * 2, 30000);
+      connectWebSocket();
+    }, delay);
+  }
 
-      _wsSocket.on('connect', function() {
-        console.log('[19888] WebSocket connected');
-        _wsConnected = true;
-      });
-
-      _wsSocket.on('kline_update', function(data) {
-        if (!data) return;
-        // Update kline data if on market page
-        if (currentPage === 'market' && data.candles) {
-          _marketKlineData = Array.isArray(data.candles) ? data.candles : _marketKlineData;
-          // Re-render on next tick
-          if (typeof renderMarketPage === 'function') renderMarketPage();
+  function stopWebSocket() {
+    if (_wsReconnectTimer) {
+      clearTimeout(_wsReconnectTimer);
+      _wsReconnectTimer = null;
+    }
+    if (_wsSocket) {
+      try {
+        if (typeof io !== 'undefined' && _wsSocket.id) {
+          _wsSocket.disconnect();
+        } else {
+          _wsSocket.close();
         }
-      });
-
-      _wsSocket.on('odds_update', function(data) {
-        if (!data || !data.match_id) return;
-        // Update odds on match cards if visible
-        var oddsEl = document.querySelector('.match-odds .val');
-        if (oddsEl && data.odds) {
-          // Simple refresh: re-render current match page data
-          if (currentPage === 'home') renderMatchCards();
-          if (currentPage === 'matches') renderMatchesPage();
-        }
-      });
-
-      _wsSocket.on('pool_update', function(data) {
-        if (!data) return;
-        // Update pool stats on profile page
-        if (currentPage === 'profile') {
-          var poolEl = document.getElementById('profilePoolBalance');
-          if (poolEl && data.total_balance !== undefined) poolEl.textContent = Number(data.total_balance).toFixed(2) + ' USDT';
-        }
-      });
-
-      _wsSocket.on('disconnect', function(reason) {
-        console.log('[19888] WebSocket disconnected:', reason);
-        _wsConnected = false;
-        startLongPolling();
-      });
-
-      _wsSocket.on('connect_error', function(err) {
-        console.warn('[19888] WebSocket connect error:', err.message);
-        _wsConnected = false;
-        startLongPolling();
-      });
-    } catch(e) {
-      console.warn('[19888] WebSocket init error:', e.message);
-      startLongPolling();
+      } catch(e) {}
+      _wsSocket = null;
     }
   }
 
@@ -1141,28 +1251,39 @@
     }, 10000);
   }
 
-  function stopWebSocket() {
-    if (_wsSocket) { _wsSocket.disconnect(); _wsSocket = null; }
-    _wsConnected = false;
-  }
-
   // ===== PAGE: RECORDS =====
+  let _recordsPage = 1;
+  let _recordsTotalPages = 1;
+  let _recordsFilter = 'all';
+
   async function renderRecords(filter) {
-    filter = filter || 'all';
-    var container = document.getElementById('recordsList');
-    if (!container) return;
+    filter = filter || _recordsFilter;
+    _recordsFilter = filter;
+    var container = document.getElementById('betsList');
+    if (!container) {
+      // Fallback: try recordsList
+      container = document.getElementById('recordsList');
+      if (!container) return;
+    }
 
-    var records = betRecords.slice(0);
+    var page = _recordsPage;
+    container.innerHTML = '<div class="skeleton-record"></div><div class="skeleton-record" style="animation-delay:.15s"></div><div class="skeleton-record" style="animation-delay:.3s"></div>';
 
-    // Always try API fetch if wallet connected (FP fix: remove stale apiAvailable gate)
+    // Always try API fetch if wallet connected
     if (walletAddress) {
-      var res = await apiFetch('/bets?address=' + encodeURIComponent(walletAddress));
-      if (res && res.code === 0 && res.data && res.data.length > 0) {
-        records = res.data.map(function(r) {
+      var query = '/bet-records?address=' + encodeURIComponent(walletAddress) + '&page=' + page + '&page_size=20';
+      if (filter !== 'all') query += '&status=' + filter;
+      try {
+        var res = await apiFetch(query);
+        if (res && res.code === 0 && res.data) {
+        var list = res.data.list || [];
+        var pagination = res.data.pagination || {};
+        _recordsTotalPages = pagination.total_pages || 1;
+        var records = list.map(function(r) {
           return {
             id: r.id,
-            team: r.team_name || r.team || '',
-            type: r.bet_type_name || r.type || '',
+            team: r.team_name || r.team || r.match_name || '',
+            type: r.bet_type_name || r.type || (r.game_type === 'champion' ? '冠军' : r.game_type === 'anti-score' ? '波胆' : '投注'),
             amount: r.amount || 0,
             odds: r.odds || 0,
             potentialWin: r.potential_win || 0,
@@ -1170,37 +1291,64 @@
             status: r.status || 'pending'
           };
         });
+        renderRecordsList(container, records, pagination);
+        return;
+      }
+      } catch(e) {
+        showToast('加载记录失败: ' + (e.message || '网络错误'));
       }
     }
 
+    // Fallback: filter local betRecords
+    var records = betRecords.slice(0);
     if (filter === 'pending') records = records.filter(function(r) { return r.status === 'pending'; });
     if (filter === 'won') records = records.filter(function(r) { return r.status === 'won'; });
     if (filter === 'lost') records = records.filter(function(r) { return r.status === 'lost'; });
+    renderRecordsList(container, records, null);
+  }
 
-    if (records.length === 0) {
-      container.innerHTML = '<div style="text-align:center;padding:40px;color:#999">暂无投注记录</div>';
+  function renderRecordsList(container, records, pagination) {
+    if (!records || records.length === 0) {
+      container.innerHTML = '<div class="empty-state">暂无投注记录</div>';
       return;
     }
 
-    container.innerHTML = records.map(function(r) {
+    var html = '';
+    for (var i = 0; i < records.length; i++) {
+      var r = records[i];
       var cls = r.status === 'won' ? 'won' : r.status === 'lost' ? 'lost' : 'pending';
       var txt = r.status === 'won' ? '已赢' : r.status === 'lost' ? '已输' : '进行中';
       var color = r.status === 'won' ? '#03A66D' : r.status === 'lost' ? '#e53935' : '#DAA520';
-      return '<div class="record-item" style="padding:12px;border-bottom:1px solid #eee">' +
-        '<div style="display:flex;justify-content:space-between;margin-bottom:4px">' +
-          '<span style="font-size:12px;color:#999">' + (r.type || '投注') + '</span>' +
-          '<span style="font-size:12px;color:#999">' + (r.time || '') + '</span>' +
+      html += '<div class="record-item">' +
+        '<div class="record-header">' +
+          '<span class="record-label">' + (r.type || '投注') + '</span>' +
+          '<span class="record-label">' + (r.time || '') + '</span>' +
         '</div>' +
-        '<div style="font-weight:600;margin-bottom:4px">' + (r.team || '') + '</div>' +
-        '<div style="display:flex;justify-content:space-between;align-items:center">' +
-          '<span>' + (r.amount || 0) + ' USDT</span>' +
+        '<div class="record-team">' + (r.team || '') + '</div>' +
+        '<div class="record-footer">' +
+          '<span class="record-amount">' + (r.amount || 0) + ' USDT</span>' +
           '<div style="display:flex;align-items:center;gap:8px">' +
-            '<span style="color:' + color + ';font-size:12px;font-weight:600">' + txt + '</span>' +
-            (r.status === 'pending' ? '<button onclick="app.cancelBet(' + r.id + ')" style="background:none;border:1px solid #e53935;color:#e53935;padding:4px 10px;border-radius:12px;font-size:11px;cursor:pointer">取消</button>' : '') +
+            '<span class="record-status" style="color:' + color + '">' + txt + '</span>' +
+            (r.status === 'pending' ? '<button onclick="app.cancelBet(' + r.id + ')" class="cancel-bet-btn">取消</button>' : '') +
           '</div>' +
         '</div>' +
       '</div>';
-    }).join('');
+    }
+
+    // Pagination controls
+    if (pagination && pagination.total_pages > 1) {
+      html += '<div class="pagination-bar">';
+      if (pagination.page > 1) {
+        html += '<button onclick="app.pageRecords(' + (pagination.page - 1) + ')" class="pagination-btn">← 上一页</button>';
+      }
+      html += '<span>第 ' + pagination.page + '/' + pagination.total_pages + ' 页</span>';
+      if (pagination.page < pagination.total_pages) {
+        html += '<button onclick="app.pageRecords(' + (pagination.page + 1) + ')" class="pagination-btn">下一页 →</button>';
+      }
+      html += '</div>';
+    }
+
+    container.innerHTML = html;
   }
 
   function filterRecords(filter, evt) {
@@ -1209,7 +1357,13 @@
       for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
       evt.target.classList.add('active');
     }
+    _recordsPage = 1;
     renderRecords(filter);
+  }
+
+  function pageRecords(page) {
+    _recordsPage = page;
+    renderRecords(_recordsFilter);
   }
 
   // ===== PAGE: PROFILE (User Center) =====
@@ -1552,21 +1706,32 @@
 
     var codeEl = document.getElementById('inviteCode');
     var statsEl = document.getElementById('inviteStats');
-    if (codeEl) codeEl.textContent = '加载中...';
-    if (statsEl) statsEl.textContent = '';
+    var levelsEl = document.getElementById('inviteLevels');
+    if (codeEl) { codeEl.textContent = ''; codeEl.innerHTML = '<div class="skeleton-invite-row" style="width:60%;margin:0 auto"></div>'; }
+    if (statsEl) statsEl.innerHTML = '<div class="skeleton-invite-row" style="width:80%"></div><div class="skeleton-invite-row" style="width:50%;margin-top:6px"></div>';
+    if (levelsEl) levelsEl.innerHTML = '<div class="skeleton-invite-row" style="width:70%"></div>';
 
     modal.style.display = 'flex';
 
-    // Load invite data + agent earnings
-    Promise.all([loadInviteData(), loadAgentEarnings()]).then(function() {
+    // Load invite data + agent earnings + invite levels
+    Promise.all([loadInviteData(), loadAgentEarnings(), loadInviteLevels()]).then(function() {
       if (codeEl) codeEl.textContent = inviteCode || '生成失败，请重试';
       var agentInfo = window._agentInfo || {};
       var levelName = agentInfo.name || '普通会员';
       var commissionL1 = ((agentInfo.commission_l1 || 0) * 100).toFixed(1);
+      var commissionL2 = ((agentInfo.commission_l2 || 0) * 100).toFixed(1);
+      var nextLevel = agentInfo.next_level || null;
+      var totalEarned = agentInfo.total_earned || 0;
+
       if (statsEl) statsEl.innerHTML =
-        '<div style="font-size:12px;color:#DAA520;margin-bottom:4px">🏅 ' + levelName + ' · 一级返佣 ' + commissionL1 + '%</div>' +
+        '<div style="font-size:12px;color:#DAA520;margin-bottom:4px">🏅 ' + levelName + ' · 一级返佣 ' + commissionL1 + '% · 二级返佣 ' + commissionL2 + '%</div>' +
         '<div>已邀请: <b>' + inviteData.count + '</b>人 | 交易额: <b>$' + (agentInfo.total_volume || 0).toLocaleString() + '</b></div>' +
-        '<div style="font-size:11px;color:#999;margin-top:4px">已领取: ' + inviteData.rewards.toFixed(2) + ' USDT</div>';
+        '<div style="font-size:11px;color:#999;margin-top:4px">已赚取: ' + totalEarned.toFixed(2) + ' USDT</div>' +
+        '<div style="font-size:11px;color:#999">已领取: ' + inviteData.rewards.toFixed(2) + ' USDT</div>' +
+        (nextLevel ? '<div style="font-size:11px;color:#667eea;margin-top:4px">下一等级: ' + nextLevel.name + ' (需邀请 ' + nextLevel.min_invites + '人)</div>' : '');
+
+      // Render invite levels
+      renderInviteLevels(levelsEl, agentInfo);
     });
   }
 
@@ -1639,6 +1804,67 @@
         window._agentInfo = res.data;
       }
     } catch(e) {}
+  }
+
+  // ===== INVITE LEVELS =====
+  var _inviteLevels = [];
+
+  async function loadInviteLevels() {
+    try {
+      var res = await apiFetch('/invite/levels');
+      if (res && res.code === 0 && Array.isArray(res.data)) {
+        _inviteLevels = res.data;
+      }
+    } catch(e) {}
+  }
+
+  function renderInviteLevels(container, agentInfo) {
+    if (!container) return;
+    if (!_inviteLevels || _inviteLevels.length === 0) {
+      container.innerHTML = '<div style="text-align:center;padding:8px;color:#999;font-size:11px">暂无等级数据</div>';
+      return;
+    }
+
+    var currentLevel = (agentInfo && agentInfo.level !== undefined) ? agentInfo.level : 0;
+    var inviteCount = (agentInfo && agentInfo.invite_count !== undefined) ? agentInfo.invite_count : 0;
+
+    var html = '<div style="margin-top:12px;border-top:1px solid #eee;padding-top:10px">' +
+      '<div style="font-size:13px;font-weight:700;color:#1a1a2e;margin-bottom:8px">📊 代理等级</div>';
+
+    for (var i = 0; i < _inviteLevels.length; i++) {
+      var lv = _inviteLevels[i];
+      var isCurrent = lv.level === currentLevel;
+      var isUnlocked = inviteCount >= lv.min_invites;
+      var nextLevel = _inviteLevels[i + 1] || null;
+      var progressPct = 0;
+      if (nextLevel && inviteCount > lv.min_invites) {
+        progressPct = Math.min(100, Math.round((inviteCount - lv.min_invites) / (nextLevel.min_invites - lv.min_invites) * 100));
+      }
+      var bgColor = isCurrent ? '#667eea' : (isUnlocked ? '#03A66D' : '#f0f0f0');
+      var textColor = isCurrent || isUnlocked ? '#fff' : '#999';
+      var checkMark = isUnlocked ? '✅' : (isCurrent ? '⭐' : '🔒');
+
+      html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;margin-bottom:4px;background:' + (isCurrent ? '#EEF0FF' : '#fafafa') + ';border-radius:8px;font-size:12px">' +
+        '<div style="width:24px;text-align:center;font-size:14px">' + checkMark + '</div>' +
+        '<div style="flex:1">' +
+          '<div style="font-weight:' + (isCurrent ? '700' : '400') + ';color:' + (isCurrent ? '#667eea' : '#333') + '">' + lv.name + '</div>' +
+          '<div style="font-size:10px;color:#999">返佣 L1: ' + (lv.commission_l1 * 100).toFixed(0) + '% · L2: ' + (lv.commission_l2 * 100).toFixed(0) + '% · 需 ' + lv.min_invites + '人</div>' +
+        '</div>' +
+        '<div style="font-size:11px;font-weight:600;color:' + textColor + ';padding:2px 8px;border-radius:10px;background:' + bgColor + '">' +
+          (isCurrent ? '当前' : (isUnlocked ? '已解锁' : '未达')) +
+        '</div>' +
+      '</div>';
+
+      // Progress bar for current level to next
+      if (isCurrent && nextLevel && progressPct < 100) {
+        html += '<div style="margin:0 8px 6px 32px;height:4px;background:#e0e0e0;border-radius:2px;overflow:hidden">' +
+          '<div style="height:100%;width:' + progressPct + '%;background:linear-gradient(90deg,#667eea,#764ba2);border-radius:2px;transition:width 0.3s"></div>' +
+        '</div>';
+      }
+    }
+
+    html += '</div>';
+    container.innerHTML = html;
   }
 
   // ===== CANCEL BET =====
@@ -2025,8 +2251,15 @@
     var match = findMatch(matchId);
     if (!match) { showToast('赛事不存在'); return; }
 
-    // Navigate to detail page and populate
+    // Navigate to detail page
     navigateTo('detail');
+
+    // Restore original page-detail HTML if it was replaced by team detail
+    var detailPage = document.getElementById('page-detail');
+    if (detailPage && _pageDetailOriginalHTML !== null) {
+      detailPage.innerHTML = _pageDetailOriginalHTML;
+      _pageDetailOriginalHTML = null;
+    }
 
     var home = match.home || match.home_team || '';
     var away = match.away || match.away_team || '';
@@ -2035,9 +2268,13 @@
     var odds = match.odds_home || '--';
 
     var homeEl = document.getElementById('detailHomeTeam');
-    if (homeEl) homeEl.textContent = home;
+    if (homeEl) {
+      homeEl.innerHTML = '<a href="javascript:;" onclick="event.stopPropagation();app.openTeamDetail(\'' + home.replace(/'/g, "\\'") + '\')" style="color:inherit;text-decoration:none">' + home + '</a>';
+    }
     var awayEl = document.getElementById('detailAwayTeam');
-    if (awayEl) awayEl.textContent = away;
+    if (awayEl) {
+      awayEl.innerHTML = '<a href="javascript:;" onclick="event.stopPropagation();app.openTeamDetail(\'' + away.replace(/'/g, "\\'") + '\')" style="color:inherit;text-decoration:none">' + away + '</a>';
+    }
     var timeEl = document.getElementById('detailMatchTime');
     if (timeEl) timeEl.textContent = time;
     var venueEl = document.getElementById('detailMatchVenue');
@@ -2352,6 +2589,199 @@
     setInterval(next, 4000);
   }
 
+  // ===== TEAM DETAIL PAGE =====
+  var _pageDetailOriginalHTML = null;
+  var _teamNameMap = null;
+
+  function getTeamIdByName(name) {
+    if (_teamNameMap && _teamNameMap[name] !== undefined) return _teamNameMap[name];
+    for (var i = 0; i < mockChampionTeams.length; i++) {
+      if (mockChampionTeams[i].name === name) {
+        return mockChampionTeams[i].id;
+      }
+    }
+    return null;
+  }
+
+  async function openTeamDetail(teamName) {
+    // Save original page-detail HTML on first call
+    var detailPage = document.getElementById('page-detail');
+    if (!detailPage) return;
+    if (_pageDetailOriginalHTML === null) {
+      _pageDetailOriginalHTML = detailPage.innerHTML;
+    }
+
+    // Navigate to detail page
+    navigateTo('detail');
+
+    // Show loading state
+    detailPage.innerHTML = '<div class="team-detail-container" style="padding:16px;max-width:600px;margin:0 auto;text-align:center;color:var(--text-muted,#999)">加载球队信息...</div>';
+
+    // Build team name → ID map if needed
+    if (!_teamNameMap) {
+      _teamNameMap = {};
+      var teamsRes = await apiFetch('/teams');
+      if (teamsRes && teamsRes.code === 0 && Array.isArray(teamsRes.data)) {
+        for (var i = 0; i < teamsRes.data.length; i++) {
+          _teamNameMap[teamsRes.data[i].name] = teamsRes.data[i].id;
+        }
+      }
+      // Also populate from mock data
+      for (var j = 0; j < mockChampionTeams.length; j++) {
+        if (_teamNameMap[mockChampionTeams[j].name] === undefined) {
+          _teamNameMap[mockChampionTeams[j].name] = mockChampionTeams[j].id;
+        }
+      }
+    }
+
+    var teamId = getTeamIdByName(teamName);
+
+    // Fetch team detail and stats in parallel
+    var teamData = null;
+    var statsData = null;
+
+    if (teamId) {
+      var [detailRes, statsRes] = await Promise.all([
+        apiFetch('/teams/' + teamId),
+        apiFetch('/teams/' + teamId + '/stats')
+      ]);
+      if (detailRes && detailRes.code === 0) teamData = detailRes.data;
+      if (statsRes && statsRes.code === 0) statsData = statsRes.data;
+    }
+
+    // Fallback: build mock team data
+    if (!teamData) {
+      var mockTeam = null;
+      for (var k = 0; k < mockChampionTeams.length; k++) {
+        if (mockChampionTeams[k].name === teamName) {
+          mockTeam = mockChampionTeams[k];
+          break;
+        }
+      }
+      if (mockTeam) {
+        teamData = {
+          id: mockTeam.id,
+          name: mockTeam.name,
+          logo: null,
+          group_name: mockTeam.group || '',
+          country: '',
+          match_count: 0
+        };
+      } else {
+        teamData = {
+          id: null,
+          name: teamName,
+          logo: null,
+          group_name: '',
+          country: '',
+          match_count: 0
+        };
+      }
+    }
+
+    // Fallback stats
+    if (!statsData) {
+      statsData = {
+        wins: 0,
+        draws: 0,
+        losses: 0,
+        goals_for: 0,
+        goals_against: 0,
+        win_rate: 0,
+        avg_goals_scored: 0,
+        avg_goals_conceded: 0,
+        form: []
+      };
+    }
+
+    renderTeamDetail(teamData, statsData);
+  }
+
+  function renderTeamDetail(teamData, statsData) {
+    var detailPage = document.getElementById('page-detail');
+    if (!detailPage) return;
+
+    var name = teamData.name || '—';
+    var group = teamData.group_name || teamData.group || '';
+    var country = teamData.country || '';
+    var logoHtml = teamLogoImg(name, 60);
+
+    // Handle both direct stats format and nested betting_stats format
+    var s = statsData.betting_stats || statsData;
+    var wins = s.wins || s.won_count || 0;
+    var draws = s.draws || 0;
+    var losses = s.losses || s.lost_count || 0;
+    var goalsFor = s.goals_for || 0;
+    var goalsAgainst = s.goals_against || 0;
+    var winRate = s.win_rate || (s.total_bets > 0 ? ((wins / s.total_bets) * 100) : 0);
+    var avgGoalsFor = s.avg_goals_scored || 0;
+    var avgGoalsAgainst = s.avg_goals_conceded || 0;
+    var form = statsData.form || s.form || [];
+
+    // Form badges (W/D/L)
+    var formHtml = '';
+    if (form.length > 0) {
+      formHtml = '<div style="display:flex;gap:6px;margin-top:8px;justify-content:center">';
+      for (var f = 0; f < form.length; f++) {
+        var result = form[f];
+        var bg = result === 'W' ? '#03A66D' : (result === 'L' ? '#E53935' : (result === 'D' ? '#FFA502' : '#999'));
+        formHtml += '<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:' + bg + ';color:#fff;font-size:12px;font-weight:700">' + result + '</span>';
+      }
+      formHtml += '</div>';
+    }
+
+    var html =
+      '<div class="team-detail-container" style="padding:16px;max-width:600px;margin:0 auto">' +
+        // Back button
+        '<div style="margin-bottom:12px">' +
+          '<a href="javascript:;" onclick="app.navigateTo(\'home\')" style="color:var(--accent,#FF6B35);text-decoration:none;font-size:13px">← 返回主页</a>' +
+        '</div>' +
+        // Team header card
+        '<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding:16px;background:var(--surface,#fff);border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.06)">' +
+          logoHtml +
+          '<div style="flex:1">' +
+            '<h2 style="margin:0;font-size:20px;font-weight:700;color:var(--text,#333)">' + name + '</h2>' +
+            '<div style="font-size:12px;color:var(--text-muted,#999);margin-top:4px">' +
+              (country ? '<span>' + country + '</span>' : '') +
+              (group ? (country ? ' · ' : '') + '<span>组别: ' + group + '</span>' : '') +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        // Win/Draw/Loss stat cards
+        '<div style="margin-bottom:16px">' +
+          '<h3 style="font-size:14px;font-weight:700;margin:0 0 8px 0;color:var(--text,#333)">📊 数据统计</h3>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">' +
+            '<div style="background:var(--surface,#fff);border-radius:8px;padding:12px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,0.04)"><div style="font-size:20px;font-weight:700;color:#03A66D">' + wins + '</div><div style="font-size:11px;color:var(--text-muted,#999)">胜</div></div>' +
+            '<div style="background:var(--surface,#fff);border-radius:8px;padding:12px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,0.04)"><div style="font-size:20px;font-weight:700;color:#FFA502">' + draws + '</div><div style="font-size:11px;color:var(--text-muted,#999)">平</div></div>' +
+            '<div style="background:var(--surface,#fff);border-radius:8px;padding:12px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,0.04)"><div style="font-size:20px;font-weight:700;color:#E53935">' + losses + '</div><div style="font-size:11px;color:var(--text-muted,#999)">负</div></div>' +
+          '</div>' +
+        '</div>' +
+        // Goals for/against
+        '<div style="margin-bottom:16px">' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">' +
+            '<div style="background:var(--surface,#fff);border-radius:8px;padding:12px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,0.04)"><div style="font-size:18px;font-weight:700;color:var(--text,#333)">' + goalsFor + '</div><div style="font-size:11px;color:var(--text-muted,#999)">进球</div></div>' +
+            '<div style="background:var(--surface,#fff);border-radius:8px;padding:12px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,0.04)"><div style="font-size:18px;font-weight:700;color:var(--text,#333)">' + goalsAgainst + '</div><div style="font-size:11px;color:var(--text-muted,#999)">失球</div></div>' +
+          '</div>' +
+        '</div>' +
+        // Avg goals
+        '<div style="margin-bottom:16px">' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">' +
+            '<div style="background:var(--surface,#fff);border-radius:8px;padding:12px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,0.04)"><div style="font-size:18px;font-weight:700;color:var(--text,#333)">' + Number(avgGoalsFor).toFixed(2) + '</div><div style="font-size:11px;color:var(--text-muted,#999)">场均进球</div></div>' +
+            '<div style="background:var(--surface,#fff);border-radius:8px;padding:12px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,0.04)"><div style="font-size:18px;font-weight:700;color:var(--text,#333)">' + Number(avgGoalsAgainst).toFixed(2) + '</div><div style="font-size:11px;color:var(--text-muted,#999)">场均失球</div></div>' +
+          '</div>' +
+        '</div>' +
+        // Win rate
+        '<div style="margin-bottom:16px;background:var(--surface,#fff);border-radius:8px;padding:16px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,0.04)">' +
+          '<div style="font-size:28px;font-weight:700;color:var(--accent,#FF6B35)">' + Number(winRate).toFixed(1) + '%</div>' +
+          '<div style="font-size:11px;color:var(--text-muted,#999);margin-top:2px">胜率</div>' +
+        '</div>' +
+        // Recent form
+        (form.length > 0 ? '<div style="margin-bottom:16px;background:var(--surface,#fff);border-radius:8px;padding:16px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,0.04)"><div style="font-size:12px;font-weight:600;color:var(--text-muted,#999);margin-bottom:6px">近期表现</div>' + formHtml + '</div>' : '') +
+      '</div>';
+
+    detailPage.innerHTML = html;
+  }
+
   // ===== EXPORT API =====
   window.app = {
     openMatch: openMatch,
@@ -2386,6 +2816,8 @@
     // Cancel + Agent
     cancelBet: cancelBet,
     loadAgentEarnings: loadAgentEarnings,
+    pageRecords: pageRecords,
+    loadInviteLevels: loadInviteLevels,
     // AI + Transactions
     toggleAIHosting: toggleAIHosting,
     navigateTo: navigateTo,
@@ -2411,6 +2843,7 @@
     renderFiatPage: renderFiatPage,
     renderAPIDocs: renderAPIDocs,
     loadPoolStatusData: loadPoolStatusData,
+    openTeamDetail: openTeamDetail,
   };
 
   // ===== INIT =====

@@ -11,7 +11,6 @@
     <meta name="keywords" content="反波胆竞猜,体育投注,足球竞猜,19888,在线投注" />
     <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
     <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
-    <link rel="stylesheet" href="css/lucky944.css" />
     <link rel="stylesheet" href="css/sunshine.css" />
     <link rel="dns-prefetch" href="https://one9888-api.onrender.com">
     <link rel="preconnect" href="https://one9888-api.onrender.com">
@@ -80,6 +79,7 @@
     <div id="inviteCode" style="font-size:20px;font-weight:700;color:#667eea;text-align:center;padding:10px;background:#f5f5ff;border-radius:8px;margin-bottom:8px">加载中...</div>
     <button onclick="app.copyInviteCode()" style="background:#667eea;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;width:100%;margin-bottom:8px">📋 复制邀请码</button>
     <div id="inviteStats" style="font-size:13px;color:#666;text-align:center;padding:8px;background:#f9f9f9;border-radius:6px;margin-bottom:8px">加载中...</div>
+    <div id="inviteLevels" style="font-size:12px;color:#666;margin-bottom:8px"></div>
     <div style="display:flex;gap:8px;margin-bottom:8px">
       <button onclick="app.shareInvite()" style="flex:1;background:#03A66D;color:#fff;border:none;padding:8px;border-radius:6px;font-size:13px;cursor:pointer">📤 分享</button>
       <button onclick="app.claimInviteRewards()" style="flex:1;background:#DAA520;color:#fff;border:none;padding:8px;border-radius:6px;font-size:13px;cursor:pointer">🎁 领取返佣</button>
@@ -244,10 +244,10 @@
                     <div class="section-header">
                         <h4>我的投注</h4>
                         <div class="filter-tabs">
-                            <button class="filter-btn active" data-filter="all">全部</button>
-                            <button class="filter-btn" data-filter="pending">进行中</button>
-                            <button class="filter-btn" data-filter="won">已赢</button>
-                            <button class="filter-btn" data-filter="lost">已输</button>
+                            <button class="filter-btn active" data-filter="all" onclick="app.filterRecords('all', event)">全部</button>
+                            <button class="filter-btn" data-filter="pending" onclick="app.filterRecords('pending', event)">进行中</button>
+                            <button class="filter-btn" data-filter="won" onclick="app.filterRecords('won', event)">已赢</button>
+                            <button class="filter-btn" data-filter="lost" onclick="app.filterRecords('lost', event)">已输</button>
                         </div>
                     </div>
                     <div class="bets-list" id="betsList">
@@ -468,6 +468,7 @@
 <!-- 自定义Toast -->
 <div class="custom-toast" id="customToast"></div>
 
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

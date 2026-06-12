@@ -6,7 +6,6 @@ const CACHE_ASSETS = [
   '/index.html',
   '/offline.html',
   '/404.html',
-  '/css/lucky944.css',
   '/css/sunshine.css',
   '/js/app.js',
   '/manifest.json',
@@ -101,13 +100,14 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // API: Network-First with offline fallback
+  // API: Network only — do NOT cache API responses
   if (url.pathname.startsWith('/api/')) {
     e.respondWith(
-      fetch(e.request).then(res => {
-        if (res.ok) caches.open(CACHE_NAME).then(c => c.put(e.request, res.clone()));
-        return res;
-      }).catch(() => caches.match(e.request))
+      fetch(e.request).catch(function() {
+        return new Response(JSON.stringify({ code: -1, error: 'offline' }), {
+          status: 503, headers: { 'Content-Type': 'application/json' }
+        });
+      })
     );
     return;
   }
