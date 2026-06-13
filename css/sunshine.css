@@ -419,10 +419,11 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,107,53,0.12
 .dialog-btn.secondary:hover{background:var(--surface-hover)}
 .dialog-btn.info{background:var(--accent);color:#fff}
 
-/* ===== QUICK AMOUNTS (dialog) ===== */
-.quick-amounts{display:flex;gap:6px;margin-bottom:12px}
-.quick-amount{flex:1;padding:6px;border:1px solid var(--border);border-radius:6px;background:var(--bg);font-size:12px;cursor:pointer;color:var(--text-light);text-align:center;transition:background-color .15s,color .15s}
-.quick-amount:hover,.quick-amount.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+/* ===== QUICK AMOUNTS (dialog + detail page) ===== */
+.quick-amounts{display:flex;gap:8px;margin-bottom:12px}
+.quick-amount{flex:1;padding:10px 6px;border:2px solid var(--border);border-radius:10px;background:var(--bg);font-size:14px;font-weight:700;cursor:pointer;color:var(--text);text-align:center;transition:background-color .15s,color .15s,border-color .15s,transform .15s}
+.quick-amount:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-1px)}
+.quick-amount.active,.quick-amount[style*="var(--accent)"]{background:var(--accent);color:#fff;border-color:var(--accent)}
 
 /* ===== PROFILE HEADER ===== */
 .profile-header{display:flex;align-items:center;gap:12px;padding:12px 0}
@@ -679,3 +680,16 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 
 /* Pool/treasury icon */
 .icon-pool{display:inline-block;width:16px;height:16px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23667eea'%3E%3Cpath d='M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z'/%3E%3C/svg%3E") no-repeat center/contain;vertical-align:middle;margin-right:4px}
+
+/* ===== BETTING UI ===== */
+.quick-bet-section{padding:12px 0;text-align:center}
+.place-bet-btn{
+  width:100%;padding:12px;margin-top:10px;
+  background:linear-gradient(135deg,#FF6B35,#FFA502);
+  color:#fff;border:none;border-radius:10px;
+  font-size:14px;font-weight:700;cursor:pointer;
+  box-shadow:0 2px 12px rgba(255,107,53,0.35);
+  transition:transform .15s,box-shadow .15s;
+}
+.place-bet-btn:hover{transform:translateY(-1px);box-shadow:0 4px 18px rgba(255,107,53,0.5)}
+.place-bet-btn:active{transform:scale(0.97)}

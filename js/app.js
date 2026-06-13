@@ -2384,11 +2384,11 @@
     }, 100);
 
     // Wire up quick-bet amounts
-    var amtBtns = document.querySelectorAll('.quick-bet-amt');
+    var amtBtns = document.querySelectorAll('.quick-amount');
     for (var i = 0; i < amtBtns.length; i++) {
       amtBtns[i].onclick = function() {
-        var btns = document.querySelectorAll('.quick-bet-amt');
-        for (var j = 0; j < btns.length; j++) btns[j].style.background = 'var(--surface)';
+        var btns = document.querySelectorAll('.quick-amount');
+        for (var j = 0; j < btns.length; j++) { btns[j].style.background = ''; btns[j].style.color = ''; }
         this.style.background = 'var(--accent)';
         this.style.color = '#fff';
         window._selectedAmount = parseInt(this.getAttribute('data-amt'));
