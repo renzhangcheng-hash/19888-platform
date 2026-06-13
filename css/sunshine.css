@@ -701,3 +701,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   font-size:12px;font-weight:600;
 }
 .balance-bar span{display:flex;align-items:center;gap:4px}
+
+/* ===== SPONSOR BAR (fixed above tabbar) ===== */
+.partners-grid-dark[style*="fixed"]{display:flex;justify-content:center;gap:12px;overflow:hidden}
+/* spacer to prevent content overlap */
+.main > .wp:last-child{padding-bottom:56px}
