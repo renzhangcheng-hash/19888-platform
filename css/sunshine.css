@@ -797,3 +797,30 @@ input:focus, select:focus, textarea:focus{
 .footer-links-bar a{color:var(--text-muted);text-decoration:none;transition:color .15s}
 .footer-links-bar a:hover{color:var(--accent)}
 .footer-links-bar span{color:var(--border)}
+
+/* ===== CENTER TOAST (wallet alerts etc) ===== */
+.toast-center{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  background:#DBEBFF;color:#1A5CA8;border:1px solid #B8D4F0;
+  border-radius:12px;padding:16px 24px;font-size:14px;font-weight:600;
+  text-align:center;z-index:99999;max-width:320px;
+  box-shadow:0 8px 32px rgba(26,92,168,0.15);
+  animation:toastCenterIn .35s cubic-bezier(.34,1.56,.64,1);
+  line-height:1.6;
+}
+.toast-center a{color:#1A5CA8;text-decoration:underline;font-weight:700}
+.toast-center.fade-out{animation:toastCenterOut .3s ease forwards}
+@keyframes toastCenterIn{from{opacity:0;transform:translate(-50%,-50%) scale(.9)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+@keyframes toastCenterOut{from{opacity:1;transform:translate(-50%,-50%) scale(1)}to{opacity:0;transform:translate(-50%,-45%) scale(.95)}}
+
+/* ===== GENERAL TOAST (enhanced) ===== */
+.custom-toast{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  background:var(--surface);border:1px solid var(--border);
+  color:var(--text);box-shadow:var(--shadow-md);
+  border-radius:10px;padding:14px 24px;font-size:13px;font-weight:600;
+  text-align:center;z-index:99998;max-width:300px;
+  opacity:0;pointer-events:none;
+  transition:opacity .25s ease,transform .25s ease;
+}
+.custom-toast.show{opacity:1;pointer-events:auto}

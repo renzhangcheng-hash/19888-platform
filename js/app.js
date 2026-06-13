@@ -155,12 +155,30 @@
   // ===== TOAST =====
   function showToast(msg, dur) {
     dur = dur || 2000;
-    const el = document.getElementById('customToast');
+    var el = document.getElementById('customToast');
     if (!el) return;
     el.textContent = msg;
     el.classList.add('show');
     clearTimeout(el._timer);
     el._timer = setTimeout(function() { el.classList.remove('show'); }, dur);
+  }
+
+  function showCenterToast(msg, dur) {
+    showToast(msg, dur || 3000);
+  }
+
+  // Wallet-required alert — centered blue toast
+  function showWalletAlert(msg) {
+    var existing = document.querySelector('.toast-center');
+    if (existing) existing.remove();
+    var el = document.createElement('div');
+    el.className = 'toast-center';
+    el.innerHTML = msg || '未检测到钱包。<br>请安装 <a href="https://metamask.io" target="_blank">MetaMask</a>，或在 <strong>TP Wallet</strong> 内置浏览器中打开。';
+    document.body.appendChild(el);
+    setTimeout(function() {
+      el.classList.add('fade-out');
+      setTimeout(function() { if (el.parentNode) el.remove(); }, 350);
+    }, 4000);
   }
 
   // ===== CONFIRM DIALOG =====
@@ -234,6 +252,12 @@
   }
 
   async function connectWallet() {
+    // Check if wallet provider exists
+    var w = detectWallet();
+    if (!w) {
+      showWalletAlert();
+      return;
+    }
     if (typeof window.dapp === 'undefined') {
       showToast('加载钱包模块...');
       try {
