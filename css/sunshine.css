@@ -703,9 +703,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .balance-bar span{display:flex;align-items:center;gap:4px}
 
 /* ===== SPONSOR BAR (fixed above tabbar) ===== */
-.partners-grid-dark[style*="fixed"]{display:flex;justify-content:center;gap:12px;overflow:hidden}
 /* spacer to prevent content overlap */
-.main > .wp:last-child{padding-bottom:96px}
 
 /* ============================================================
    UI OPTIMIZATION PASS — 2026-06-13
