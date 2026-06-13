@@ -600,7 +600,7 @@
 
     // Update top tabs active state (for home page tabs: 推荐赛事 / 冠亚预测)
     if (page === 'home') {
-      var topTabs = document.querySelectorAll('.slick_tab_btn .ul-tabs_b1 li');
+      var topTabs = document.querySelectorAll('.ul-tabs_b1 li');
       for (var k = 0; k < topTabs.length; k++) {
         topTabs[k].classList.toggle('on', k === 0);
       }
@@ -626,7 +626,7 @@
   // ===== TOP TAB SWITCHING (on home page) =====
   function switchTopTab(idx) {
     var tabCons = document.querySelectorAll('.slick_tab .tab_con');
-    var topTabs = document.querySelectorAll('.slick_tab_btn .ul-tabs_b1 li');
+    var topTabs = document.querySelectorAll('.ul-tabs_b1 li');
     for (var i = 0; i < tabCons.length; i++) {
       if (i === idx) {
         tabCons[i].classList.add('active');
@@ -3050,7 +3050,7 @@
     });
 
     // Top tab click handlers (home page tabs)
-    var topTabs = document.querySelectorAll('.slick_tab_btn .ul-tabs_b1 li');
+    var topTabs = document.querySelectorAll('.ul-tabs_b1 li');
     topTabs.forEach(function(tab, idx) {
       tab.addEventListener('click', function(e) {
         e.preventDefault();
