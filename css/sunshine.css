@@ -70,11 +70,42 @@ body.index .header .global-lang-switch-btn{
 .header .wallet-connect{position:relative !important;top:auto !important;right:auto !important;transform:none !important;margin-left:auto;flex-shrink:0;align-self:center}
 
 /* ===== WALLET ===== */
-.wallet-connect{background:#FF6B35;color:#fff;border:1px solid #E55A2B;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600}
-.wallet-connect:hover{background:#E55A2B;border-color:#C4451F}
-.wallet-connect.connected{background:#E55A2B;border-color:#C4451F}
-.wallet-icon{filter:brightness(0) invert(1);opacity:0.9}
-.wallet-address{color:#fff;font-size:11px;font-weight:600}
+.wallet-connect{
+  background:linear-gradient(135deg,#FF6B35,#FF8C42);
+  color:#fff;
+  border:none;
+  border-radius:8px;
+  padding:9px 18px;
+  font-size:13px;
+  font-weight:700;
+  cursor:pointer;
+  box-shadow:0 2px 12px rgba(255,107,53,0.35);
+  transition:all .2s ease;
+  letter-spacing:0.3px;
+}
+.wallet-connect:hover{
+  background:linear-gradient(135deg,#E55A2B,#FF6B35);
+  box-shadow:0 4px 16px rgba(255,107,53,0.5);
+  transform:translateY(-1px);
+}
+.wallet-connect.connected{
+  background:linear-gradient(135deg,#00A86B,#00C853);
+  box-shadow:0 2px 8px rgba(0,168,107,0.3);
+}
+.wallet-connect.connected:hover{
+  background:linear-gradient(135deg,#008B5A,#00A86B);
+  box-shadow:0 4px 12px rgba(0,168,107,0.45);
+}
+/* Pulse animation when not connected */
+.wallet-connect:not(.connected){
+  animation:walletPulse 2s ease-in-out infinite;
+}
+@keyframes walletPulse{
+  0%,100%{box-shadow:0 2px 12px rgba(255,107,53,0.35)}
+  50%{box-shadow:0 2px 20px rgba(255,107,53,0.55)}
+}
+.wallet-icon{display:inline-block;width:18px;height:18px;filter:brightness(0) invert(1);opacity:1;vertical-align:middle;margin-right:6px}
+.wallet-address{color:#fff;font-size:12px;font-weight:700;letter-spacing:0.2px}
 
 /* ===== BANNER ===== */
 .banner{padding:0;margin:0}
