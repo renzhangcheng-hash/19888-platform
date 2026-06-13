@@ -425,11 +425,8 @@
   function teamLogoImg(name, size) {
     var s = size || 50;
     var safeName = sanitize(name);
-    var slug = safeName.replace(/[^a-zA-Z\u4e00-\u9fff]/g, '_').toLowerCase();
-    var enc = encodeURIComponent(name);
     var f = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="50" fill="#F0E8E0"/><text x="50" y="60" text-anchor="middle" font-size="32" fill="#FF6B35" font-family="Arial" font-weight="bold">' + safeName.charAt(0) + '</text></svg>');
-    // <picture> with no type attr → browser tries each URL, falls through on 404
-    return '<picture><source srcset="img/teams/' + enc + '.svg"><source srcset="img/teams/' + enc + '.png"><source srcset="img/teams/' + enc + '.webp"><img src="' + f + '" width="' + s + '" height="' + s + '" style="border-radius:50%;object-fit:contain;background:#F0E8E0;flex-shrink:0" alt="' + safeName + '" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=\'' + f + '\'"></picture>';
+    return '<img src="img/teams/' + encodeURIComponent(name) + '.png" width="' + s + '" height="' + s + '" style="border-radius:50%;object-fit:contain;background:#F0E8E0;flex-shrink:0" alt="' + safeName + '" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=\'' + f + '\'">';
   }
 
   // ===== MATCH CARD (lucky944 DOM — enhanced with odds) =====
