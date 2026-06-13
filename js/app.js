@@ -3071,19 +3071,39 @@
     var banner = null;
     function createBanner() {
       banner = document.createElement('div');
-      banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#e53935;color:#fff;text-align:center;padding:8px;font-size:13px;transform:translateY(-100%);transition:transform 0.3s';
-      banner.textContent = '网络已断开 - 部分功能不可用';
+      banner.id = 'offline-banner';
+      banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:linear-gradient(135deg,#e53935,#c62828);color:#fff;text-align:center;padding:8px 16px;font-size:13px;font-weight:600;transform:translateY(-100%);transition:transform 0.3s;display:flex;align-items:center;justify-content:center;gap:10px';
+      banner.innerHTML = '<span>⚠️ 网络已断开 - 部分功能不可用</span><button onclick="app.retryConnection()" style="background:#fff;color:#e53935;border:none;padding:3px 10px;border-radius:4px;font-size:11px;cursor:pointer;font-weight:700">🔄 重试</button>';
       document.body.appendChild(banner);
     }
-    window.addEventListener('online', function() {
-      if (banner) banner.style.transform = 'translateY(-100%)';
-      renderMatchCards();
-    });
-    window.addEventListener('offline', function() {
+    function showBanner() {
       if (!banner) createBanner();
       banner.style.transform = 'translateY(0)';
+      // Auto-retry every 15s
+      if (banner._retryTimer) clearInterval(banner._retryTimer);
+      banner._retryTimer = setInterval(function() {
+        if (navigator.onLine) {
+          banner.style.transform = 'translateY(-100%)';
+          clearInterval(banner._retryTimer);
+          app.renderMatchCards();
+        }
+      }, 15000);
+    }
+    function hideBanner() {
+      if (banner) {
+        banner.style.transform = 'translateY(-100%)';
+        if (banner._retryTimer) clearInterval(banner._retryTimer);
+      }
+    }
+    window.addEventListener('online', function() {
+      hideBanner();
+      window.app.renderMatchCards();
     });
-    if (!navigator.onLine && !banner) { createBanner(); banner.style.transform = 'translateY(0)'; }
+    window.addEventListener('offline', showBanner);
+    // Check on init
+    setTimeout(function() {
+      if (!navigator.onLine) showBanner();
+    }, 3000);
   })();
 
   // Event delegation: match card clicks (data-match-id)
