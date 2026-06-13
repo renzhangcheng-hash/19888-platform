@@ -2619,14 +2619,34 @@
   }
 
   // ===== LANGUAGE =====
+  const i18n = {
+    cn: { home:'首页', ai:'AI预测', matches:'赛事', market:'行情', profile:'我的','推荐赛事':'推荐赛事','冠亚预测':'冠亚预测','关于我们':'关于我们','更多 »':'更多 »','服务条款':'服务条款','隐私政策':'隐私政策','确认投注':'确认投注','充值':'充值','提现':'提现','邀请好友':'邀请好友' },
+    en: { home:'Home', ai:'AI Picks', matches:'Matches', market:'Market', profile:'Me','推荐赛事':'Recommended','冠亚预测':'Champion','关于我们':'About','更多 »':'More »','服务条款':'Terms','隐私政策':'Privacy','确认投注':'Place Bet','充值':'Deposit','提现':'Withdraw','邀请好友':'Invite' },
+    vn: { home:'Trang chủ', ai:'AI', matches:'Trận đấu', market:'Thị trường', profile:'Tôi','推荐赛事':'Đề xuất','冠亚预测':'Vô địch','关于我们':'Giới thiệu' },
+    jp: { home:'ホーム', ai:'AI予測', matches:'試合', market:'マーケット', profile:'マイ','推荐赛事':'おすすめ','冠亚预测':'優勝予想','关于我们':'概要' },
+    kr: { home:'홈', ai:'AI예측', matches:'경기', market:'시장', profile:'내정보','推荐赛事':'추천','冠亚预测':'우승예측','关于我们':'소개' },
+    cntw: { home:'首頁', ai:'AI預測', matches:'賽事', market:'行情', profile:'我的','推荐赛事':'推薦賽事','冠亚预测':'冠亞預測','关于我们':'關於我們' }
+  };
+
   function setLanguage(langCode) {
     lang = langCode;
     try { localStorage.setItem('19888_lang', langCode); } catch(e) {}
+    // Update modal selection
     document.querySelectorAll('.global-lang-option').forEach(function(o) {
       o.classList.toggle('selected', o.getAttribute('data-lang') === langCode);
     });
     var modal = document.getElementById('globalLangModal');
     if (modal) modal.classList.remove('active');
+    // Translate bottom nav and top tabs
+    var dict = i18n[langCode] || i18n.cn;
+    document.querySelectorAll('[data-i18n]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n');
+      if (dict[key]) el.textContent = dict[key];
+    });
+    // Update flag icon hint
+    var flags = { cn:'CN', en:'EN', vn:'VN', jp:'JP', kr:'KR', cntw:'TW' };
+    var btn = document.querySelector('.global-lang-switch-btn');
+    if (btn) btn.setAttribute('title', 'Language: ' + (flags[langCode] || langCode.toUpperCase()));
   }
 
   // ===== OPPORTUNISTIC TOUCH FEEDBACK =====
@@ -2974,22 +2994,10 @@
         if (m) m.classList.remove('active');
       });
     }
+    // Language options — single handler via setLanguage
     document.querySelectorAll('.global-lang-option').forEach(function(opt) {
       opt.addEventListener('click', function() {
         setLanguage(this.getAttribute('data-lang'));
-      });
-    });
-
-    // Language options click
-    document.querySelectorAll('.global-lang-option').forEach(function(opt) {
-      opt.addEventListener('click', function() {
-        var l = this.getAttribute('data-lang');
-        lang = l;
-        try { localStorage.setItem('current_lang', l); } catch(e) {}
-        document.querySelectorAll('.global-lang-option').forEach(function(o) { o.classList.remove('selected'); });
-        this.classList.add('selected');
-        var m = document.getElementById('globalLangModal');
-        if (m) m.classList.remove('active');
       });
     });
 
@@ -3049,12 +3057,9 @@
 
     // Restore saved language
     try {
-      var savedLang = localStorage.getItem('19888_lang') || localStorage.getItem('current_lang');
+      var savedLang = localStorage.getItem('19888_lang');
       if (savedLang) {
-        lang = savedLang;
-        document.querySelectorAll('.global-lang-option').forEach(function(o) {
-          o.classList.toggle('selected', o.getAttribute('data-lang') === savedLang);
-        });
+        setLanguage(savedLang);
       }
     } catch(e) {}
 
