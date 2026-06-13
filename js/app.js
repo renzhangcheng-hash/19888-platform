@@ -2631,9 +2631,13 @@
   function setLanguage(langCode) {
     lang = langCode;
     try { localStorage.setItem('19888_lang', langCode); } catch(e) {}
-    // Update modal selection
+    // Update modal selection (if exists)
     document.querySelectorAll('.global-lang-option').forEach(function(o) {
       o.classList.toggle('selected', o.getAttribute('data-lang') === langCode);
+    });
+    // Update language bar
+    document.querySelectorAll('.lang-item').forEach(function(o) {
+      o.classList.toggle('active', o.getAttribute('data-lang') === langCode);
     });
     var modal = document.getElementById('globalLangModal');
     if (modal) modal.classList.remove('active');
@@ -2643,10 +2647,6 @@
       var key = el.getAttribute('data-i18n');
       if (dict[key]) el.textContent = dict[key];
     });
-    // Update flag icon hint
-    var flags = { cn:'CN', en:'EN', vn:'VN', jp:'JP', kr:'KR', cntw:'TW' };
-    var btn = document.querySelector('.global-lang-switch-btn');
-    if (btn) btn.setAttribute('title', 'Language: ' + (flags[langCode] || langCode.toUpperCase()));
   }
 
   // ===== OPPORTUNISTIC TOUCH FEEDBACK =====
@@ -2977,29 +2977,6 @@
         if (e.target === inviteModal) hideInviteModal();
       });
     }
-
-    // Language modal — use querySelector for class-based element
-    var langBtn = document.querySelector('.global-lang-switch-btn');
-    if (langBtn) {
-      langBtn.addEventListener('click', function(e) {
-        e.preventDefault(); e.stopPropagation();
-        var m = document.getElementById('globalLangModal');
-        if (m) m.classList.add('active');
-      });
-    }
-    var langMask = document.getElementById('globalLangModalMask');
-    if (langMask) {
-      langMask.addEventListener('click', function() {
-        var m = document.getElementById('globalLangModal');
-        if (m) m.classList.remove('active');
-      });
-    }
-    // Language options — single handler via setLanguage
-    document.querySelectorAll('.global-lang-option').forEach(function(opt) {
-      opt.addEventListener('click', function() {
-        setLanguage(this.getAttribute('data-lang'));
-      });
-    });
 
     // Bottom nav click handlers
     var footerLinks = document.querySelectorAll('.footer .ul-tabbar li a');

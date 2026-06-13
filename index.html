@@ -19,22 +19,6 @@
 </head>
 <body class="index">
 
-<!-- 语言切换弹窗 -->
-<div class="global-lang-modal" id="globalLangModal">
-    <div class="global-lang-modal-mask" id="globalLangModalMask"></div>
-    <div class="global-lang-modal-content">
-        <div class="global-lang-modal-header">Language</div>
-        <div class="global-lang-modal-body">
-            <div class="global-lang-option" data-lang="en">English</div>
-            <div class="global-lang-option" data-lang="vn">Tiếng Việt</div>
-            <div class="global-lang-option" data-lang="kr">한국어</div>
-            <div class="global-lang-option" data-lang="jp">日本語</div>
-            <div class="global-lang-option" data-lang="cntw">繁体中文</div>
-            <div class="global-lang-option" data-lang="cn">简体中文</div>
-        </div>
-    </div>
-</div>
-
 <!-- 自定义确认对话框 -->
 <div class="custom-confirm-overlay" id="customConfirmOverlay" style="display:none"></div>
 <div class="custom-confirm" id="customConfirm" style="display:none">
@@ -145,10 +129,19 @@
   </div>
 </div>
 
+<!-- 语言栏 -->
+<div class="lang-bar" id="langBar">
+  <span class="lang-item active" data-lang="cn" onclick="app.setLanguage('cn')">简中</span>
+  <span class="lang-item" data-lang="en" onclick="app.setLanguage('en')">EN</span>
+  <span class="lang-item" data-lang="vn" onclick="app.setLanguage('vn')">VI</span>
+  <span class="lang-item" data-lang="jp" onclick="app.setLanguage('jp')">日</span>
+  <span class="lang-item" data-lang="kr" onclick="app.setLanguage('kr')">한</span>
+  <span class="lang-item" data-lang="cntw" onclick="app.setLanguage('cntw')">繁</span>
+</div>
+
 <!-- 头部 -->
 <div class="header">
     <div class="wp">
-        <span class="global-lang-switch-btn"><img src="img/lang.svg" alt="Language" width="22" height="22" loading="eager" decoding="async"></span>
         <div class="logo">
             <img src="img/logo.svg" alt="19888" width="120" height="36" loading="eager" decoding="async">
         </div>
