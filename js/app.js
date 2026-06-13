@@ -67,6 +67,7 @@
     if (banner) banner.style.display = 'none';
     // Reload current page data
     if (currentPage === 'home') renderMatchCards();
+    if (currentPage === 'ai') renderAIPage();
     if (currentPage === 'matches') navigateTo('matches');
     if (currentPage === 'records') renderRecords();
     if (currentPage === 'profile') renderProfile();
@@ -501,15 +502,15 @@
   }
 
   // ===== NAVIGATION =====
-  var tabPageMap = { 'home': 0, 'matches': 1, 'market': 2, 'profile': 3, 'transactions': 3, 'docs': -1, 'fiat': -1 };
-  var tabNames = ['home', 'matches', 'market', 'profile'];
+  var tabPageMap = { 'home': 0, 'ai': 1, 'matches': 2, 'market': 3, 'profile': 4, 'transactions': 4, 'docs': -1, 'fiat': -1 };
+  var tabNames = ['home', 'ai', 'matches', 'market', 'profile'];
 
   function navigateTo(page) {
     if (currentPage === page) return;
     currentPage = page;
 
     // Update page title
-    var titles = { home:'首页', matches:'赛事列表', market:'行情', profile:'我的', records:'投注记录', transactions:'交易流水', detail:'赛事详情', about:'关于我们' };
+    var titles = { home:'首页', ai:'AI预测', matches:'赛事列表', market:'行情', profile:'我的', records:'投注记录', transactions:'交易流水', detail:'赛事详情', about:'关于我们' };
     document.title = '19888 | ' + (titles[page] || page);
 
     // Auto-refresh management
@@ -577,6 +578,7 @@
     if (page === 'matches') renderMatchesPage();
     if (page === 'records') renderRecords();
     if (page === 'profile') renderProfile();
+    if (page === 'ai') renderAIPage();
     if (page === 'transactions') renderTransactions();
     if (page === 'market') renderMarketPage();
     if (page === 'docs') renderAPIDocs();
@@ -2618,12 +2620,12 @@
 
   // ===== LANGUAGE =====
   const i18n = {
-    cn: { home:'首页', matches:'赛事', market:'行情', profile:'我的','推荐赛事':'推荐赛事','冠亚预测':'冠亚预测','关于我们':'关于我们','更多 »':'更多 »','服务条款':'服务条款','隐私政策':'隐私政策','确认投注':'确认投注','充值':'充值','提现':'提现','邀请好友':'邀请好友' },
-    en: { home:'Home', matches:'Matches', market:'Market', profile:'Me','推荐赛事':'Recommended','冠亚预测':'Champion','关于我们':'About','更多 »':'More »','服务条款':'Terms','隐私政策':'Privacy','确认投注':'Place Bet','充值':'Deposit','提现':'Withdraw','邀请好友':'Invite' },
-    vn: { home:'Trang chủ', matches:'Trận đấu', market:'Thị trường', profile:'Tôi','推荐赛事':'Đề xuất','冠亚预测':'Vô địch','关于我们':'Giới thiệu' },
-    jp: { home:'ホーム', matches:'試合', market:'マーケット', profile:'マイ','推荐赛事':'おすすめ','冠亚预测':'優勝予想','关于我们':'概要' },
-    kr: { home:'홈', matches:'경기', market:'시장', profile:'내정보','推荐赛事':'추천','冠亚预测':'우승예측','关于我们':'소개' },
-    cntw: { home:'首頁', matches:'賽事', market:'行情', profile:'我的','推荐赛事':'推薦賽事','冠亚预测':'冠亞預測','关于我们':'關於我們' }
+    cn: { home:'首页', ai:'AI预测', matches:'赛事', market:'行情', profile:'我的','推荐赛事':'推荐赛事','冠亚预测':'冠亚预测','关于我们':'关于我们','更多 »':'更多 »','服务条款':'服务条款','隐私政策':'隐私政策','确认投注':'确认投注','充值':'充值','提现':'提现','邀请好友':'邀请好友' },
+    en: { home:'Home', ai:'AI Picks', matches:'Matches', market:'Market', profile:'Me','推荐赛事':'Recommended','冠亚预测':'Champion','关于我们':'About','更多 »':'More »','服务条款':'Terms','隐私政策':'Privacy','确认投注':'Place Bet','充值':'Deposit','提现':'Withdraw','邀请好友':'Invite' },
+    vn: { home:'Trang chủ', ai:'AI', matches:'Trận đấu', market:'Thị trường', profile:'Tôi','推荐赛事':'Đề xuất','冠亚预测':'Vô địch','关于我们':'Giới thiệu' },
+    jp: { home:'ホーム', ai:'AI予測', matches:'試合', market:'マーケット', profile:'マイ','推荐赛事':'おすすめ','冠亚预测':'優勝予想','关于我们':'概要' },
+    kr: { home:'홈', ai:'AI예측', matches:'경기', market:'시장', profile:'내정보','推荐赛事':'추천','冠亚预测':'우승예측','关于我们':'소개' },
+    cntw: { home:'首頁', ai:'AI預測', matches:'賽事', market:'行情', profile:'我的','推荐赛事':'推薦賽事','冠亚预测':'冠亞預測','关于我们':'關於我們' }
   };
 
   function setLanguage(langCode) {
