@@ -256,11 +256,13 @@
       }
 
       showToast('钱包已连接: ' + walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4));
-      // Update UI: hide label, show address
+      // Update UI: hide label, show address + balance bar
       var label = document.querySelector('.wallet-label');
       var addr = document.getElementById('walletAddress');
+      var balBar = document.getElementById('topBalanceBar');
       if (label) label.style.display = 'none';
       if (addr) addr.textContent = walletAddress.slice(0, 4) + '...' + walletAddress.slice(-4);
+      if (balBar) balBar.style.display = 'flex';
       showGasTip();  // Remind about BNB gas
 
       // Sync with backend (await it)
@@ -287,7 +289,9 @@
         if (balRes && balRes.code === 0 && balRes.data) {
           userBalance = balRes.data.available || 0;
           var usdtEl = document.getElementById('profileUSDTBalance');
+          var topEl = document.getElementById('topUSDTBal');
           if (usdtEl) usdtEl.textContent = Number(balRes.data.available || 0).toFixed(2) + ' USDT';
+          if (topEl) topEl.textContent = Number(balRes.data.available || 0).toFixed(2);
         }
       } catch(e) {}
     }
@@ -403,11 +407,13 @@
     if (typeof dapp !== 'undefined') dapp.disconnect();
     walletAddress = null;
     walletProvider = null;
-    // Restore label
+    // Restore label, hide balance bar
     var label = document.querySelector('.wallet-label');
     var addr = document.getElementById('walletAddress');
+    var balBar = document.getElementById('topBalanceBar');
     if (label) label.style.display = '';
     if (addr) addr.textContent = '';
+    if (balBar) balBar.style.display = 'none';
     showToast('已断开钱包连接');
   }
 

@@ -693,3 +693,11 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 }
 .place-bet-btn:hover{transform:translateY(-1px);box-shadow:0 4px 18px rgba(255,107,53,0.5)}
 .place-bet-btn:active{transform:scale(0.97)}
+
+/* ===== TOP BALANCE BAR ===== */
+.balance-bar{
+  display:flex;justify-content:center;align-items:center;gap:12px;
+  padding:5px 16px;background:#1a1a2e;color:#FFD700;
+  font-size:12px;font-weight:600;
+}
+.balance-bar span{display:flex;align-items:center;gap:4px}
