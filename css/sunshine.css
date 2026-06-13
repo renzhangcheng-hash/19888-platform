@@ -786,3 +786,14 @@ input:focus, select:focus, textarea:focus{
 
 /* ===== TEAMS GRID (champion) ===== */
 #teamsGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;padding:8px 0}
+
+/* ===== FOOTER LINKS BAR ===== */
+.footer-links-bar{
+  position:fixed;bottom:56px;left:0;right:0;z-index:49;
+  display:flex;justify-content:center;align-items:center;gap:4px;
+  padding:4px 12px;background:var(--surface);
+  border-top:1px solid var(--border);font-size:10px;
+}
+.footer-links-bar a{color:var(--text-muted);text-decoration:none;transition:color .15s}
+.footer-links-bar a:hover{color:var(--accent)}
+.footer-links-bar span{color:var(--border)}
