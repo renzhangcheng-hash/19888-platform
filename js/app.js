@@ -604,13 +604,19 @@
     var tabCons = document.querySelectorAll('.slick_tab .tab_con');
     var topTabs = document.querySelectorAll('.slick_tab_btn .ul-tabs_b1 li');
     for (var i = 0; i < tabCons.length; i++) {
-      tabCons[i].classList.toggle('active', i === idx);
-      tabCons[i].style.display = '';
+      if (i === idx) {
+        tabCons[i].classList.add('active');
+        tabCons[i].style.display = '';
+      } else {
+        tabCons[i].classList.remove('active');
+        tabCons[i].style.display = 'none';
+      }
     }
     for (var j = 0; j < topTabs.length; j++) {
       topTabs[j].classList.toggle('on', j === idx);
     }
     if (idx === 1) renderChampionBet();
+    if (idx === 2) renderAboutPage();
   }
 
   // ===== PAGE: HOME - Matches =====
@@ -676,6 +682,22 @@
         '</div>' +
       '</div>';
     }).join('');
+  }
+
+  function renderAboutPage() {
+    var el = document.querySelector('#page-about .platform-intro');
+    if (!el) return;
+    el.innerHTML =
+      '<div style="padding:16px">' +
+        '<div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:12px">🏆 关于 19888</div>' +
+        '<p style="font-size:13px;color:var(--text-light);line-height:1.8;margin-bottom:12px">19888 是一家专业的反波胆竞猜平台，致力于为用户提供安全、公平、透明的体育竞猜体验。平台由 Winsupreme Technology Limitada 拥有并营运，依据哥斯大黎加法律设立，为有限责任公司。</p>' +
+        '<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px">🤖 AI 技术</div>' +
+        '<p style="font-size:13px;color:var(--text-light);line-height:1.8;margin-bottom:12px">平台基于 5000 万场历史数据进行 AI 深度学习训练，反波胆玩法理论胜率高达 88.89%。采用 Transformer 神经网络架构，实时分析球队状态、伤病、天气等多维数据。</p>' +
+        '<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px">🛡️ 安全合规</div>' +
+        '<p style="font-size:13px;color:var(--text-light);line-height:1.8;margin-bottom:12px">平台持有 Anjouan 合法牌照运营。用户资金由 BSC 链上智能合约托管，定期接受第三方安全审计。所有投注数据链上可查，透明不可篡改。</p>' +
+        '<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px">💬 联系我们</div>' +
+        '<div style="font-size:13px;color:var(--text-light);line-height:1.8">Telegram: <a href="https://t.me/19888official" target="_blank" style="color:var(--accent)">@19888official</a><br>Email: support@19888.asia<br>合约审计: BscScan 已验证</div>' +
+      '</div>';
   }
 
   // ===== PAGE: MATCHES (grouped by league) =====
@@ -2911,6 +2933,7 @@
     renderMatchCards: renderMatchCards,
     loadMoreMatches: loadMoreMatches,
     renderChampionBet: renderChampionBet,
+    renderAboutPage: renderAboutPage,
     openBetDialog: showBetDialog,
     // Deposit / Withdraw
     showDepositModal: showDepositModal,
