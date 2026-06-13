@@ -42,3 +42,4 @@
 2026-06-13T01:33:44Z INF precheck component="TCP Connectivity" details="HTTP/2 connection successful" run_id=da63134c-2a43-464b-a5da-e3c008ee5161 status=pass target=region2.v2.argotunnel.com
 2026-06-13T01:33:44Z INF precheck component="Cloudflare API" details="API is reachable" run_id=da63134c-2a43-464b-a5da-e3c008ee5161 status=pass target=api.cloudflare.com:443
 2026-06-13T01:33:44Z INF precheck complete hard_fail=false run_id=da63134c-2a43-464b-a5da-e3c008ee5161 suggested_protocol=quic
+2026-06-13T03:18:47Z ERR Failed to refresh DNS local resolver error="lookup region1.v2.argotunnel.com: i/o timeout"

@@ -426,9 +426,10 @@
     var s = size || 50;
     var safeName = sanitize(name);
     var slug = safeName.replace(/[^a-zA-Z\u4e00-\u9fff]/g, '_').toLowerCase();
-    var fallback = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="50" fill="#F0E8E0"/><text x="50" y="60" text-anchor="middle" font-size="32" fill="#FF6B35" font-family="Arial" font-weight="bold">' + safeName.charAt(0) + '</text></svg>');
-    var src = 'img/teams/' + encodeURIComponent(name) + '.png';
-    return '<img src="' + src + '" width="' + s + '" height="' + s + '" style="border-radius:50%;object-fit:contain;background:#F0E8E0;flex-shrink:0" alt="' + safeName + '" loading="lazy" decoding="async" onerror="var t=this,b=t.src.split(\'.\'),ext=b.pop(),d=b.join(\'.\');if(ext==\'png\'){var si=new Image();si.onload=function(){t.src=this.src};si.onerror=function(){t.src=d+\'.webp\'};si.src=d+\'.svg\'}else if(ext==\'svg\'){var wi=new Image();wi.onload=function(){t.src=this.src};wi.onerror=function(){t.onerror=null;t.src=\'' + fallback + '\'};wi.src=d+\'.webp\'}else{t.onerror=null;t.src=\'' + fallback + '\'}">';
+    var enc = encodeURIComponent(name);
+    var f = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="50" fill="#F0E8E0"/><text x="50" y="60" text-anchor="middle" font-size="32" fill="#FF6B35" font-family="Arial" font-weight="bold">' + safeName.charAt(0) + '</text></svg>');
+    // <picture> native format fallback: .svg → .png → .webp → text SVG
+    return '<picture><source srcset="img/teams/' + enc + '.svg" type="image/svg+xml"><source srcset="img/teams/' + enc + '.png" type="image/png"><source srcset="img/teams/' + enc + '.webp" type="image/webp"><img src="' + f + '" width="' + s + '" height="' + s + '" style="border-radius:50%;object-fit:contain;background:#F0E8E0;flex-shrink:0" alt="' + safeName + '" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=\'' + f + '\'"></picture>';
   }
 
   // ===== MATCH CARD (lucky944 DOM — enhanced with odds) =====
