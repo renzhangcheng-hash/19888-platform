@@ -256,6 +256,11 @@
       }
 
       showToast('钱包已连接: ' + walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4));
+      // Update UI: hide label, show address
+      var label = document.querySelector('.wallet-label');
+      var addr = document.getElementById('walletAddress');
+      if (label) label.style.display = 'none';
+      if (addr) addr.textContent = walletAddress.slice(0, 4) + '...' + walletAddress.slice(-4);
       showGasTip();  // Remind about BNB gas
 
       // Sync with backend (await it)
@@ -398,6 +403,11 @@
     if (typeof dapp !== 'undefined') dapp.disconnect();
     walletAddress = null;
     walletProvider = null;
+    // Restore label
+    var label = document.querySelector('.wallet-label');
+    var addr = document.getElementById('walletAddress');
+    if (label) label.style.display = '';
+    if (addr) addr.textContent = '';
     showToast('已断开钱包连接');
   }
 
