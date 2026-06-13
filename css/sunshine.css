@@ -157,9 +157,25 @@ body.index .header .global-lang-switch-btn{
 .ul-info li:nth-child(even) .con{background:var(--surface) !important}
 .ul-info li .con:hover{border-color:var(--accent);box-shadow:var(--shadow)}
 .ul-info li::before,.ul-info li::after{display:none}
-.ul-info li .league-name{background:rgba(255,107,53,0.04);border-radius:0 0 8px 8px;margin:-12px auto 10px auto}
+.ul-info li .league-name{
+  background:linear-gradient(135deg,var(--accent-glow),var(--bg));
+  border-radius:0 0 8px 8px;margin:0 auto 8px auto;
+  padding:6px 16px;text-align:center;border-top:1px solid var(--border)
+}
 .ul-info li .league-name::before,.ul-info li .league-name::after{display:none}
-.ul-info li .league-name .p1{color:var(--accent);text-shadow:none;font-size:11px}
+.ul-info li .league-name .p1{
+  color:var(--accent);font-size:12px;font-weight:600;letter-spacing:.5px;
+  text-transform:uppercase
+}
+/* League group header (match list page) */
+.league-group-header .con{
+  padding:10px 12px !important;text-align:center
+}
+.league-group-header .con span{
+  display:inline-block;padding:6px 20px;font-size:12px;font-weight:600;
+  color:var(--accent);background:var(--accent-glow);
+  border-radius:16px;cursor:default;letter-spacing:.5px
+}
 .ul-info li .team-logo{background:var(--bg);border:1px solid var(--border)}
 .ul-info li .team-name{color:var(--text);font-size:13px}
 .ul-info li .match-time .time{color:#2D2D2D}

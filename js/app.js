@@ -760,7 +760,7 @@
       var keys = Object.keys(groups).sort();
       var html = '';
       keys.forEach(function(k) {
-        if (html) html += '<li class="league-group-header"><div class="con" style="padding:6px 12px;text-align:center"><span class="load-more-btn" style="cursor:default;padding:6px 16px;font-size:12px">' + sanitize(k) + '</span></div></li>';
+        if (html) html += '<li class="league-group-header"><div class="con" style="padding:10px 12px;text-align:center"><span>' + sanitize(k) + '</span></div></li>';
         groups[k].forEach(function(m) {
           html += matchesPageCardHTML(m);
         });
