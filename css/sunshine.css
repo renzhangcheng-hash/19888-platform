@@ -45,7 +45,7 @@ body{
 }
 body::before{display:none}
 body.index{padding-top:0}
-a{text-decoration:none;color:#FF6B35;transition:color .3s ease}
+a{text-decoration:none;color:var(--accent);transition:color .2s ease}
 a:hover{color:#E55A2B}
 img{max-width:100%}
 .wp{padding:0 12px;background:transparent}
@@ -706,3 +706,85 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .partners-grid-dark[style*="fixed"]{display:flex;justify-content:center;gap:12px;overflow:hidden}
 /* spacer to prevent content overlap */
 .main > .wp:last-child{padding-bottom:96px}
+
+/* ============================================================
+   UI OPTIMIZATION PASS — 2026-06-13
+   ============================================================ */
+
+/* Smooth scrolling + selection */
+html{scroll-behavior:smooth}
+::selection{background:var(--accent);color:#fff}
+::placeholder{color:var(--text-muted);opacity:1}
+
+/* Consistent focus ring */
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+button:focus-visible:not(:active){outline-offset:2px}
+
+/* Card uniformity */
+.card, .dialog-box, .team-card, .champion-bet-section .team-card,
+.profile-header, .balance-card, .pnl-card, .recent-bets-section{
+  background:var(--surface);border-radius:12px;
+  box-shadow:var(--shadow-sm);overflow:hidden
+}
+
+/* Button system */
+button, .btn{
+  font-family:inherit;cursor:pointer;border:none;border-radius:8px;
+  font-weight:600;transition:transform .15s,box-shadow .15s,background .2s;
+  -webkit-tap-highlight-color:transparent
+}
+button:active{transform:scale(0.97)}
+button:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+
+/* Input uniformity */
+input, select, textarea{
+  font-family:inherit;font-size:14px;border:1px solid var(--border);
+  border-radius:8px;padding:10px 12px;background:var(--surface);
+  color:var(--text);transition:border-color .15s;width:100%
+}
+input:focus, select:focus, textarea:focus{
+  border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-ring)
+}
+
+/* Touch target minimum */
+.touch-target, .quick-amount, .bet-btn, .score-cell,
+.action-btn, .menu-item, .filter-btn, .bottom-nav a{
+  min-height:44px;min-width:44px;display:flex;align-items:center;justify-content:center
+}
+
+/* Skeleton shimmer uniformity */
+@keyframes shimmer{
+  from{background-position:-200% 0}to{background-position:200% 0}
+}
+.skeleton-row, .skeleton-card{
+  height:80px;border-radius:10px;
+  background:linear-gradient(90deg,var(--surface) 25%,var(--border) 37%,var(--surface) 63%);
+  background-size:200% 100%;animation:shimmer 1.5s ease infinite
+}
+
+/* Empty state */
+.empty-state{
+  text-align:center;padding:40px 20px;color:var(--text-muted)
+}
+.empty-state .empty-icon{font-size:48px;margin-bottom:12px}
+.empty-state .empty-text{font-size:13px;line-height:1.6}
+
+/* ===== CHAMPION BET TEAM CARDS ===== */
+.champion-bet-section .team-card{
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  padding:16px 10px;text-align:center;min-width:120px
+}
+.team-card .team-logo{margin-bottom:4px}
+.team-card .team-name{font-size:13px;font-weight:600;color:var(--text)}
+.team-card .odds-group{display:flex;gap:8px;width:100%}
+.team-card .odds-item{flex:1;text-align:center;padding:4px 0}
+.team-card .odds-label{font-size:10px;color:var(--text-muted);display:block}
+.team-card .odds-value{font-size:16px;font-weight:700;color:var(--accent)}
+.team-card .bet-buttons{display:flex;gap:4px;width:100%}
+.team-card .bet-btn{flex:1;padding:6px 4px;font-size:11px;font-weight:700;border-radius:6px}
+.team-card .bet-btn.bet-champion{background:linear-gradient(135deg,var(--gold),#FFC107);color:#fff}
+.team-card .bet-btn.bet-runner-up{background:var(--surface);color:var(--accent);border:1px solid var(--accent)}
+.team-card .bet-btn:hover{opacity:0.9}
+
+/* ===== TEAMS GRID (champion) ===== */
+#teamsGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;padding:8px 0}
