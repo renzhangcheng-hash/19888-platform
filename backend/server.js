@@ -55,9 +55,9 @@ const JWT_EXPIRY = process.env.JWT_EXPIRY || '24h';
 const RPC_URL = process.env.RPC_URL || 'https://bsc-dataseed.binance.org';
 // BSC Mainnet — deployed 2026-06-13
 const CONTRACT_ADDRESSES = {
-  LUCKY_POOL: process.env.CONTRACT_ADDRESSES.LUCKY_POOL || '0x07Dbf04Db72Ebd0D6a9488cC90934B046C2092e2',
-  CHAMPION_BET: process.env.CONTRACT_ADDRESSES.CHAMPION_BET || '0xeBF0EcF53c420C3cA85e20f51e13eb5C51BfCF3a',
-  ANTI_SCORE_BET: process.env.CONTRACT_ADDRESSES.ANTI_SCORE_BET || '0xc7aE31441B72D40F7EAc9AFBc6adC30D8692caEd',
+  LUCKY_POOL: (process.env.CONTRACT_ADDRESSES && JSON.parse(process.env.CONTRACT_ADDRESSES).LUCKY_POOL) || '0x07Dbf04Db72Ebd0D6a9488cC90934B046C2092e2',
+  CHAMPION_BET: (process.env.CONTRACT_ADDRESSES && JSON.parse(process.env.CONTRACT_ADDRESSES).CHAMPION_BET) || '0xeBF0EcF53c420C3cA85e20f51e13eb5C51BfCF3a',
+  ANTI_SCORE_BET: (process.env.CONTRACT_ADDRESSES && JSON.parse(process.env.CONTRACT_ADDRESSES).ANTI_SCORE_BET) || '0xc7aE31441B72D40F7EAc9AFBc6adC30D8692caEd',
   SCORE_BET: process.env.SCORE_BET_ADDRESS || '0xc64E68996b39de6a09A572d35f144Ff5ae891457',
   USDT: process.env.USDT_ADDRESS || '0x55d398326f99059fF775485246999027B3197955',
   CHAIN_ID: parseInt(process.env.CHAIN_ID || '56'),
@@ -2803,7 +2803,6 @@ const io = socketIo(server, {
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
       if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
-      if (ALLOWED_ORIGIN_SUFFIXES.some(s => origin.endsWith(s))) return callback(null, true);
       callback(null, false);
     },
     methods: ['GET', 'POST'],
