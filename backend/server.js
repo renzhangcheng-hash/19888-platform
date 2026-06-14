@@ -52,10 +52,16 @@ if (!JWT_SECRET) {
 const JWT_EXPIRY = process.env.JWT_EXPIRY || '24h';
 
 // ── Sepolia RPC for on-chain verification ───────
-const RPC_URL = process.env.RPC_URL || 'https://ethereum-sepolia-rpc.publicnode.com';
-const LUCKY_POOL_ADDRESS = (process.env.LUCKY_POOL_ADDRESS || '0x02fda9c22d6f8733bA507Ed1019d67571626e9DA').toLowerCase();
-const CHAMPION_BET_ADDRESS = (process.env.CHAMPION_BET_ADDRESS || '0x938246dee823cEFe5574E4d195EfAD0467b2ED71').toLowerCase();
-const ANTI_SCORE_BET_ADDRESS = (process.env.ANTI_SCORE_BET_ADDRESS || '0x865C5C27c75eFE75a18EBC0B51F2CA0aEb6597aD').toLowerCase();
+const RPC_URL = process.env.RPC_URL || 'https://bsc-dataseed.binance.org';
+// BSC Mainnet — deployed 2026-06-13
+const CONTRACT_ADDRESSES = {
+  LUCKY_POOL: process.env.CONTRACT_ADDRESSES.LUCKY_POOL || '0x07Dbf04Db72Ebd0D6a9488cC90934B046C2092e2',
+  CHAMPION_BET: process.env.CONTRACT_ADDRESSES.CHAMPION_BET || '0xeBF0EcF53c420C3cA85e20f51e13eb5C51BfCF3a',
+  ANTI_SCORE_BET: process.env.CONTRACT_ADDRESSES.ANTI_SCORE_BET || '0xc7aE31441B72D40F7EAc9AFBc6adC30D8692caEd',
+  SCORE_BET: process.env.SCORE_BET_ADDRESS || '0xc64E68996b39de6a09A572d35f144Ff5ae891457',
+  USDT: process.env.USDT_ADDRESS || '0x55d398326f99059fF775485246999027B3197955',
+  CHAIN_ID: parseInt(process.env.CHAIN_ID || '56'),
+};
 
 // Lazy ethers provider (created on first use)
 let _provider = null;
@@ -1158,7 +1164,7 @@ app.post('/api/champion-bet/place', riskCheck, asyncHandler(async (req, res) => 
   if (tx_hash && typeof tx_hash === 'string' && tx_hash.trim().length > 0) {
     const txHash = tx_hash.trim();
     const amountWei = ethers.parseUnits(amt.toFixed(18), 18);
-    const verification = await verifyOnChainTx(txHash, addr, CHAMPION_BET_ADDRESS, amountWei);
+    const verification = await verifyOnChainTx(txHash, addr, CONTRACT_ADDRESSES.CHAMPION_BET, amountWei);
     if (!verification.valid) {
       console.error(`[ChampionBet] On-chain verify failed: addr=${addr} tx=${txHash}`, verification.reason);
       return res.status(400).json({ code:1, msg:`链上交易验证失败: ${verification.reason}` });
@@ -1247,7 +1253,7 @@ app.post('/api/bet/confirm', riskCheck, asyncHandler(async (req, res) => {
   // Verify the tx_hash on-chain
   const amtNum = Number(amount || 0);
   const amountWei = ethers.parseUnits(amtNum.toFixed(18), 18);
-  const expectedTo = game_type === 'champion' ? CHAMPION_BET_ADDRESS : ANTI_SCORE_BET_ADDRESS;
+  const expectedTo = game_type === 'champion' ? CONTRACT_ADDRESSES.CHAMPION_BET : CONTRACT_ADDRESSES.ANTI_SCORE_BET;
   const verification = await verifyOnChainTx(txHash, addr, expectedTo, amountWei);
   if (!verification.valid) {
     return res.status(400).json({ code:1, msg:`链上交易验证失败: ${verification.reason}` });
@@ -2206,7 +2212,7 @@ app.post('/api/deposit', asyncHandler(async (req, res) => {
   // --- On-chain verification ---
   // Verify the tx_hash is a real Sepolia transaction to LuckyPool contract
   const amountWei = ethers.parseUnits(amt.toFixed(18), 18);
-  const verification = await verifyOnChainTx(txHash, addr, LUCKY_POOL_ADDRESS, amountWei);
+  const verification = await verifyOnChainTx(txHash, addr, CONTRACT_ADDRESSES.LUCKY_POOL, amountWei);
   if (!verification.valid) {
     console.error(`[Deposit] On-chain verify failed: addr=${addr} tx=${txHash}`, verification.reason);
     // Record failed attempt for audit
