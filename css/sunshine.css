@@ -431,9 +431,9 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,107,53,0.12
 /* ===== PAGE TRANSITIONS ===== */
 .tab_con{display:none;opacity:0;transition:opacity .25s ease}
 .tab_con.show,.tab_con.active{display:block;opacity:1}
-.page{display:none;opacity:0;transition:opacity .25s ease}
-.page.active{display:block;opacity:0;animation:pageFadeIn .3s ease forwards}
-@keyframes pageFadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.page{opacity:0;transition:opacity .2s ease}
+.page.active{opacity:1;animation:pageFadeIn .25s ease}
+@keyframes pageFadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 
 /* ===== SAFE AREA ===== */
 @supports(padding-bottom:env(safe-area-inset-bottom)){
@@ -914,8 +914,6 @@ input:focus, select:focus, textarea:focus{
 .team-name{font-size:13px;font-weight:600;text-align:center;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 /* --- Page transitions --- */
-.page{animation:pageFadeIn .25s ease}
-@keyframes pageFadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 .tab_con.active{animation:tabSlideIn .2s ease}
 @keyframes tabSlideIn{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
 
