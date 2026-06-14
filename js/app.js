@@ -1756,8 +1756,9 @@
     // Try on-chain first via Web3, then confirm via API
     if (typeof dapp !== 'undefined') {
       try {
-        var txHash = await dapp.executeDeposit(amount);
-        if (txHash) {
+        var result = await dapp.executeDeposit(amount);
+        if (result && result.success) {
+          var txHash = result.txHash;
           // Confirm the deposit with backend API
           var confirmRes = await apiFetch('/deposit', {
             method: 'POST',
