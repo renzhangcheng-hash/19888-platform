@@ -2,11 +2,19 @@
   'use strict';
 
   // ===== CONFIG =====
-  const DEFAULT_API_BASE = 'https://cannon-tower-auckland-embedded.trycloudflare.com/api';
+  const DEFAULT_API_BASE = 'https://one9888-api.onrender.com/api';
   function resolveApiBase() {
-    // Priority: localStorage override → same-domain api → default tunnel
+    // Priority: localStorage override → same-domain api → default
     const stored = cacheGet('19888_api_base');
-    if (stored) return stored;
+    if (stored) {
+      // Invalidate stale tunnel URLs
+      if (stored.includes('trycloudflare.com')) {
+        console.log('[19888] Clearing stale tunnel URL from cache');
+        cacheRemove('19888_api_base');
+      } else {
+        return stored;
+      }
+    }
     // On localhost, use relative path
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
       return '/api';
