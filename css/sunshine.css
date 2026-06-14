@@ -1125,3 +1125,10 @@ h1,h2,h3{font-weight:600;letter-spacing:-.02em;line-height:1.2}
 }
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
 [role="button"]{cursor:pointer}
+
+/* ============================================================
+   DAPP UX — Network badge / Tx toast / Wallet hints
+   ============================================================ */
+#networkBadge{backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+#txToast{backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+#txToast a:hover{text-decoration:underline}

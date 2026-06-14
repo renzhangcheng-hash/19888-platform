@@ -462,4 +462,161 @@
     if (withdrawModal) withdrawModal.addEventListener('click', function(e) { if (e.target === withdrawModal) window.dapp.hideWithdrawModal(); });
   });
 
+  // ============================================================
+  // DAPP UX MODULE — Network / Gas / Tx Toast / Mobile Links
+  // ============================================================
+
+  // --- Network detection + auto-prompt ---
+  function checkNetworkOnConnect() {
+    if (!walletAddress || !activeChain) return;
+    var expectedChainId = getConfig().chainId;
+    if (currentChainId !== expectedChainId) {
+      showTxToast({
+        type: 'warning',
+        title: '网络不匹配',
+        msg: '当前连接 ' + (CHAINS.mainnet.chainId === currentChainId ? 'BSC主网' : '其他网络') + '，请切换到BSC主网',
+        action: { text: '切换网络', fn: function() { window.dapp.switchChain('mainnet'); } }
+      });
+    }
+  }
+  window.addEventListener('dapp:chainChanged', checkNetworkOnConnect);
+
+  // --- Transaction Toast (loading→success/failure) ---
+  var txToastTimer = null;
+  function showTxToast(opts) {
+    var el = document.getElementById('txToast');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'txToast';
+      el.style.cssText = 'position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:10000;max-width:340px;width:90%;padding:14px 18px;border-radius:12px;background:var(--surface,#fff);box-shadow:var(--shadow-md);display:flex;align-items:flex-start;gap:12px;font-size:14px;line-height:1.5;transition:transform .25s ease,opacity .25s ease;opacity:0;pointer-events:none';
+      document.body.appendChild(el);
+    }
+    clearTimeout(txToastTimer);
+    var icon = opts.type === 'loading' ? '⏳' : opts.type === 'success' ? '✅' : opts.type === 'error' ? '❌' : '⚠️';
+    var bg = opts.type === 'error' ? '#FEF2F2' : opts.type === 'success' ? '#F0FDF4' : opts.type === 'warning' ? '#FFFBEB' : '#EFF6FF';
+    el.innerHTML = '<span style="font-size:20px;flex-shrink:0">'+icon+'</span><div style="flex:1"><div style="font-weight:600;margin-bottom:2px">'+opts.title+'</div><div style="color:var(--text-light);font-size:13px">'+opts.msg+'</div>'+(opts.link?'<a href="'+opts.link+'" target="_blank" style="color:var(--primary);font-size:12px;font-weight:500">查看交易 ↗</a>':'')+'</div>'+(opts.action?'<button style="flex-shrink:0;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600;border:none;background:var(--primary);color:#fff;cursor:pointer">'+opts.action.text+'</button>':'');
+    el.style.background = bg;
+    el.style.opacity = '0';
+    el.style.transform = 'translateX(-50%) translateY(10px)';
+    el.style.pointerEvents = opts.action ? 'auto' : 'none';
+    if (opts.action) el.querySelector('button').onclick = opts.action.fn;
+    requestAnimationFrame(function() {
+      el.style.opacity = '1';
+      el.style.transform = 'translateX(-50%) translateY(0)';
+    });
+    if (!opts.persist) {
+      txToastTimer = setTimeout(function() {
+        el.style.opacity = '0';
+        el.style.transform = 'translateX(-50%) translateY(10px)';
+      }, opts.duration || 5000);
+    }
+  }
+
+  // --- Transaction wrapper with loading/success/error ---
+  async function withTxToast(promise, opts) {
+    showTxToast({
+      type: 'loading',
+      title: opts.title || '交易确认中',
+      msg: '请在钱包中确认交易...',
+      persist: true
+    });
+    try {
+      var tx = await promise;
+      showTxToast({
+        type: 'loading', title: '交易已提交',
+        msg: '等待区块确认中...',
+        persist: true
+      });
+      var receipt = await tx.wait();
+      var explorerUrl = getConfig().explorer + '/tx/' + tx.hash;
+      showTxToast({
+        type: 'success',
+        title: opts.success || '交易成功',
+        msg: (opts.successMsg || '') + '',
+        link: explorerUrl,
+        duration: 8000
+      });
+      return { success: true, tx: tx, receipt: receipt };
+    } catch (e) {
+      var errMsg = parseTxError(e);
+      showTxToast({
+        type: 'error',
+        title: '交易失败',
+        msg: errMsg,
+        duration: 8000
+      });
+      return { success: false, error: errMsg };
+    }
+  }
+
+  // --- User-friendly error messages ---
+  function parseTxError(e) {
+    var msg = (e.reason || e.message || '').toLowerCase();
+    if (msg.includes('user rejected') || msg.includes('user denied')) return '你在钱包中取消了交易';
+    if (msg.includes('insufficient funds')) return '余额不足，请充值后重试';
+    if (msg.includes('gas required exceeds')) return 'Gas费不足，请确保钱包有足够的BNB';
+    if (msg.includes('nonce too low')) return '交易顺序错误，请刷新页面重试';
+    if (msg.includes('internal json-rpc')) return '网络异常，请检查RPC连接';
+    if (msg.includes('call exception')) return '合约调用失败，请检查参数';
+    return e.reason || e.message || '未知错误';
+  }
+
+  // --- Mobile wallet deep links ---
+  function getMobileWalletDeepLink() {
+    var ua = navigator.userAgent || '';
+    var dappUrl = encodeURIComponent(window.location.origin);
+    if (ua.includes('TokenPocket') || ua.includes('TPWallet')) {
+      return null; // Already in TP Wallet dapp browser
+    }
+    if (ua.includes('TrustWallet') || ua.includes('Trust')) {
+      return 'https://link.trustwallet.com/open_url?coin_id=20000714&url=' + dappUrl;
+    }
+    if (ua.includes('MetaMask') || ua.includes('Mobile')) {
+      return 'https://metamask.app.link/dapp/' + window.location.host;
+    }
+    return null;
+  }
+
+  // --- Network badge (injected by app.js when needed) ---
+  function injectNetworkBadge() {
+    var el = document.getElementById('networkBadge');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'networkBadge';
+      el.style.cssText = 'position:fixed;top:50px;right:12px;z-index:9999;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;pointer-events:none;transition:all .3s';
+      document.body.appendChild(el);
+    }
+    if (activeChain === 'mainnet' && currentChainId === 56) {
+      el.textContent = 'BSC';
+      el.style.background = '#F0FDF4'; el.style.color = '#16A34A';
+    } else if (activeChain === 'sepolia') {
+      el.textContent = '测试网';
+      el.style.background = '#FFFBEB'; el.style.color = '#D97706';
+    } else {
+      el.textContent = '⚠ 错误网络';
+      el.style.background = '#FEF2F2'; el.style.color = '#DC2626';
+    }
+  }
+  window.addEventListener('dapp:chainChanged', injectNetworkBadge);
+  window.addEventListener('dapp:accountChanged', function() {
+    if (walletAddress) injectNetworkBadge();
+    else { var b = document.getElementById('networkBadge'); if (b) b.remove(); }
+  });
+
+  // --- Expose to window.dapp ---
+  var _origConnect = window.dapp.connect;
+  window.dapp.connect = async function() {
+    var result = await _origConnect.call(window.dapp);
+    if (result.success) {
+      injectNetworkBadge();
+      checkNetworkOnConnect();
+    }
+    return result;
+  };
+  window.dapp.withTxToast = withTxToast;
+  window.dapp.showTxToast = showTxToast;
+  window.dapp.getMobileDeepLink = getMobileWalletDeepLink;
+  window.dapp.injectNetworkBadge = injectNetworkBadge;
+  window.dapp.parseTxError = parseTxError;
+
 })();
