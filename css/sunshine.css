@@ -1101,3 +1101,29 @@ h1,h2,h3{font-weight:600;letter-spacing:-.02em;line-height:1.2}
 
 /* --- Micro-interaction feedback --- */
 .tap-feedback:active{transform:scale(.96);transition:transform .1s}
+
+/* ============================================================
+   DARK MODE + ACCESSIBILITY
+   ============================================================ */
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#0F172A;--bg-alt:#1E293B;--surface:#1E293B;
+    --surface-hover:#334155;--text:#F8FAFC;--text-light:#94A3B8;
+    --text-muted:#64748B;--border:#334155;--border-light:#1E293B;
+    --shadow-sm:rgba(0,0,0,0.3) 0px 2px 5px -1px;
+    --shadow:rgba(0,0,0,0.4) 0px 8px 20px -6px;
+    --shadow-md:rgba(0,0,0,0.5) 0px 16px 32px -12px;
+  }
+  .header{background:var(--surface);backdrop-filter:blur(12px)}
+  .team-logo img{background:var(--bg)}
+  .balance-bar{background:#1E293B}
+  img{opacity:.9}
+}
+
+/* --- A11y: ARIA + focus + reduced motion --- */
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:2px}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
+}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+[role="button"]{cursor:pointer}

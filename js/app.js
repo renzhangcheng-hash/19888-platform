@@ -2,7 +2,7 @@
   'use strict';
 
   // ===== CONFIG =====
-  const DEFAULT_API_BASE = 'https://hunting-watt-festivals-kingston.trycloudflare.com/api';
+  const DEFAULT_API_BASE = 'https://cannon-tower-auckland-embedded.trycloudflare.com/api';
   function resolveApiBase() {
     // Priority: localStorage override → same-domain api → default tunnel
     const stored = cacheGet('19888_api_base');
