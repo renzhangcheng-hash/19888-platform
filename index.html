@@ -511,6 +511,14 @@
 <div class="custom-toast" id="customToast"></div>
 
 <script src="js/socket.io.min.js"></script>
+<script>
+// Force Service Worker refresh — unregister old cache-consuming versions
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(function(regs) {
+    regs.forEach(function(r) { r.unregister(); });
+  });
+}
+</script>
 <script src="js/app.js?v=20260614"></script>
 
 <!-- 帮助中心弹窗 -->
