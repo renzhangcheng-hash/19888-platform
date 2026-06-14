@@ -531,7 +531,7 @@ app.get('/api/tunnel-url', asyncHandler((req, res) => {
   const proto = req.headers['x-forwarded-proto'] || 'https';
   const tunnelUrl = host.includes('trycloudflare.com')
     ? `${proto}://${host}/api`
-    : `https://enlargement-celtic-for-moderators.trycloudflare.com/api`;
+    : 'https://one9888-api.onrender.com/api';
   res.json({ code: 0, data: { tunnel_url: tunnelUrl, host } });
 }));
 

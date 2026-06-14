@@ -11,7 +11,7 @@
       script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.socket.io;
       style-src 'self' 'unsafe-inline';
       img-src 'self' data: https:;
-      connect-src 'self' https://one9888-api.onrender.com wss://one9888-api.onrender.com ws://localhost:3088 wss://*.trycloudflare.com;
+      connect-src 'self' https://one9888-api.onrender.com wss://one9888-api.onrender.com ws://localhost:3088;
       font-src 'self';
       frame-ancestors 'none';
       base-uri 'self';
