@@ -1008,7 +1008,7 @@ h1,h2,h3{font-weight:600;letter-spacing:-.02em;line-height:1.2}
   background:var(--accent-grad);color:#fff;
   border-radius:var(--radius-sm);padding:8px 16px;
   font-weight:600;font-size:13px;letter-spacing:-.01em;
-  box-shadow:var(--shadow-sm);transition:all .2s
+  box-shadow:var(--shadow-sm);transition:box-shadow .2s,transform .2s
 }
 .wallet-connect:hover{box-shadow:var(--shadow);transform:translateY(-1px)}
 
@@ -1016,7 +1016,7 @@ h1,h2,h3{font-weight:600;letter-spacing:-.02em;line-height:1.2}
 .quick-amount{
   background:var(--surface);border:1.5px solid var(--border);
   border-radius:var(--radius);padding:10px 8px;font-size:13px;
-  font-weight:600;color:var(--text-light);transition:all .15s
+  font-weight:600;color:var(--text-light);transition:border-color .15s,background .15s
 }
 .quick-amount.active{
   background:var(--primary);color:#fff;border-color:var(--primary);
@@ -1081,7 +1081,7 @@ h1,h2,h3{font-weight:600;letter-spacing:-.02em;line-height:1.2}
 .team-card{
   background:var(--surface);border:1px solid var(--border);
   border-radius:var(--radius);box-shadow:var(--shadow-sm);
-  padding:var(--space-md);text-align:center;transition:all .2s
+  padding:var(--space-md);text-align:center;transition:box-shadow .2s,border-color .2s
 }
 .team-card:hover{border-color:var(--primary-light);box-shadow:var(--shadow)}
 .team-card .team-name{font-size:14px;font-weight:600;margin:8px 0 4px;color:var(--text)}
