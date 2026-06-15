@@ -1527,8 +1527,10 @@
       profilePage.innerHTML = '<div class="profile-page" style="padding:40px 20px;text-align:center">' +
         '<div style="font-size:48px;margin-bottom:16px">🔒</div>' +
         '<p style="font-size:16px;font-weight:600;margin-bottom:8px">请先连接钱包</p>' +
-        '<p style="color:#999;font-size:13px;margin-bottom:20px">连接钱包以查看您的账户信息</p>' +
-        '<button onclick="app.connectWallet()" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;padding:12px 32px;border-radius:24px;font-size:15px;cursor:pointer">连接钱包</button>' +
+        '<p style="color:#999;font-size:13px;margin-bottom:20px">连接BSC钱包以充值/投注/提现</p>' +
+        '<button onclick="app.connectWallet()" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;padding:12px 32px;border-radius:24px;font-size:15px;cursor:pointer;animation:pulse 2s infinite">🔗 连接钱包</button>' +
+        '<div style="margin-top:24px"><button onclick="app.showDepositModal()" style="background:#f1f3f4;color:#999;border:1px dashed #ccc;padding:10px 28px;border-radius:12px;font-size:13px;cursor:pointer;margin:4px">📥 充值</button><button onclick="app.showWithdrawModal()" style="background:#f1f3f4;color:#999;border:1px dashed #ccc;padding:10px 28px;border-radius:12px;font-size:13px;cursor:pointer;margin:4px">📤 提现</button></div>' +
+        '<p style="color:#bbb;font-size:11px;margin-top:8px">需要先连接钱包</p>' +
         '</div>';
       return;
     }
