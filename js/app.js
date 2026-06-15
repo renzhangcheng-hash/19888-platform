@@ -288,11 +288,11 @@
       }
 
       showToast('钱包已连接: ' + walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4));
-      // Update UI: hide label, show address + balance bar
+      // Update UI: show "已连接钱包", address, balance bar
       var label = document.querySelector('.wallet-label');
       var addr = document.getElementById('walletAddress');
       var balBar = document.getElementById('topBalanceBar');
-      if (label) label.style.display = 'none';
+      if (label) { label.textContent = '已连接'; label.style.display = ''; }
       if (addr) addr.textContent = walletAddress.slice(0, 4) + '...' + walletAddress.slice(-4);
       if (balBar) balBar.style.display = 'flex';
       showGasTip();  // Remind about BNB gas
@@ -443,7 +443,7 @@
     var label = document.querySelector('.wallet-label');
     var addr = document.getElementById('walletAddress');
     var balBar = document.getElementById('topBalanceBar');
-    if (label) label.style.display = '';
+    if (label) { label.textContent = '连接钱包'; label.style.display = ''; }
     if (addr) addr.textContent = '';
     if (balBar) balBar.style.display = 'none';
     showToast('已断开钱包连接');
@@ -3179,5 +3179,22 @@
   window.addEventListener('unhandledrejection', function(e) {
     console.error('[19888 Unhandled Promise]', e.reason);
   });
+
+  // Auto-connect wallet on page load (if previously authorized)
+  async function autoConnectWallet() {
+    try {
+      var provider = window.ethereum || window.tp?.ethereum;
+      if (!provider) return;
+      var accounts = await provider.request({ method: 'eth_accounts' });
+      if (accounts && accounts.length > 0) {
+        console.log('[19888] Auto-connecting wallet: ' + accounts[0].slice(0, 6) + '...');
+        await connectWallet();
+      }
+    } catch(e) {
+      // Silent — user has no wallet or denied
+    }
+  }
+  // Delay slightly for wallet injection (TP Wallet mobile)
+  setTimeout(autoConnectWallet, 500);
 
 })();
