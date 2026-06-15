@@ -1,6 +1,6 @@
 // 19888 Service Worker — Network-First for HTML, Cache-First for assets
 // v14: Lazy-load ethers/web3, better image caching
-const CACHE_NAME = "19888-v15-design-upgrade";
+const CACHE_NAME = "19888-v16-force-fresh";
 const CACHE_ASSETS = [
   '/',
   '/index.html',
