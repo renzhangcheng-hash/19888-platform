@@ -1095,7 +1095,11 @@ app.get('/api/teams/:id/stats', asyncHandler((req, res) => {
 // ═══════════════════════════════════════════════════
 
 app.get('/api/matches', asyncHandler((req, res) => {
-  const matches = read('matches').map(m => ({
+  const today = new Date().toISOString().split('T')[0]; // e.g. "2026-06-15"
+  const from = req.query.from || today;
+  const matches = read('matches')
+    .filter(m => m.match_time >= from)
+    .map(m => ({
     ...m,
     home_logo: teamLogoUrl(m.home),
     away_logo: teamLogoUrl(m.away),
