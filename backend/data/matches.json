@@ -8,7 +8,7 @@
     "odds_home": 2.55,
     "odds_draw": 3.75,
     "odds_away": 2.65,
-    "status": "upcoming"
+    "status": "live"
   },
   {
     "id": 2,
@@ -41,7 +41,7 @@
     "odds_home": 1.88,
     "odds_draw": 17.5,
     "odds_away": 4.62,
-    "status": "upcoming"
+    "status": "live"
   },
   {
     "id": 5,
@@ -74,7 +74,7 @@
     "odds_home": 2.73,
     "odds_draw": 2.85,
     "odds_away": 2.75,
-    "status": "upcoming"
+    "status": "live"
   },
   {
     "id": 8,
@@ -107,7 +107,7 @@
     "odds_home": 1.64,
     "odds_draw": 10.0,
     "odds_away": 3.07,
-    "status": "upcoming"
+    "status": "live"
   },
   {
     "id": 11,
@@ -140,7 +140,7 @@
     "odds_home": 2.38,
     "odds_draw": 3.05,
     "odds_away": 2.43,
-    "status": "upcoming"
+    "status": "live"
   },
   {
     "id": 14,
@@ -173,7 +173,7 @@
     "odds_home": 1.68,
     "odds_draw": 15.0,
     "odds_away": 4.07,
-    "status": "upcoming"
+    "status": "live"
   },
   {
     "id": 17,

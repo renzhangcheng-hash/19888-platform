@@ -656,17 +656,48 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 }
 
 /* ===== CONFIRM DIALOG ===== */
-.custom-confirm-overlay.show {
-  opacity: 1;
-  pointer-events: auto;
+.custom-confirm-overlay {
+  position: fixed; inset: 0; z-index:9999;
+  background: rgba(0,0,0,.55); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  opacity:0; pointer-events:none; transition:opacity .2s;
 }
-.custom-confirm.show {
-  transform: translateY(0) scale(1);
-}
+.custom-confirm-overlay.show { opacity:1; pointer-events:auto; }
 .custom-confirm {
-  transform: translateY(20px) scale(0.96);
-  transition: transform .25s cubic-bezier(.34,1.56,.64,1);
+  background: var(--surface); border:1px solid var(--border);
+  border-radius:16px; padding:28px 24px 20px; min-width:300px; max-width:400px;
+  box-shadow: 0 16px 48px rgba(0,0,0,.25);
+  transform:translateY(12px) scale(.97);
+  transition:transform .25s cubic-bezier(.34,1.56,.64,1);
 }
+.custom-confirm.show { transform:translateY(0) scale(1); }
+.custom-confirm-title {
+  font-size:17px; font-weight:700; color:var(--text);
+  margin-bottom:12px; text-align:center;
+}
+.custom-confirm-content {
+  font-size:14px; color:var(--text-muted,#848E9C);
+  text-align:center; margin-bottom:20px; line-height:1.6;
+  white-space:pre-line;
+}
+.custom-confirm-buttons {
+  display:flex; justify-content:center; gap:12px; margin-top:4px;
+}
+.custom-confirm-btn {
+  padding:10px 28px; border-radius:10px; font-size:14px;
+  font-weight:600; cursor:pointer; border:none; transition:all .15s;
+  min-width:100px;
+}
+.confirm-cancel-btn {
+  background: var(--bg,#f1f3f4); color:var(--text,#333);
+  border:1px solid var(--border,#ddd);
+}
+.confirm-cancel-btn:hover { background:var(--border,#e0e0e0); }
+.confirm-ok-btn {
+  background: var(--accent,#533afd); color:#fff;
+  box-shadow: 0 4px 16px rgba(83,58,253,.3);
+}
+.confirm-ok-btn:hover { opacity:.9; transform:translateY(-1px); }
 
 /* ===== LANGUAGE BAR ===== */
 .lang-bar {

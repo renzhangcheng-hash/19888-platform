@@ -210,11 +210,9 @@
     if (!overlay || !dialog) return;
     document.getElementById('confirmTitle').textContent = title;
     document.getElementById('confirmContent').textContent = content;
-    overlay.style.display = 'block';
-    dialog.style.display = 'block';
     overlay.classList.add('show');
     dialog.classList.add('show');
-    function hide() { overlay.style.display = 'none'; dialog.style.display = 'none'; overlay.classList.remove('show'); dialog.classList.remove('show'); }
+    function hide() { overlay.classList.remove('show'); dialog.classList.remove('show'); }
     const ok = document.getElementById('confirmOkBtn');
     const cancel = document.getElementById('confirmCancelBtn');
     const nOk = ok.cloneNode(true), nCancel = cancel.cloneNode(true), nOverlay = overlay.cloneNode(true);
