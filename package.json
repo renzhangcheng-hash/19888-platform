@@ -9,11 +9,24 @@
     "start": "node backend/server.js"
   },
   "dependencies": {
+    "@sentry/browser": "^10.57.0",
     "cors": "^2.8.6",
     "ethers": "^6.16.0",
     "express": "^4.21.0",
     "express-rate-limit": "^6.7.0",
     "helmet": "^8.2.0",
     "jsonwebtoken": "^9.0.3"
-  }
+  },
+  "description": "> 不猜结果，反猜意外 · 让每一脚射门都有价值",
+  "main": "sw.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/renzhangcheng-hash/19888-platform.git"
+  },
+  "keywords": [],
+  "author": "",
+  "bugs": {
+    "url": "https://github.com/renzhangcheng-hash/19888-platform/issues"
+  },
+  "homepage": "https://github.com/renzhangcheng-hash/19888-platform#readme"
 }

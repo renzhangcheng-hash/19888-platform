@@ -594,9 +594,6 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   transition: opacity .2s ease;
   pointer-events: none;
 }
-  opacity: 1;
-  pointer-events: auto;
-}
 .dialog-box {
   transform: translateY(20px) scale(0.96);
   transition: transform .25s cubic-bezier(.34,1.56,.64,1);

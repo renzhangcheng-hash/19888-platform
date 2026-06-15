@@ -2522,6 +2522,37 @@ app.post('/api/admin/risk/config', adminAuth, asyncHandler((req, res) => {
   res.json({ code:0, msg:'配置已更新', data: riskConfig });
 }));
 
+// POST /api/admin/manual-deposit — 管理员手动充值（绕过链上验证）
+app.post('/api/admin/manual-deposit', adminAuth, asyncHandler(async (req, res) => {
+  const { wallet_address, amount } = req.body;
+  if (!wallet_address || !amount || Number(amount) <= 0) {
+    return res.status(400).json({ code: 1, msg: '参数无效' });
+  }
+  const addr = wallet_address.toLowerCase().trim();
+  const amt = Number(amount);
+  const deposits = read('deposits');
+  const txHash = '0xadmin_manual_' + Date.now();
+
+  const deposit = {
+    id: (deposits[deposits.length - 1]?.id || 0) + 1,
+    address: addr, tx_hash: txHash, amount: amt,
+    status: 'confirmed', created_at: new Date().toISOString(),
+    note: 'Admin manual deposit'
+  };
+  deposits.push(deposit);
+  write('deposits', deposits);
+
+  const users = read('users');
+  const u = users.find(x => x.address.toLowerCase() === addr);
+  if (u) { u.balance = (u.balance||0) + amt; u.total_deposited = (u.total_deposited||0) + amt; }
+  else { users.push({ address: addr, balance: amt, total_deposited: amt, total_wagered: 0, total_won: 0 }); }
+  write('users', users);
+
+  console.log(`[Admin] Manual deposit: ${addr} +${amt} USDT`);
+  res.json({ code: 0, msg: '手动充值成功', data: { deposit_id: deposit.id, amount: amt } });
+}));
+
+
 // ═══════════════════════════════════════════════════
 //  AGENT LEVELS + AUTO SETTLE
 // ═══════════════════════════════════════════════════

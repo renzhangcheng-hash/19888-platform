@@ -88,7 +88,7 @@ class L5Agent:
             self.log("✅ DOM consistency PASS")
             
         # 1.5 CSS balance
-        with open(f"{PROJECT}/css/style.css") as f:
+        with open(f"{PROJECT}/css/sunshine.css") as f:
             css = f.read()
         opens = css.count("{")
         closes = css.count("}")
