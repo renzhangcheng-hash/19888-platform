@@ -119,8 +119,16 @@
   ];
 
   // ===== API HELPERS =====
+  // In-memory cache for GET requests (ttl: 2 min)
+  var _apiCache = {};
   function apiFetch(endpoint, opts) {
     opts = opts || {};
+    // Cache GET requests
+    if (!opts.method || opts.method === 'GET') {
+      var ck = endpoint;
+      var cached = _apiCache[ck];
+      if (cached && (Date.now() - cached.ts < 120000)) return Promise.resolve(cached.data);
+    }
 
     // Simple: try each URL once, first success wins
     const urls = [resolveApiBase()];
@@ -136,8 +144,8 @@
       var ctrl = new AbortController();
       var timer = setTimeout(function() {
         ctrl.abort();
-        showToast('请求超时');
-      }, 25000);
+      }, 8000);  // 8s timeout (was 25s)
+
       return fetch(url, {
         method: opts.method || 'GET',
         headers: { 'Content-Type': 'application/json' },
@@ -149,6 +157,12 @@
         apiAvailable = true;
         if (base !== resolveApiBase()) cacheSet('19888_api_base', base);
         return r.json();
+      }).then(function(data) {
+        // Cache GET (non-auth) results
+        if ((!opts.method || opts.method === 'GET') && !endpoint.includes('/admin/')) {
+          _apiCache[ck] = { ts: Date.now(), data: data };
+        }
+        return data;
       }).catch(function(err) {
         clearTimeout(timer);
         if (err.name === 'AbortError') {
