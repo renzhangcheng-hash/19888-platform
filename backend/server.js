@@ -35,21 +35,14 @@ const PORT = process.env.PORT || 3088;
 const DATA_DIR = path.join(__dirname, 'data');
 
 // ── JWT Config ──────────────────────────────────
-// FP-V19888-3: Use env var, or generate once and persist in jwt_secret.txt
+// JWT_SECRET: env var required in production
 let JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
-  const fs2 = require('fs');
-  const secretPath = path.join(__dirname, 'data', 'jwt_secret.txt');
-  try {
-    JWT_SECRET = fs2.readFileSync(secretPath, 'utf8').trim();
-  } catch (_e) {
-    JWT_SECRET = require('crypto').randomBytes(32).toString('hex');
-    fs2.mkdirSync(path.join(__dirname, 'data'), { recursive: true });
-    fs2.writeFileSync(secretPath, JWT_SECRET, 'utf8');
-    console.log('⚠️ JWT_SECRET not set — generated persistent random secret');
-  }
+  // Fallback for local dev only — warn prominently
+  JWT_SECRET = require('crypto').randomBytes(32).toString('hex');
+  console.error('⚠️  WARNING: JWT_SECRET not set — using ephemeral random key. All tokens invalid on restart.');
 }
-const JWT_EXPIRY = process.env.JWT_EXPIRY || '24h';
+const JWT_EXPIRY = process.env.JWT_EXPIRY || '2h';
 
 // ── Sepolia RPC for on-chain verification ───────
 const RPC_URL = process.env.RPC_URL || 'https://bsc-dataseed.binance.org';
@@ -155,10 +148,18 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true, parameterLimit: 1000 }));
 
 app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
-// Static files — serve only when path exists (Render compatibility)
+// Static files — serve frontend only (NOT backend/data/)
 const staticPath = path.join(__dirname, '..');
 if (fs.existsSync(staticPath)) {
-  app.use(express.static(staticPath));
+  app.use(express.static(staticPath, {
+    index: false,
+    setHeaders: function(res, filePath) {
+      // Block access to backend/ and data/ directories
+      if (filePath.indexOf('/backend/') !== -1 || filePath.indexOf('/data/') !== -1) {
+        res.status(404).end();
+      }
+    }
+  }));
 }
 
 // ── Ensure Data Directory ─────────────────────────
@@ -495,7 +496,7 @@ function seed() {
     }
     const pass = ADMIN_DEFAULT_PASS || require('crypto').randomBytes(6).toString('hex');
     write('admins', [{ username: 'admin', password: hashPassword(pass) }]);
-    console.log(`✅ Admin account created (password: ${pass})`);
+    console.log('✅ Admin account created');
     console.log('⚠️  Change this password immediately after first login');
   }
 
@@ -2666,8 +2667,8 @@ app.get('/api/finance/daily-report', adminAuth, asyncHandler((req, res) => {
   });
 }));
 
-// GET /api/finance/pool-status
-app.get('/api/finance/pool-status', asyncHandler((req, res) => {
+// GET /api/finance/pool-status — requires admin auth
+app.get('/api/finance/pool-status', adminAuth, asyncHandler((req, res) => {
   const users = read('users');
   const totalBalance = users.reduce((s, u) => s + (u.balance || 0), 0);
   const totalFrozen = users.reduce((s, u) => s + (u.frozen_bet || 0) + (u.frozen_ai || 0), 0);
@@ -2697,8 +2698,8 @@ app.get('/api/finance/pool-status', asyncHandler((req, res) => {
 //  ORDER SYSTEM: CANCEL + TRANSACTION HISTORY
 // ═══════════════════════════════════════════════════
 
-// POST /api/bets/:id/cancel — cancel a pending bet
-app.post('/api/bets/:id/cancel', asyncHandler((req, res) => {
+// POST /api/bets/:id/cancel — cancel a pending bet (with lock)
+app.post('/api/bets/:id/cancel', asyncHandler(async (req, res) => {
   const betId = parseInt(req.params.id);
   if (!Number.isInteger(betId) || betId < 1) {
     return res.status(400).json({ code:1, msg:'无效的投注ID' });
@@ -2709,25 +2710,31 @@ app.post('/api/bets/:id/cancel', asyncHandler((req, res) => {
   }
 
   const addr = wallet_address.toLowerCase().trim();
-  const bets = read('bets');
-  const bet = bets.find(b => b.id === betId && b.address.toLowerCase() === addr);
-  if (!bet) return res.status(404).json({ code:1, msg:'投注不存在或不属于您' });
-  if (bet.status !== 'pending') return res.status(400).json({ code:1, msg:'只能取消待结算的投注' });
 
-  // Refund to balance
-  const users = read('users');
-  const user = users.find(u => u.address.toLowerCase() === addr);
-  if (user) {
-    user.balance = (user.balance || 0) + (bet.amount || 0);
-    user.frozen_bet = Math.max(0, (user.frozen_bet || 0) - (bet.amount || 0));
-    write('users', users);
-  }
+  // Use lockedUpdate for atomicity
+  await lockedUpdate('bets', (bets) => {
+    const bet = bets.find(b => b.id === betId && b.address.toLowerCase() === addr);
+    if (!bet) throw { status: 404, code: 1, msg: '投注不存在或不属于您' };
+    if (bet.status !== 'pending') throw { status: 400, code: 1, msg: '只能取消待结算的投注' };
+    bet.status = 'cancelled';
+    bet.cancelled_at = new Date().toISOString();
+    return bets;
+  });
 
-  bet.status = 'cancelled';
-  bet.cancelled_at = new Date().toISOString();
-  write('bets', bets);
+  // Refund balance atomically
+  await lockedUpdate('users', (users) => {
+    const user = users.find(u => u.address.toLowerCase() === addr);
+    if (user) {
+      const bet = read('bets').find(b => b.id === betId);
+      if (!bet || bet.status !== 'cancelled') throw { status: 500, code: 1, msg: '取消失败，请重试' };
+      user.balance = (user.balance || 0) + (bet.amount || 0);
+      user.frozen_bet = Math.max(0, (user.frozen_bet || 0) - (bet.amount || 0));
+    }
+    return users;
+  });
 
-  res.json({ code:0, msg:'投注已取消，金额已退回', data: { bet_id: betId, refunded: bet.amount } });
+  const finalBet = read('bets').find(b => b.id === betId);
+  res.json({ code:0, msg:'投注已取消，金额已退回', data: { bet_id: betId, refunded: finalBet.amount } });
 }));
 
 // GET /api/user/transactions?wallet=0x...&type=all|deposit|withdraw|bet

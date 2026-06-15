@@ -4,10 +4,12 @@ pragma solidity ^0.8.28;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
 /// @title VIPStaking — 5-level VIP system based on cumulative turnover
 /// @notice VIP tiers determined by total turnover, with tiered rebates on anti-score, score, and AI bets
-contract VIPStaking is Initializable, UUPSUpgradeable, OwnableUpgradeable {
+contract VIPStaking is Initializable, UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable {
     struct VIPInfo {
         uint256 turnoverThreshold;  // Cumulative turnover required for this level (in USDT * 1e18)
         uint256 antiScoreRebate;    // Anti-score rebate in bps (e.g. 20 = 0.2%)
@@ -39,6 +41,8 @@ contract VIPStaking is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
     function initialize() public initializer {
         __Ownable_init(msg.sender);
+        __Pausable_init();
+        __ReentrancyGuard_init();
 
         // VIP 1: $20K turnover, 0.2% anti-score / 1% score / 0.1% AI rebate
         vipTiers[1] = VIPInfo(20_000 * 1e18, 20, 100, 10);

@@ -4,10 +4,11 @@ pragma solidity ^0.8.28;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "./LuckyPool.sol";
 
 /// @title ChampionBet — Champion & runner-up predictions
-contract ChampionBet is Initializable, UUPSUpgradeable, OwnableUpgradeable {
+contract ChampionBet is Initializable, UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable {
     LuckyPool public pool;
     struct CBet { address user; uint256 teamId; uint8 betType; uint256 amount; uint256 odds; uint256 win; bool settled; bool won; }
     mapping(uint256 => CBet) public bets;
@@ -18,12 +19,14 @@ contract ChampionBet is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     
     constructor() { _disableInitializers(); }
     function initialize(address _pool) public initializer {
-        __Ownable_init(msg.sender);
+        __Ownable_init();
+        __UUPSUpgradeable_init();
+        __Pausable_init();
         pool = LuckyPool(_pool);
     }
     function _authorizeUpgrade(address) internal override onlyOwner {}
     
-    function placeBet(uint256 _teamId, uint8 _betType, uint256 _amount) external {
+    function placeBet(uint256 _teamId, uint8 _betType, uint256 _amount) external whenNotPaused {
         require((_betType == 1 || _betType == 2) && _amount > 0 && !resultSet && pool.userBalance(msg.sender) >= _amount, "Invalid");
         betCount++;
         CBet storage b = bets[betCount];
