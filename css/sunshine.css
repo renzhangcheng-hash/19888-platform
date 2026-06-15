@@ -1130,6 +1130,31 @@ h1,h2,h3{font-weight:600;letter-spacing:-.02em;line-height:1.2}
 /* --- Micro-interaction feedback --- */
 .tap-feedback:active{transform:scale(.96);transition:transform .1s}
 
+/* --- Shared inline-style replacements (reduce JS inline count) --- */
+/* Profile/dialog center buttons */
+.cta-primary{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;padding:12px 32px;border-radius:24px;font-size:15px;cursor:pointer}
+.cta-green{background:linear-gradient(135deg,#03A66D,#02C076);color:#fff;border:none;padding:12px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer}
+.cta-outline{background:#fff;border:1px solid #e53935;padding:12px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;color:#e53935}
+/* Stat cards */
+.stat-card{text-align:center;padding:12px 8px;background:var(--bg);border-radius:10px}
+.stat-value{font-size:20px;font-weight:700;color:var(--accent)}
+.stat-label{font-size:11px;color:var(--text-muted);margin-top:2px}
+/* Flex center + gap */
+.flex-center{display:flex;align-items:center;justify-content:center}
+.flex-between{display:flex;justify-content:space-between;align-items:center}
+.gap-12{gap:12px}
+/* Tag/badge */
+.tag-accent{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:rgba(83,58,253,.1);color:var(--accent)}
+.tag-green{background:rgba(3,166,109,.1);color:#03A66D}
+.tag-red{background:rgba(229,57,53,.1);color:#E53935}
+/* Card heading */
+.card-heading{font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px}
+/* Section padding */
+.section-pad{padding:16px}
+/* Small muted text */
+.text-sm-muted{font-size:12px;color:var(--text-muted)}
+.text-xs{font-size:11px;color:var(--text-muted)}
+
 /* ============================================================
    DARK MODE + ACCESSIBILITY
    ============================================================ */

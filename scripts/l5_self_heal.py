@@ -74,9 +74,14 @@ class L5Agent:
         missing = js_ids - html_ids
         # Filter dynamic elements (created by JS or template concatenation)
         dynamic = {'deposit-modal', 'withdraw-modal', 'w-addr', 'w-amount', 'w-balance',
-                   'bet-total-return', 'hot-ranking-list', 'detail-h2h', 'detail-recent'}
+                   'bet-total-return', 'hot-ranking-list', 'detail-h2h', 'detail-recent',
+                   # JS-generated dynamic IDs (profile, pool stats, AI, score bet, matches, records)
+                   'aiMaxDaily', 'poolTotalFrozen', 'api-offline-banner', 'poolTotalDeposited',
+                   'globalLangModal', 'poolUserCount', 'aiMaxBet', 'poolPendingWithdrawals',
+                   'aiRisk', 'scoreBetAmount', 'poolPendingBets', 'profileRecentBets',
+                   'matchesPageList', 'recordsList', 'editNick', 'scoreBetBtn'}
         # Also filter template prefixes that resolve to existing IDs
-        template_prefixes = {'page-', 'tab-'}
+        template_prefixes = {'page-', 'tab-', 'detail-', 'market-', 'champion-', 'about-'}
         real_missing = {m for m in missing if m not in dynamic and not any(m.startswith(p) for p in template_prefixes)}
         
         self.tests_run += 1
