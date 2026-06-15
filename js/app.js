@@ -24,7 +24,7 @@
 
   // ===== STATE =====
   let apiAvailable = false;
-  let walletAddress = null;
+  let _wallet = null;  // renamed: avoid DOM id="walletAddress" collision
   let walletProvider = null;
   let currentPage = 'home';
   let betRecords = [];
@@ -279,7 +279,7 @@
     // dapp.connect() internally waits for wallet provider injection (TP Wallet support)
     const result = await window.dapp.connect();
     if (result.success) {
-      walletAddress = result.address;
+      _wallet = result.address;
 
       // Check chain and switch to correct network
       const chainOk = await dapp.switchChain();
@@ -287,18 +287,18 @@
         showToast('⚠️ 请切换到BSC主网以进行交易');
       }
 
-      showToast('钱包已连接: ' + walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4));
+      showToast('钱包已连接: ' + _wallet.slice(0, 6) + '...' + _wallet.slice(-4));
       // Update UI: show "已连接钱包", address, balance bar
       var label = document.querySelector('.wallet-label');
       var addr = document.getElementById('walletAddress');
       var balBar = document.getElementById('topBalanceBar');
       if (label) { label.textContent = '已连接'; label.style.display = ''; }
-      if (addr) addr.textContent = walletAddress.slice(0, 4) + '...' + walletAddress.slice(-4);
+      if (addr) addr.textContent = _wallet.slice(0, 4) + '...' + _wallet.slice(-4);
       if (balBar) balBar.style.display = 'flex';
       showGasTip();  // Remind about BNB gas
 
       // Sync with backend (await it)
-      await apiFetch('/wallet/connect', { method: 'POST', body: JSON.stringify({ wallet_address: walletAddress }) });
+      await apiFetch('/wallet/connect', { method: 'POST', body: JSON.stringify({ wallet_address: _wallet }) });
 
       // Load all user data from backend
       loadPoolBalance();
@@ -315,9 +315,9 @@
 
   async function loadPoolBalance() {
     // Always load backend balance first
-    if (walletAddress) {
+    if (_wallet) {
       try {
-        var balRes = await apiFetch('/user/balance?address=' + encodeURIComponent(walletAddress));
+        var balRes = await apiFetch('/user/balance?address=' + encodeURIComponent(_wallet));
         if (balRes && balRes.code === 0 && balRes.data) {
           userBalance = balRes.data.available || 0;
           var usdtEl = document.getElementById('profileUSDTBalance');
@@ -339,7 +339,7 @@
 
   // ===== SYNC ALL USER DATA =====
   async function syncAllUserData() {
-    if (!walletAddress) return;
+    if (!_wallet) return;
     await Promise.all([
       loadPnLData().catch(function(){}),
       loadVIPData().catch(function(){}),
@@ -351,7 +351,7 @@
   function startProfileAutoRefresh() {
     stopProfileAutoRefresh();
     _profileRefreshTimer = setInterval(function() {
-      if (currentPage === 'profile' && walletAddress) {
+      if (currentPage === 'profile' && _wallet) {
         loadPoolBalance();
         loadPnLData();
         loadVIPData();
@@ -366,9 +366,9 @@
   let pnlData = { total_wagered: 0, total_won: 0, net_pnl: 0, roi: 0 };
 
   async function loadPnLData() {
-    if (!walletAddress) return;
+    if (!_wallet) return;
     try {
-      const res = await apiFetch('/user/pnl?wallet=' + encodeURIComponent(walletAddress));
+      const res = await apiFetch('/user/pnl?wallet=' + encodeURIComponent(_wallet));
       if (res && res.code === 0 && res.data) {
         pnlData = {
           total_wagered: parseFloat(res.data.total_wagered) || 0,
@@ -382,11 +382,11 @@
 
   // ===== VIP DATA =====
   async function loadVIPData() {
-    if (!walletAddress) return;
+    if (!_wallet) return;
     var card = document.getElementById('vipCard');
     if (!card) return;
     try {
-      var res = await apiFetch('/vip/status?wallet=' + encodeURIComponent(walletAddress));
+      var res = await apiFetch('/vip/status?wallet=' + encodeURIComponent(_wallet));
       if (res && res.code === 0 && res.data) {
         var d = res.data;
         card.style.display = 'block';
@@ -437,7 +437,7 @@
 
   function disconnectWallet() {
     if (typeof dapp !== 'undefined') dapp.disconnect();
-    walletAddress = null;
+    _wallet = null;
     walletProvider = null;
     // Restore label, hide balance bar
     var label = document.querySelector('.wallet-label');
@@ -450,8 +450,8 @@
   }
 
   function handleWalletBtnClick() {
-    if (walletAddress) {
-      showConfirm('断开钱包连接', '当前: ...' + walletAddress.slice(-6) + '\n断开？', disconnectWallet);
+    if (_wallet) {
+      showConfirm('断开钱包连接', '当前: ...' + _wallet.slice(-6) + '\n断开？', disconnectWallet);
     } else {
       connectWallet();
     }
@@ -1396,8 +1396,8 @@
     container.innerHTML = '<div class="skeleton-record"></div><div class="skeleton-record" style="animation-delay:.15s"></div><div class="skeleton-record" style="animation-delay:.3s"></div>';
 
     // Always try API fetch if wallet connected
-    if (walletAddress) {
-      var query = '/bet-records?address=' + encodeURIComponent(walletAddress) + '&page=' + page + '&page_size=20';
+    if (_wallet) {
+      var query = '/bet-records?address=' + encodeURIComponent(_wallet) + '&page=' + page + '&page_size=20';
       if (filter !== 'all') query += '&status=' + filter;
       try {
         var res = await apiFetch(query);
@@ -1509,7 +1509,7 @@
       mainEl.querySelector('.slick_tab').appendChild(profilePage);
     }
 
-    if (!walletAddress) {
+    if (!_wallet) {
       profilePage.innerHTML = '<div class="profile-page" style="padding:40px 20px;text-align:center">' +
         '<div style="font-size:48px;margin-bottom:16px">🔒</div>' +
         '<p style="font-size:16px;font-weight:600;margin-bottom:8px">请先连接钱包</p>' +
@@ -1525,7 +1525,7 @@
     await loadVIPData();
     await loadPoolStatusData();
 
-    var shortAddr = walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
+    var shortAddr = _wallet.slice(0, 6) + '...' + _wallet.slice(-4);
     var pnlClass = pnlData.net_pnl >= 0 ? 'pnl-positive' : 'pnl-negative';
     var pnlSign = pnlData.net_pnl >= 0 ? '+' : '';
     var roiClass = pnlData.roi >= 0 ? 'pnl-positive' : 'pnl-negative';
@@ -1535,7 +1535,7 @@
 
       // ---- User Header ----
       '<div class="profile-header" style="display:flex;align-items:center;gap:14px;padding:16px;background:#fff;border-radius:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05)">' +
-        '<div class="avatar" style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;flex-shrink:0">' + walletAddress.slice(2,4).toUpperCase() + '</div>' +
+        '<div class="avatar" style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;flex-shrink:0">' + _wallet.slice(2,4).toUpperCase() + '</div>' +
         '<div class="user-info" style="flex:1;min-width:0">' +
           '<div class="nickname" style="font-size:16px;font-weight:700;color:#1a1a2e">我的钱包</div>' +
           '<div class="wallet-addr" style="font-size:12px;color:#999;font-family:monospace;overflow:hidden;text-overflow:ellipsis">' + shortAddr + '</div>' +
@@ -1637,7 +1637,7 @@
     var records = [];
 
     // Try from blockchain
-    if (typeof dapp !== 'undefined' && walletAddress) {
+    if (typeof dapp !== 'undefined' && _wallet) {
       try {
         var onChainBets = await dapp.getUserBets();
         if (onChainBets && onChainBets.length > 0) {
@@ -1657,9 +1657,9 @@
     }
 
     // Fallback: try API
-    if (records.length === 0 && apiAvailable && walletAddress) {
+    if (records.length === 0 && apiAvailable && _wallet) {
       try {
-        var res = await apiFetch('/bets?address=' + encodeURIComponent(walletAddress) + '&limit=5');
+        var res = await apiFetch('/bets?address=' + encodeURIComponent(_wallet) + '&limit=5');
         if (res && res.code === 0 && res.data) {
           records = res.data.map(function(r) {
             return {
@@ -1702,7 +1702,7 @@
 
   // ===== DEPOSIT / WITHDRAW HANDLERS =====
   function showDepositModal() {
-    if (!walletAddress) { 
+    if (!_wallet) { 
       // Show modal with wallet prompt instead of just toast
       var modal = document.getElementById('depositModal');
       if (modal) { 
@@ -1759,7 +1759,7 @@
 
   // ===== DEPOSIT / WITHDRAW (API-backed) =====
   function showWithdrawModal() {
-    if (!walletAddress) { showDepositModal(); return; }
+    if (!_wallet) { showDepositModal(); return; }
     var modal = document.getElementById('withdrawModal');
     if (modal) modal.style.display = 'flex';
   }
@@ -1786,7 +1786,7 @@
           // Confirm the deposit with backend API
           var confirmRes = await apiFetch('/deposit', {
             method: 'POST',
-            body: JSON.stringify({ wallet_address: walletAddress, tx_hash: txHash, amount: amount })
+            body: JSON.stringify({ wallet_address: _wallet, tx_hash: txHash, amount: amount })
           });
           if (confirmRes && confirmRes.code === 0) {
             showTxToast('✅ 充值成功: ' + amount + ' USDT', txHash);
@@ -1821,12 +1821,12 @@
       showToast('请输入有效的提现地址（0x...）');
       return;
     }
-    if (!walletAddress) { showToast('请先连接钱包'); return; }
+    if (!_wallet) { showToast('请先连接钱包'); return; }
 
     try {
       var res = await apiFetch('/withdraw', {
         method: 'POST',
-        body: JSON.stringify({ wallet_address: walletAddress, amount: amount, withdraw_address: toAddress, tx_hash: 'withdraw_' + Date.now() })
+        body: JSON.stringify({ wallet_address: _wallet, amount: amount, withdraw_address: toAddress, tx_hash: 'withdraw_' + Date.now() })
       });
       if (res && res.code === 0) {
         showToast('✅ 提现申请已提交: ' + amount + ' USDT → ' + toAddress.slice(0,6) + '...');
@@ -1846,10 +1846,10 @@
   let inviteData = { count: 0, rewards: 0 };
 
   async function loadInviteData() {
-    if (!walletAddress) return;
+    if (!_wallet) return;
     try {
       // First try GET stats (non-404 friendly fallback if no user yet)
-      var statsRes = await apiFetch('/invite/stats?wallet=' + encodeURIComponent(walletAddress));
+      var statsRes = await apiFetch('/invite/stats?wallet=' + encodeURIComponent(_wallet));
       if (statsRes && statsRes.code === 0 && statsRes.data) {
         inviteCode = statsRes.data.code || '';
         inviteData.count = parseInt(statsRes.data.invite_count || 0);
@@ -1859,7 +1859,7 @@
       if (!inviteCode) {
         var genRes = await apiFetch('/invite/generate-code', {
           method: 'POST',
-          body: JSON.stringify({ wallet_address: walletAddress })
+          body: JSON.stringify({ wallet_address: _wallet })
         });
         if (genRes && genRes.code === 0 && genRes.data) {
           inviteCode = genRes.data.invite_code || genRes.data.code || '';
@@ -1869,7 +1869,7 @@
   }
 
   function showInviteModal() {
-    if (!walletAddress) { showToast('请先连接钱包'); return; }
+    if (!_wallet) { showToast('请先连接钱包'); return; }
 
     var modal = document.getElementById('inviteModal');
     if (!modal) return;
@@ -1955,9 +1955,9 @@
 
   // ===== AGENT EARNINGS =====
   async function loadAgentEarnings() {
-    if (!walletAddress) return;
+    if (!_wallet) return;
     try {
-      var res = await apiFetch('/invite/earnings?wallet=' + encodeURIComponent(walletAddress));
+      var res = await apiFetch('/invite/earnings?wallet=' + encodeURIComponent(_wallet));
       if (res && res.code === 0 && res.data) {
         window._agentInfo = res.data;
       }
@@ -2027,12 +2027,12 @@
 
   // ===== CANCEL BET =====
   async function cancelBet(betId) {
-    if (!walletAddress) { showToast('请先连接钱包'); return; }
+    if (!_wallet) { showToast('请先连接钱包'); return; }
     showConfirm('取消投注', '确定要取消这笔投注吗？金额将退回余额。', async function() {
       try {
         var res = await apiFetch('/bets/' + betId + '/cancel', {
           method: 'POST',
-          body: JSON.stringify({ wallet_address: walletAddress })
+          body: JSON.stringify({ wallet_address: _wallet })
         });
         if (res && res.code === 0) {
           showToast('✅ 投注已取消，' + (res.data ? res.data.refunded : '') + ' USDT 已退回');
@@ -2047,14 +2047,14 @@
 
   // ===== AI HOSTING TOGGLE =====
   async function toggleAIHosting() {
-    if (!walletAddress) { showToast('请先连接钱包'); return; }
+    if (!_wallet) { showToast('请先连接钱包'); return; }
     try {
-      var statusRes = await apiFetch('/ai-hosting/status?address=' + encodeURIComponent(walletAddress));
+      var statusRes = await apiFetch('/ai-hosting/status?address=' + encodeURIComponent(_wallet));
       var isActive = statusRes && statusRes.data && statusRes.data.active;
       if (isActive) {
         var res = await apiFetch('/ai-hosting/deactivate', {
           method: 'POST',
-          body: JSON.stringify({ wallet_address: walletAddress })
+          body: JSON.stringify({ wallet_address: _wallet })
         });
         if (res && res.code === 0) {
           showToast('✅ AI托管已停用，冻结资金已释放');
@@ -2066,7 +2066,7 @@
         // Activate with default amount
         var activateRes = await apiFetch('/ai-hosting/activate', {
           method: 'POST',
-          body: JSON.stringify({ wallet_address: walletAddress, freeze_amount: 100 })
+          body: JSON.stringify({ wallet_address: _wallet, freeze_amount: 100 })
         });
         if (activateRes && activateRes.code === 0) {
           showToast('✅ AI托管已激活，冻结 100 USDT');
@@ -2080,9 +2080,9 @@
 
   // ===== DEPOSIT/WITHDRAW HISTORY =====
   async function loadDepositHistory() {
-    if (!walletAddress) { showToast('请先连接钱包'); return; }
+    if (!_wallet) { showToast('请先连接钱包'); return; }
     try {
-      var res = await apiFetch('/deposit/history?wallet=' + encodeURIComponent(walletAddress));
+      var res = await apiFetch('/deposit/history?wallet=' + encodeURIComponent(_wallet));
       var data = (res && res.data) ? (Array.isArray(res.data) ? res.data : (res.data.transactions || [])) : [];
       if (data.length === 0) { showToast('暂无充值记录'); return; }
       var html = data.slice(0, 5).map(function(d) {
@@ -2093,9 +2093,9 @@
   }
 
   async function loadWithdrawHistory() {
-    if (!walletAddress) { showToast('请先连接钱包'); return; }
+    if (!_wallet) { showToast('请先连接钱包'); return; }
     try {
-      var res = await apiFetch('/withdraw/history?wallet=' + encodeURIComponent(walletAddress));
+      var res = await apiFetch('/withdraw/history?wallet=' + encodeURIComponent(_wallet));
       var data = (res && res.data) ? (Array.isArray(res.data) ? res.data : (res.data.transactions || [])) : [];
       if (data.length === 0) { showToast('暂无提现记录'); return; }
       var html = data.slice(0, 5).map(function(d) {
@@ -2106,11 +2106,11 @@
   }
 
   async function checkVIPUpgrade() {
-    if (!walletAddress) return;
+    if (!_wallet) return;
     try {
       var res = await apiFetch('/vip/check-upgrade', {
         method: 'POST',
-        body: JSON.stringify({ wallet_address: walletAddress })
+        body: JSON.stringify({ wallet_address: _wallet })
       });
       if (res && res.code === 0) {
         showToast('VIP升级检查: ' + (res.data.can_upgrade ? '✅ 可升级到 ' + res.data.next_level : '当前已是最高等级'));
@@ -2120,9 +2120,9 @@
 
   // ===== AI HOSTING HISTORY =====
   async function loadAIHistory() {
-    if (!walletAddress) { showToast('请先连接钱包'); return; }
+    if (!_wallet) { showToast('请先连接钱包'); return; }
     try {
-      var res = await apiFetch('/ai-hosting/history?address=' + encodeURIComponent(walletAddress));
+      var res = await apiFetch('/ai-hosting/history?address=' + encodeURIComponent(_wallet));
       var data = (res && res.data) || [];
       if (data.length === 0) { showToast('暂无AI托管记录'); return; }
       var html = data.slice(0, 5).map(function(h) {
@@ -2134,9 +2134,9 @@
 
   // ===== AI SETTINGS =====
   async function showAISettings() {
-    if (!walletAddress) return;
+    if (!_wallet) return;
     try {
-      var res = await apiFetch('/ai-hosting/status?address=' + encodeURIComponent(walletAddress));
+      var res = await apiFetch('/ai-hosting/status?address=' + encodeURIComponent(_wallet));
       var s = (res && res.data && res.data.settings) || { max_bet_per_match: 100, max_daily_bet: 500, risk_level: 'medium' };
       var html = '<div style="text-align:left;font-size:12px;line-height:2">' +
         '<label>单场上限: <input id="aiMaxBet" type="number" value="' + s.max_bet_per_match + '" style="width:80px;padding:4px;border:1px solid #ddd;border-radius:4px"></label><br>' +
@@ -2156,7 +2156,7 @@
         try {
           var r = await apiFetch('/ai-hosting/settings', {
             method: 'POST',
-            body: JSON.stringify({ wallet_address: walletAddress, settings: settings })
+            body: JSON.stringify({ wallet_address: _wallet, settings: settings })
           });
           if (r && r.code === 0) showToast('设置已保存');
         } catch(e) { showToast('保存失败'); }
@@ -2166,9 +2166,9 @@
 
   // ===== PROFILE EDIT =====
   async function showProfileEdit() {
-    if (!walletAddress) return;
+    if (!_wallet) return;
     try {
-      var res = await apiFetch('/user/profile?address=' + encodeURIComponent(walletAddress));
+      var res = await apiFetch('/user/profile?address=' + encodeURIComponent(_wallet));
       var p = (res && res.data) || {};
       var html = '<div style="text-align:left;font-size:12px;line-height:2">' +
         '<label>昵称: <input id="editNick" value="' + (p.nickname || '') + '" style="width:120px;padding:4px;border:1px solid #ddd;border-radius:4px"></label>' +
@@ -2178,7 +2178,7 @@
         try {
           var r = await apiFetch('/user/profile', {
             method: 'POST',
-            body: JSON.stringify({ wallet_address: walletAddress, nickname: nick })
+            body: JSON.stringify({ wallet_address: _wallet, nickname: nick })
           });
           if (r && r.code === 0) { showToast('资料已更新'); renderProfile(); }
         } catch(e) { showToast('更新失败'); }
@@ -2188,11 +2188,11 @@
 
   // ===== REFERRAL CLAIM =====
   async function claimInviteRewards() {
-    if (!walletAddress) return;
+    if (!_wallet) return;
     try {
       var r = await apiFetch('/invite/claim-reward', {
         method: 'POST',
-        body: JSON.stringify({ wallet_address: walletAddress })
+        body: JSON.stringify({ wallet_address: _wallet })
       });
       if (r && r.code === 0) { showToast('✅ 已领取 ' + r.data.claimed + ' USDT'); renderProfile(); }
       else showToast(r.msg || '领取失败');
@@ -2218,11 +2218,11 @@
   function selectScoreBet(score) { _selectedScore = score; showToast('已选: ' + score); }
 
   async function placeScoreBet(matchId, score, amount) {
-    if (!walletAddress) { showToast('请先连接钱包'); return; }
+    if (!_wallet) { showToast('请先连接钱包'); return; }
     try {
       var r = await apiFetch('/score-bet/place', {
         method: 'POST',
-        body: JSON.stringify({ wallet_address: walletAddress, match_id: matchId, cell_score: score, amount: amount })
+        body: JSON.stringify({ wallet_address: _wallet, match_id: matchId, cell_score: score, amount: amount })
       });
       if (r && r.code === 0) showToast('✅ 比分投注成功');
       else showToast(r.msg || '投注失败');
@@ -2259,7 +2259,7 @@
     // Listen for account changes
     window.addEventListener('dapp:accountChanged', function(e) {
       if (!e.detail || !e.detail.address) {
-        walletAddress = null;
+        _wallet = null;
         if (currentPage === 'profile') renderProfile();
       }
     });
@@ -2287,9 +2287,9 @@
       var poolRes = await apiFetch('/finance/pool-status');
       if (poolRes && poolRes.code === 0) poolData = poolRes.data;
     } catch(e) {}
-    if (walletAddress) {
+    if (_wallet) {
       try {
-        var aiRes = await apiFetch('/ai-hosting/status?address=' + encodeURIComponent(walletAddress));
+        var aiRes = await apiFetch('/ai-hosting/status?address=' + encodeURIComponent(_wallet));
         if (aiRes && aiRes.code === 0) aiStatus = aiRes.data;
       } catch(e) {}
     }
@@ -2331,7 +2331,7 @@
         '</div>' +
 
         // AI Hosting CTA
-        (walletAddress ?
+        (_wallet ?
           '<div style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:16px">' +
             '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
               '<div><div style="font-size:14px;font-weight:600;color:var(--text)">AI 自动托管</div><div style="font-size:11px;color:var(--text-muted)">' + (aiStatus && aiStatus.active ? '运行中' : '未激活') + '</div></div>' +
@@ -2363,14 +2363,14 @@
 
     container.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted)">加载中...</div>';
 
-    if (!walletAddress) {
+    if (!_wallet) {
       container.innerHTML = '<div style="padding:32px;text-align:center;color:var(--text-muted)"><p style="margin-bottom:12px">请先连接钱包</p><button onclick="app.connectWallet()" style="background:var(--accent);color:#0B0E11;border:none;padding:10px 24px;border-radius:4px;cursor:pointer">连接钱包</button></div>';
       return;
     }
 
     var txData = [];
     try {
-      var res = await apiFetch('/user/transactions?wallet=' + encodeURIComponent(walletAddress) + '&limit=50');
+      var res = await apiFetch('/user/transactions?wallet=' + encodeURIComponent(_wallet) + '&limit=50');
       if (res && res.code === 0 && res.data && res.data.transactions) {
         txData = res.data.transactions;
       }
@@ -2494,7 +2494,7 @@
   }
 
   document.getElementById('placeBetBtn').onclick = function() {
-    if (!walletAddress) { showToast('请先连接钱包'); return; }
+    if (!_wallet) { showToast('请先连接钱包'); return; }
     if (!window._selectedScore) { showToast('请选择比分'); return; }
     var amount = window._selectedAmount || 10;
     var matchId = window._detailMatchId;
@@ -2513,7 +2513,7 @@
           match_id: matchId,
           cell_score: score,
           amount: amount,
-          wallet_address: walletAddress,
+          wallet_address: _wallet,
           tx_hash: 'browser_' + Date.now()
         })
       });
@@ -2568,7 +2568,7 @@
   }
 
   async function confirmBet() {
-    if (!walletAddress) { showToast('请先连接钱包'); return; }
+    if (!_wallet) { showToast('请先连接钱包'); return; }
     var amount = parseFloat(document.getElementById('betAmountInput').value);
     if (!amount || amount < 1 || isNaN(amount)) { showToast('请输入正确的投注金额'); return; }
     var d = betDialogData;
@@ -2590,7 +2590,7 @@
             team_id: d.teamId,
             bet_type: betTypeIdx + 1,  // 1=champion, 2=runner-up in backend
             amount: amount,
-            wallet_address: walletAddress,
+            wallet_address: _wallet,
             tx_hash: tx.hash
           })
         }).then(function(r) {
@@ -2613,7 +2613,7 @@
 
   // Champion bet
   function openChampionBet(teamName, teamId, betType, odds) {
-    if (!walletAddress) { showToast('请先连接钱包'); return; }
+    if (!_wallet) { showToast('请先连接钱包'); return; }
 
     var typeName = betType === 'champion' ? '冠军' : '亚军';
     betDialogData = {
