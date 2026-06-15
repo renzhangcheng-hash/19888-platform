@@ -3176,5 +3176,8 @@
   window.addEventListener('error', function(e) {
     console.error('[19888 Error]', e.message, e.filename, e.lineno);
   });
+  window.addEventListener('unhandledrejection', function(e) {
+    console.error('[19888 Unhandled Promise]', e.reason);
+  });
 
 })();
