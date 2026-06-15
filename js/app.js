@@ -1691,7 +1691,20 @@
 
   // ===== DEPOSIT / WITHDRAW HANDLERS =====
   function showDepositModal() {
-    if (!walletAddress) { showToast('请先连接钱包'); return; }
+    if (!walletAddress) { 
+      // Show modal with wallet prompt instead of just toast
+      var modal = document.getElementById('depositModal');
+      if (modal) { 
+        modal.style.display = 'flex'; 
+        modal.classList.add('show');
+        // Show connect prompt inside modal
+        var body = modal.querySelector('.dialog-body');
+        if (body) {
+          body.innerHTML = '<div style="text-align:center;padding:20px"><p style="margin-bottom:16px;color:#666">请先连接钱包后再充值</p><button onclick="app.handleWalletBtnClick();app.hideDepositModal()" style="background:var(--accent);color:#fff;border:none;padding:10px 28px;border-radius:8px;font-size:14px;cursor:pointer">连接钱包</button></div>';
+        }
+      }
+      return; 
+    }
     if (typeof dapp !== 'undefined') {
       dapp.showDepositModal();
     } else {
@@ -1735,7 +1748,7 @@
 
   // ===== DEPOSIT / WITHDRAW (API-backed) =====
   function showWithdrawModal() {
-    if (!walletAddress) { showToast('请先连接钱包'); return; }
+    if (!walletAddress) { showDepositModal(); return; }
     var modal = document.getElementById('withdrawModal');
     if (modal) modal.style.display = 'flex';
   }
