@@ -19,7 +19,7 @@ class FrontendAgent {
     const deps = [
       { name: 'ethers.js', size: 494, onCriticalPath: false, action: 'Lazy ✓' },
       { name: 'app.js', size: 120, onCriticalPath: true, action: 'Keep ✓' },
-      { name: 'lucky944.css', size: 27, onCriticalPath: true, action: 'Inline critical ✓' }
+      { name: '19888.css', size: 27, onCriticalPath: true, action: 'Inline critical ✓' }
     ];
     return { totalKB: 641, criticalKB: 147, principle: 'Every KB on critical path must produce pixels' };
   }

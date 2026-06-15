@@ -10,7 +10,7 @@
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │                    19888.asia (Netlify SPA)                       │
-│  index.html + lucky944.css + app.js + web3.js + ethers.js        │
+│  index.html + 19888.css + app.js + web3.js + ethers.js        │
 └──────────────────────────┬───────────────────────────────────────┘
                            │ Cloudflare Tunnel
                            ▼

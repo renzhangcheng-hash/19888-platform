@@ -477,7 +477,7 @@
     return '<img src="img/teams/' + encodeURIComponent(name) + '.png" width="' + s + '" height="' + s + '" style="border-radius:50%;object-fit:contain;background:#E2E8F0;flex-shrink:0" alt="' + safeName + '" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=\'' + f + '\'">';
   }
 
-  // ===== MATCH CARD (lucky944 DOM — enhanced with odds) =====
+  // ===== MATCH CARD (19888 DOM — enhanced with odds) =====
   function matchCardHTML(m) {
     var t = m.time || m.match_time || '';
     var parts = t.split(' ');

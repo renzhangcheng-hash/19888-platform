@@ -1,9 +1,9 @@
 /**
- * 19888 API Server — Express.js (lucky944-compatible)
+ * 19888 API Server — Express.js (19888-compatible)
  * Full CRUD: matches, teams, odds, bets, users, wallet auth, AI托管
  * Storage: JSON files (zero-dependency persistence)
  *
- * Endpoints match lucky944 API structure:
+ * Endpoints match 19888 API structure:
  *   GET  /api/user/balance     → {available, frozen_bet, frozen_ai}
  *   GET  /api/user/profile     → {nickname, avatar, address, ...}
  *   POST /api/user/profile     → update nickname/avatar
@@ -522,7 +522,7 @@ app.get('/', asyncHandler((req, res) => {
 }));
 
 app.get('/api/status', asyncHandler((req, res) => {
-  res.json({ status:'ok', version:'2.0.0', name:'19888 API (lucky944-compatible)' });
+  res.json({ status:'ok', version:'2.0.0', name:'19888 API (19888-compatible)' });
 }));
 
 // GET /api/tunnel-url — return current tunnel URL (used by keeper cron)
@@ -568,7 +568,7 @@ app.post('/api/wallet/connect', asyncHandler((req, res) => {
 }));
 
 // ═══════════════════════════════════════════════════
-//  USER BALANCE (lucky944 format)
+//  USER BALANCE (19888 format)
 // ═══════════════════════════════════════════════════
 
 // GET /api/user/balance?address=0x...
@@ -588,7 +588,7 @@ app.get('/api/user/balance', asyncHandler((req, res) => {
 }));
 
 // ═══════════════════════════════════════════════════
-//  USER PROFILE (lucky944 format)
+//  USER PROFILE (19888 format)
 // ═══════════════════════════════════════════════════
 
 // GET /api/user/profile?address=0x...
@@ -667,7 +667,7 @@ app.post('/api/user/profile', asyncHandler((req, res) => {
 }));
 
 // ═══════════════════════════════════════════════════
-//  AI托管 (AI HOSTING) — lucky944 style
+//  AI托管 (AI HOSTING) — 19888 style
 // ═══════════════════════════════════════════════════
 
 // GET /api/ai-hosting/status?address=0x...
@@ -895,7 +895,7 @@ app.post('/api/ai-hosting/settings', asyncHandler((req, res) => {
 }));
 
 // ═══════════════════════════════════════════════════
-//  BET RECORDS (lucky944 format — paginated)
+//  BET RECORDS (19888 format — paginated)
 // ═══════════════════════════════════════════════════
 
 // GET /api/bet-records?address=0x...&page=1&page_size=20&status=pending&type=champion&from=...&to=...
@@ -975,7 +975,7 @@ app.get('/api/bet-records', asyncHandler((req, res) => {
 }));
 
 // ═══════════════════════════════════════════════════
-//  TEAMS (lucky944 format)
+//  TEAMS (19888 format)
 // ═══════════════════════════════════════════════════
 
 // GET /api/teams — all teams with stats
