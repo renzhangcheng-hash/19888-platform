@@ -473,8 +473,19 @@
   function teamLogoImg(name, size) {
     var s = size || 50;
     var safeName = sanitize(name);
-    var f = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="50" fill="#E2E8F0"/><text x="50" y="60" text-anchor="middle" font-size="32" fill="#533afd" font-family="Inter,system-ui,sans-serif" font-weight="bold">' + safeName.charAt(0) + '</text></svg>');
-    return '<img src="img/teams/' + encodeURIComponent(name) + '.png" width="' + s + '" height="' + s + '" style="border-radius:50%;object-fit:contain;background:#E2E8F0;flex-shrink:0" alt="' + safeName + '" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=\'' + f + '\'">';
+    // Fallback SVG: use btoa for safe base64 encoding
+    var svgRaw = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="50" fill="#E2E8F0"/><text x="50" y="60" text-anchor="middle" font-size="32" fill="#533afd" font-family="Inter,sans-serif" font-weight="bold">' + safeName.charAt(0) + '</text></svg>';
+    // Convert to UTF-8 bytes then base64
+    var utf8Bytes = [];
+    for (var i = 0; i < svgRaw.length; i++) {
+      var c = svgRaw.charCodeAt(i);
+      if (c < 128) utf8Bytes.push(c);
+      else if (c < 2048) { utf8Bytes.push(192 | c >> 6); utf8Bytes.push(128 | c & 63); }
+      else { utf8Bytes.push(224 | c >> 12); utf8Bytes.push(128 | c >> 6 & 63); utf8Bytes.push(128 | c & 63); }
+    }
+    var b64 = btoa(String.fromCharCode.apply(null, utf8Bytes));
+    var f = 'data:image/svg+xml;base64,' + b64;
+    return '<img src="img/teams/' + encodeURIComponent(name) + '.png" width="' + s + '" height="' + s + '" style="border-radius:50%;object-fit:contain;background:#E2E8F0;flex-shrink:0" alt="' + safeName + '" loading="eager" decoding="sync" onerror="this.onerror=null;this.src=\'' + f + '\'">';
   }
 
   // ===== MATCH CARD (19888 DOM — enhanced with odds) =====
