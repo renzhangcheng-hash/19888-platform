@@ -98,7 +98,18 @@ app.use((req, res, next) => {
 
 // ── Security Headers (Helmet) ────────────────────
 app.use(helmet({
-  contentSecurityPolicy: false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'none'"],
+      connectSrc: ["'self'", "https://one9888-api.onrender.com", "wss://one9888-api.onrender.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://19888.netlify.app"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      fontSrc: ["'self'"],
+      frameAncestors: ["'self'", "https://19888.netlify.app", "https://19888.asia"],
+      formAction: ["'self'"],
+    },
+  },
   crossOriginEmbedderPolicy: false,
 }));
 
