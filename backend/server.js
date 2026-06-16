@@ -239,7 +239,8 @@ function lockedUpdate(name, updateFn) {
           resolve(result);
         } catch (e) {
           releaseLock(name);
-          throw e;
+          // Resolve with structured error so callers can handle it gracefully
+          resolve({ error: e.message || String(e), code: e.code || 500, msg: e.msg || e.message || '更新失败' });
         }
       } catch (e) {
         reject(e);
