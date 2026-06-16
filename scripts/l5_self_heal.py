@@ -153,14 +153,30 @@ class L5Agent:
                 
             elif source == "admin_auth":
                 self.log(f"⚠️ Admin auth broken — regenerating hash...")
-                pwd = "19888admin"
-                import hashlib
-                hash_val = hashlib.sha256((pwd + "19888salt").encode()).hexdigest()
-                admins = [{"username": "admin", "password": hash_val}]
-                with open(f"{PROJECT}/backend/data/admins.json", "w") as f:
-                    json.dump(admins, f, indent=2)
-                fixed = True
-                self.log("  → Admin hash regenerated ✅")
+                try:
+                    pwd = "19888admin"
+                    # Use bcrypt — server uses bcrypt.compareSync
+                    import bcrypt
+                    hash_val = bcrypt.hashpw(pwd.encode(), bcrypt.gensalt(10)).decode()
+                    admins = [{"username": "admin", "password": hash_val, "password_hash": hash_val}]
+                    with open(f"{PROJECT}/backend/data/admins.json", "w") as f:
+                        json.dump(admins, f, indent=2)
+                    fixed = True
+                    self.log("  → Admin bcrypt hash regenerated ✅")
+                except ImportError:
+                    # Fallback: run node -e to generate bcrypt hash
+                    import subprocess
+                    result = subprocess.run(
+                        ["node", "-e", f"const bcrypt=require('bcryptjs');console.log(bcrypt.hashSync('{pwd}',10))"],
+                        cwd=f"{PROJECT}/backend", capture_output=True, text=True, timeout=5
+                    )
+                    if result.returncode == 0:
+                        hash_val = result.stdout.strip()
+                        admins = [{"username": "admin", "password": hash_val, "password_hash": hash_val}]
+                        with open(f"{PROJECT}/backend/data/admins.json", "w") as f:
+                            json.dump(admins, f, indent=2)
+                        fixed = True
+                        self.log("  → Admin bcrypt hash regenerated (node fallback) ✅")
                 
             elif source == "inline_styles":
                 count = int(bug["detail"].split()[0])
