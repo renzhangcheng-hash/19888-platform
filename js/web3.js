@@ -283,7 +283,7 @@
       const input = document.getElementById('depositAmount');
       if (input) input.value = '100';
       modal.style.display = 'flex';
-      const quickBtns = modal.querySelectorAll('.quick-amt');
+      const quickBtns = modal.querySelectorAll('.quick-amount');
       quickBtns.forEach(function(btn) {
         btn.onclick = function() {
           const amt = this.getAttribute('data-amt');

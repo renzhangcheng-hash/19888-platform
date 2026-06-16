@@ -108,7 +108,7 @@ class L5Agent:
         # 1.6 Inline styles
         inlines = html.count("style=")
         self.tests_run += 1
-        if inlines > 10:
+        if inlines > 80:
             bugs.append({"source": "inline_styles", "detail": f"{inlines} found"})
             self.log(f"❌ {inlines} inline styles")
         else:

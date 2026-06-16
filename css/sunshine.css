@@ -1154,6 +1154,31 @@ h1,h2,h3{font-weight:600;letter-spacing:-.02em;line-height:1.2}
 /* Small muted text */
 .text-sm-muted{font-size:12px;color:var(--text-muted)}
 .text-xs{font-size:11px;color:var(--text-muted)}
+/* Text utilities — replace inline color+size */
+.text-muted{color:var(--text-muted)!important}
+.text-accent{color:var(--accent)!important}
+.text-white{color:#fff!important}
+.text-sm{font-size:12px}
+.text-base{font-size:14px}
+.text-lg{font-size:16px}
+.text-xl{font-size:18px}
+.text-bold{font-weight:600}
+.text-700{font-weight:700}
+/* Spacing */
+.mb-4{margin-bottom:4px}
+.mb-8{margin-bottom:8px}
+.mb-12{margin-bottom:12px}
+.mb-16{margin-bottom:16px}
+.mt-8{margin-top:8px}
+/* Border radius */
+.rounded-8{border-radius:8px}
+.rounded-12{border-radius:12px}
+.rounded-16{border-radius:16px}
+/* Padding */
+.p-8{padding:8px}
+.p-12{padding:12px}
+.p-16{padding:16px}
+.px-12{padding-left:12px;padding-right:12px}
 
 /* ============================================================
    DARK MODE + ACCESSIBILITY

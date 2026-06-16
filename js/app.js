@@ -1716,35 +1716,62 @@
 
   // ===== DEPOSIT / WITHDRAW HANDLERS =====
   function showDepositModal() {
+    var modal = document.getElementById('depositModal');
+    if (!modal) return;
     if (!_wallet) { 
-      // Show modal with wallet prompt instead of just toast
-      var modal = document.getElementById('depositModal');
-      if (modal) { 
-        modal.style.display = 'flex'; 
-        modal.classList.add('show');
-        // Show connect prompt inside modal
-        var body = modal.querySelector('.dialog-body');
-        if (body) {
-          body.innerHTML = '<div style="text-align:center;padding:20px"><p style="margin-bottom:16px;color:#666">请先连接钱包后再充值</p><button onclick="app.handleWalletBtnClick();app.hideDepositModal()" style="background:var(--accent);color:#fff;border:none;padding:10px 28px;border-radius:8px;font-size:14px;cursor:pointer">连接钱包</button></div>';
-        }
+      // Show connect prompt inside modal
+      modal.style.display = 'flex'; 
+      modal.classList.add('show');
+      var body = modal.querySelector('.dialog-box');
+      if (body) {
+        body.innerHTML = '<h3>充值 USDT</h3><div style="text-align:center;padding:20px"><p style="margin-bottom:16px;color:#666">请先连接钱包后再充值</p><button onclick="app.handleWalletBtnClick();app.hideDepositModal()" style="background:var(--accent);color:#fff;border:none;padding:10px 28px;border-radius:8px;font-size:14px;cursor:pointer">连接钱包</button></div>';
       }
       return; 
     }
-    if (typeof dapp !== 'undefined') {
-      dapp.showDepositModal();
-    } else {
-      var modal = document.getElementById('depositModal');
-      if (modal) { modal.style.display = 'flex'; modal.classList.add('show'); }
+    // Wallet connected — show deposit form directly
+    var input = document.getElementById('depositAmount');
+    if (input) input.value = '100';
+    modal.style.display = 'flex';
+    modal.classList.add('show');
+    // Restore original dialog content if wallet was just connected
+    var body = modal.querySelector('.dialog-box');
+    if (body && body.querySelector('button[onclick*="handleWalletBtnClick"]')) {
+      // Rebuild deposit form
+      body.innerHTML = '<h3>充值 USDT</h3>' +
+        '<input id="depositAmount" type="number" placeholder="金额" min="10" value="100">' +
+        '<div class="quick-amounts">' +
+          '<button class="quick-amount" data-amt="100">100</button>' +
+          '<button class="quick-amount" data-amt="500">500</button>' +
+          '<button class="quick-amount" data-amt="1000">1000</button>' +
+        '</div>' +
+        '<div style="font-size:10px;color:var(--text-muted);margin:8px 0;text-align:center">' +
+          '⛽ BSC Gas: <span id="gasEstimate" style="font-weight:600;color:var(--accent)">~0.0001 BNB</span>' +
+          ' · <a href="javascript:;" onclick="app.showApprovalLimitInfo()" style="color:var(--accent);text-decoration:underline">授权限额</a>' +
+        '</div>' +
+        '<div class="dialog-actions">' +
+          '<button class="dialog-btn primary" id="depositConfirm">确认充值</button>' +
+          '<button class="dialog-btn secondary" id="depositCancel">取消</button>' +
+        '</div>';
+      // Re-bind events
+      var depConf = document.getElementById('depositConfirm');
+      if (depConf) depConf.addEventListener('click', function(e) { e.preventDefault(); confirmDeposit(); });
+      var depCanc = document.getElementById('depositCancel');
+      if (depCanc) depCanc.addEventListener('click', function() { hideDepositModal(); });
     }
+    // Bind quick amount buttons
+    var quickBtns = modal.querySelectorAll('.quick-amount');
+    quickBtns.forEach(function(btn) {
+      btn.onclick = function() {
+        var amt = this.getAttribute('data-amt');
+        var inp = document.getElementById('depositAmount');
+        if (inp) inp.value = amt;
+      };
+    });
   }
 
   function hideDepositModal() {
-    if (typeof dapp !== 'undefined') {
-      dapp.hideDepositModal();
-    } else {
-      var modal = document.getElementById('depositModal');
-      if (modal) { modal.style.display = 'none'; modal.classList.remove('show'); }
-    }
+    var modal = document.getElementById('depositModal');
+    if (modal) { modal.style.display = 'none'; modal.classList.remove('show'); }
   }
 
   // Gas estimate updater — polls BSC gas price
@@ -1775,7 +1802,26 @@
   function showWithdrawModal() {
     if (!_wallet) { showDepositModal(); return; }
     var modal = document.getElementById('withdrawModal');
-    if (modal) modal.style.display = 'flex';
+    if (!modal) return;
+    var input = document.getElementById('withdrawAmount');
+    if (input) input.value = '';
+    modal.style.display = 'flex';
+    modal.classList.add('show');
+    // Restore dialog content if it was hijacked
+    var body = modal.querySelector('.dialog-box');
+    if (body && body.querySelector('button[onclick*="handleWalletBtnClick"]')) {
+      body.innerHTML = '<h3>提现 USDT</h3>' +
+        '<input id="withdrawAmount" type="number" placeholder="金额" min="10">' +
+        '<input id="withdrawAddress" type="text" placeholder="提现地址">' +
+        '<div class="dialog-actions">' +
+          '<button class="dialog-btn primary" id="withdrawConfirm">确认提现</button>' +
+          '<button class="dialog-btn secondary" id="withdrawCancel">取消</button>' +
+        '</div>';
+      var wConf = document.getElementById('withdrawConfirm');
+      if (wConf) wConf.addEventListener('click', function(e) { e.preventDefault(); confirmWithdraw(); });
+      var wCanc = document.getElementById('withdrawCancel');
+      if (wCanc) wCanc.addEventListener('click', function() { hideWithdrawModal(); });
+    }
   }
 
   function hideWithdrawModal() {
@@ -2322,7 +2368,7 @@
           '</div>' +
           '<div style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:12px;text-align:center">' +
             '<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">资金池</div>' +
-            '<div style="font-size:20px;font-weight:700;color:var(--accent)">$' + Number(poolBalance).toLocaleString() + '</div>' +
+            '<div class="text-accent text-700 text-xl">$' + Number(poolBalance).toLocaleString() + '</div>' +
           '</div>' +
           '<div style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:12px;text-align:center">' +
             '<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">进行中</div>' +
