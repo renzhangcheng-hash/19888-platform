@@ -477,26 +477,33 @@ function generateMockPool() {
 // ── Seed Data ─────────────────────────────────────
 function seed() {
   const hasMatches = read('matches').length > 0;
+  const hasTeams = read('champion_teams').length > 0;
+  const seedDir = path.join(__dirname, 'seed');
+  const seedMatches = path.join(seedDir, 'matches.json');
+  const seedTeams = path.join(seedDir, 'champion_teams.json');
+  let seeded = false;
 
-  if (!hasMatches) {
-    // Copy World Cup 2026 data from seed files
-    const seedDir = path.join(__dirname, 'seed');
-    const seedMatches = path.join(seedDir, 'matches.json');
-    const seedTeams = path.join(seedDir, 'champion_teams.json');
+  if (!hasMatches && fs.existsSync(seedMatches)) {
+    fs.copyFileSync(seedMatches, path.join(DATA_DIR, 'matches.json'));
+    seeded = true;
+  } else if (!hasMatches) {
+    const now = new Date();
+    write('matches', [
+      { id:1, league:'世界杯 A组·第1轮', home:'美国', away:'墨西哥', match_time: fmt(now,0,14,0), odds_home:1.65, odds_draw:3.30, odds_away:6.00, status:'upcoming' },
+    ]);
+  }
 
-    if (fs.existsSync(seedMatches) && fs.existsSync(seedTeams)) {
-      fs.copyFileSync(seedMatches, path.join(DATA_DIR, 'matches.json'));
-      fs.copyFileSync(seedTeams, path.join(DATA_DIR, 'champion_teams.json'));
-      console.log('✅ World Cup 2026 seed data loaded');
-    } else {
-      const now = new Date();
-      write('matches', [
-        { id:1, league:'世界杯 A组·第1轮', home:'美国', away:'墨西哥', match_time: fmt(now,0,14,0), odds_home:1.65, odds_draw:3.30, odds_away:6.00, status:'upcoming' },
-      ]);
-      write('champion_teams', [
-        { id:1, name:'巴西', flag:'🇧🇷', champion_odds:5.5, runner_odds:4.0, group:'B' },
-      ]);
-    }
+  if (!hasTeams && fs.existsSync(seedTeams)) {
+    fs.copyFileSync(seedTeams, path.join(DATA_DIR, 'champion_teams.json'));
+    seeded = true;
+  } else if (!hasTeams) {
+    write('champion_teams', [
+      { id:1, name:'巴西', flag:'🇧🇷', champion_odds:5.5, runner_odds:4.0, group:'B' },
+    ]);
+  }
+
+  if (seeded) {
+    console.log('✅ World Cup 2026 seed data loaded');
   }
 
   // Always seed admin account if it doesn't exist (FP fix)
