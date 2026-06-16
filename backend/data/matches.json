@@ -8,7 +8,7 @@
     "odds_home": 2.55,
     "odds_draw": 3.75,
     "odds_away": 2.65,
-    "status": "live"
+    "status": "finished"
   },
   {
     "id": 2,
@@ -19,7 +19,7 @@
     "odds_home": 1.8,
     "odds_draw": 17.5,
     "odds_away": 4.6,
-    "status": "upcoming"
+    "status": "finished"
   },
   {
     "id": 3,
@@ -30,7 +30,7 @@
     "odds_home": 2.77,
     "odds_draw": 3.5,
     "odds_away": 2.83,
-    "status": "upcoming"
+    "status": "finished"
   },
   {
     "id": 4,
@@ -41,7 +41,7 @@
     "odds_home": 1.88,
     "odds_draw": 17.5,
     "odds_away": 4.62,
-    "status": "live"
+    "status": "finished"
   },
   {
     "id": 5,
@@ -52,7 +52,7 @@
     "odds_home": 1.72,
     "odds_draw": 17.5,
     "odds_away": 4.58,
-    "status": "upcoming"
+    "status": "finished"
   },
   {
     "id": 6,
@@ -63,7 +63,7 @@
     "odds_home": 2.95,
     "odds_draw": 3.75,
     "odds_away": 2.9,
-    "status": "upcoming"
+    "status": "finished"
   },
   {
     "id": 7,
@@ -74,7 +74,7 @@
     "odds_home": 2.73,
     "odds_draw": 2.85,
     "odds_away": 2.75,
-    "status": "live"
+    "status": "finished"
   },
   {
     "id": 8,
@@ -83,9 +83,9 @@
     "away": "喀麦隆",
     "match_time": "2026-06-15 17:00",
     "odds_home": 2.5,
-    "odds_draw": 10.0,
+    "odds_draw": 10,
     "odds_away": 3.5,
-    "status": "upcoming"
+    "status": "finished"
   },
   {
     "id": 9,
@@ -94,9 +94,9 @@
     "away": "波兰",
     "match_time": "2026-06-15 20:00",
     "odds_home": 1.72,
-    "odds_draw": 5.0,
+    "odds_draw": 5,
     "odds_away": 2.17,
-    "status": "upcoming"
+    "status": "finished"
   },
   {
     "id": 10,
@@ -105,9 +105,9 @@
     "away": "喀麦隆",
     "match_time": "2026-06-15 14:00",
     "odds_home": 1.64,
-    "odds_draw": 10.0,
+    "odds_draw": 10,
     "odds_away": 3.07,
-    "status": "live"
+    "status": "finished"
   },
   {
     "id": 11,
@@ -116,9 +116,9 @@
     "away": "喀麦隆",
     "match_time": "2026-06-15 17:00",
     "odds_home": 1.61,
-    "odds_draw": 10.0,
+    "odds_draw": 10,
     "odds_away": 3.05,
-    "status": "upcoming"
+    "status": "finished"
   },
   {
     "id": 12,
@@ -127,9 +127,9 @@
     "away": "波兰",
     "match_time": "2026-06-15 20:00",
     "odds_home": 1.78,
-    "odds_draw": 5.0,
+    "odds_draw": 5,
     "odds_away": 2.21,
-    "status": "upcoming"
+    "status": "finished"
   },
   {
     "id": 13,
@@ -140,7 +140,7 @@
     "odds_home": 2.38,
     "odds_draw": 3.05,
     "odds_away": 2.43,
-    "status": "live"
+    "status": "finished"
   },
   {
     "id": 14,
@@ -149,9 +149,9 @@
     "away": "马里",
     "match_time": "2026-06-15 17:00",
     "odds_home": 1.98,
-    "odds_draw": 15.0,
+    "odds_draw": 15,
     "odds_away": 4.18,
-    "status": "upcoming"
+    "status": "finished"
   },
   {
     "id": 15,
@@ -160,9 +160,9 @@
     "away": "哥伦比亚",
     "match_time": "2026-06-15 20:00",
     "odds_home": 1.86,
-    "odds_draw": 4.0,
+    "odds_draw": 4,
     "odds_away": 2.1,
-    "status": "upcoming"
+    "status": "finished"
   },
   {
     "id": 16,
@@ -171,9 +171,9 @@
     "away": "马里",
     "match_time": "2026-06-15 14:00",
     "odds_home": 1.68,
-    "odds_draw": 15.0,
+    "odds_draw": 15,
     "odds_away": 4.07,
-    "status": "live"
+    "status": "finished"
   },
   {
     "id": 17,
@@ -182,9 +182,9 @@
     "away": "马里",
     "match_time": "2026-06-15 17:00",
     "odds_home": 1.6,
-    "odds_draw": 15.0,
+    "odds_draw": 15,
     "odds_away": 4.04,
-    "status": "upcoming"
+    "status": "finished"
   },
   {
     "id": 18,
@@ -193,9 +193,9 @@
     "away": "哥伦比亚",
     "match_time": "2026-06-15 20:00",
     "odds_home": 2.16,
-    "odds_draw": 4.0,
+    "odds_draw": 4,
     "odds_away": 2.35,
-    "status": "upcoming"
+    "status": "finished"
   },
   {
     "id": 19,
@@ -281,7 +281,7 @@
     "away": "突尼斯",
     "match_time": "2026-06-16 17:00",
     "odds_home": 2.64,
-    "odds_draw": 20.0,
+    "odds_draw": 20,
     "odds_away": 5.34,
     "status": "upcoming"
   },
@@ -303,7 +303,7 @@
     "away": "突尼斯",
     "match_time": "2026-06-16 14:00",
     "odds_home": 1.69,
-    "odds_draw": 20.0,
+    "odds_draw": 20,
     "odds_away": 5.06,
     "status": "upcoming"
   },
@@ -314,7 +314,7 @@
     "away": "突尼斯",
     "match_time": "2026-06-16 17:00",
     "odds_home": 1.63,
-    "odds_draw": 20.0,
+    "odds_draw": 20,
     "odds_away": 5.04,
     "status": "upcoming"
   },
@@ -489,7 +489,7 @@
     "home": "乌拉圭",
     "away": "厄瓜多尔",
     "match_time": "2026-06-17 20:00",
-    "odds_home": 2.0,
+    "odds_home": 2,
     "odds_draw": 7.5,
     "odds_away": 2.8,
     "status": "upcoming"
@@ -545,7 +545,7 @@
     "away": "沙特阿拉伯",
     "match_time": "2026-06-17 17:00",
     "odds_home": 1.81,
-    "odds_draw": 20.0,
+    "odds_draw": 20,
     "odds_away": 5.09,
     "status": "upcoming"
   },
@@ -567,7 +567,7 @@
     "away": "沙特阿拉伯",
     "match_time": "2026-06-17 14:00",
     "odds_home": 2.07,
-    "odds_draw": 20.0,
+    "odds_draw": 20,
     "odds_away": 5.17,
     "status": "upcoming"
   },
@@ -578,7 +578,7 @@
     "away": "沙特阿拉伯",
     "match_time": "2026-06-17 17:00",
     "odds_home": 1.86,
-    "odds_draw": 20.0,
+    "odds_draw": 20,
     "odds_away": 5.11,
     "status": "upcoming"
   },
@@ -611,7 +611,7 @@
     "away": "南非",
     "match_time": "2026-06-18 17:00",
     "odds_home": 2.94,
-    "odds_draw": 15.0,
+    "odds_draw": 15,
     "odds_away": 4.54,
     "status": "upcoming"
   },
@@ -622,7 +622,7 @@
     "away": "尼日利亚",
     "match_time": "2026-06-18 20:00",
     "odds_home": 3.63,
-    "odds_draw": 7.0,
+    "odds_draw": 7,
     "odds_away": 3.73,
     "status": "upcoming"
   },
@@ -633,7 +633,7 @@
     "away": "南非",
     "match_time": "2026-06-18 14:00",
     "odds_home": 3.42,
-    "odds_draw": 15.0,
+    "odds_draw": 15,
     "odds_away": 4.72,
     "status": "upcoming"
   },
@@ -644,7 +644,7 @@
     "away": "南非",
     "match_time": "2026-06-18 17:00",
     "odds_home": 2.78,
-    "odds_draw": 15.0,
+    "odds_draw": 15,
     "odds_away": 4.48,
     "status": "upcoming"
   },
@@ -687,7 +687,7 @@
     "home": "塞尔维亚",
     "away": "秘鲁",
     "match_time": "2026-06-18 20:00",
-    "odds_home": 3.0,
+    "odds_home": 3,
     "odds_draw": 7.5,
     "odds_away": 3.4,
     "status": "upcoming"
@@ -732,7 +732,7 @@
     "away": "土耳其",
     "match_time": "2026-06-18 14:00",
     "odds_home": 3.35,
-    "odds_draw": 5.0,
+    "odds_draw": 5,
     "odds_away": 3.3,
     "status": "upcoming"
   },
@@ -797,9 +797,9 @@
     "home": "待定",
     "away": "待定",
     "match_time": "2026-07-05 14:00",
-    "odds_home": 2.0,
-    "odds_draw": 3.0,
-    "odds_away": 2.0,
+    "odds_home": 2,
+    "odds_draw": 3,
+    "odds_away": 2,
     "status": "upcoming"
   },
   {
@@ -808,9 +808,9 @@
     "home": "待定",
     "away": "待定",
     "match_time": "2026-07-05 17:00",
-    "odds_home": 2.0,
-    "odds_draw": 3.0,
-    "odds_away": 2.0,
+    "odds_home": 2,
+    "odds_draw": 3,
+    "odds_away": 2,
     "status": "upcoming"
   },
   {
@@ -819,9 +819,9 @@
     "home": "待定",
     "away": "待定",
     "match_time": "2026-07-05 20:00",
-    "odds_home": 2.0,
-    "odds_draw": 3.0,
-    "odds_away": 2.0,
+    "odds_home": 2,
+    "odds_draw": 3,
+    "odds_away": 2,
     "status": "upcoming"
   },
   {
@@ -830,9 +830,9 @@
     "home": "待定",
     "away": "待定",
     "match_time": "2026-07-05 23:00",
-    "odds_home": 2.0,
-    "odds_draw": 3.0,
-    "odds_away": 2.0,
+    "odds_home": 2,
+    "odds_draw": 3,
+    "odds_away": 2,
     "status": "upcoming"
   },
   {
@@ -841,9 +841,9 @@
     "home": "待定",
     "away": "待定",
     "match_time": "2026-07-05 20:00",
-    "odds_home": 2.0,
-    "odds_draw": 3.0,
-    "odds_away": 2.0,
+    "odds_home": 2,
+    "odds_draw": 3,
+    "odds_away": 2,
     "status": "upcoming"
   },
   {
@@ -852,9 +852,9 @@
     "home": "待定",
     "away": "待定",
     "match_time": "2026-07-05 21:00",
-    "odds_home": 2.0,
-    "odds_draw": 3.0,
-    "odds_away": 2.0,
+    "odds_home": 2,
+    "odds_draw": 3,
+    "odds_away": 2,
     "status": "upcoming"
   },
   {
@@ -863,9 +863,9 @@
     "home": "待定",
     "away": "待定",
     "match_time": "2026-07-05 08:00",
-    "odds_home": 2.0,
-    "odds_draw": 3.0,
-    "odds_away": 2.0,
+    "odds_home": 2,
+    "odds_draw": 3,
+    "odds_away": 2,
     "status": "upcoming"
   },
   {
@@ -874,9 +874,9 @@
     "home": "待定",
     "away": "待定",
     "match_time": "2026-07-05 22:00",
-    "odds_home": 2.0,
-    "odds_draw": 3.0,
-    "odds_away": 2.0,
+    "odds_home": 2,
+    "odds_draw": 3,
+    "odds_away": 2,
     "status": "upcoming"
   },
   {
@@ -885,9 +885,9 @@
     "home": "待定",
     "away": "待定",
     "match_time": "2026-07-05 23:00",
-    "odds_home": 2.0,
-    "odds_draw": 3.0,
-    "odds_away": 2.0,
+    "odds_home": 2,
+    "odds_draw": 3,
+    "odds_away": 2,
     "status": "upcoming"
   },
   {
@@ -896,9 +896,9 @@
     "home": "待定",
     "away": "待定",
     "match_time": "2026-07-05 17:00",
-    "odds_home": 2.0,
-    "odds_draw": 3.0,
-    "odds_away": 2.0,
+    "odds_home": 2,
+    "odds_draw": 3,
+    "odds_away": 2,
     "status": "upcoming"
   },
   {
@@ -907,9 +907,9 @@
     "home": "待定",
     "away": "待定",
     "match_time": "2026-07-05 20:00",
-    "odds_home": 2.0,
-    "odds_draw": 3.0,
-    "odds_away": 2.0,
+    "odds_home": 2,
+    "odds_draw": 3,
+    "odds_away": 2,
     "status": "upcoming"
   },
   {
@@ -918,9 +918,9 @@
     "home": "待定",
     "away": "待定",
     "match_time": "2026-07-05 23:00",
-    "odds_home": 2.0,
-    "odds_draw": 3.0,
-    "odds_away": 2.0,
+    "odds_home": 2,
+    "odds_draw": 3,
+    "odds_away": 2,
     "status": "upcoming"
   },
   {
@@ -929,9 +929,9 @@
     "home": "待定",
     "away": "待定",
     "match_time": "2026-07-05 02:00",
-    "odds_home": 2.0,
-    "odds_draw": 3.0,
-    "odds_away": 2.0,
+    "odds_home": 2,
+    "odds_draw": 3,
+    "odds_away": 2,
     "status": "upcoming"
   },
   {
@@ -940,9 +940,9 @@
     "home": "待定",
     "away": "待定",
     "match_time": "2026-07-05 05:00",
-    "odds_home": 2.0,
-    "odds_draw": 3.0,
-    "odds_away": 2.0,
+    "odds_home": 2,
+    "odds_draw": 3,
+    "odds_away": 2,
     "status": "upcoming"
   },
   {
@@ -951,9 +951,9 @@
     "home": "待定",
     "away": "待定",
     "match_time": "2026-07-05 08:00",
-    "odds_home": 2.0,
-    "odds_draw": 3.0,
-    "odds_away": 2.0,
+    "odds_home": 2,
+    "odds_draw": 3,
+    "odds_away": 2,
     "status": "upcoming"
   },
   {
@@ -962,9 +962,9 @@
     "home": "待定",
     "away": "待定",
     "match_time": "2026-07-05 11:00",
-    "odds_home": 2.0,
-    "odds_draw": 3.0,
-    "odds_away": 2.0,
+    "odds_home": 2,
+    "odds_draw": 3,
+    "odds_away": 2,
     "status": "upcoming"
   },
   {
@@ -973,9 +973,9 @@
     "home": "待定",
     "away": "待定",
     "match_time": "2026-07-08 14:00",
-    "odds_home": 2.0,
-    "odds_draw": 3.0,
-    "odds_away": 2.0,
+    "odds_home": 2,
+    "odds_draw": 3,
+    "odds_away": 2,
     "status": "upcoming"
   },
   {
@@ -984,9 +984,9 @@
     "home": "待定",
     "away": "待定",
     "match_time": "2026-07-08 17:00",
-    "odds_home": 2.0,
-    "odds_draw": 3.0,
-    "odds_away": 2.0,
+    "odds_home": 2,
+    "odds_draw": 3,
+    "odds_away": 2,
     "status": "upcoming"
   },
   {
@@ -995,9 +995,9 @@
     "home": "待定",
     "away": "待定",
     "match_time": "2026-07-08 20:00",
-    "odds_home": 2.0,
-    "odds_draw": 3.0,
-    "odds_away": 2.0,
+    "odds_home": 2,
+    "odds_draw": 3,
+    "odds_away": 2,
     "status": "upcoming"
   },
   {
@@ -1006,9 +1006,9 @@
     "home": "待定",
     "away": "待定",
     "match_time": "2026-07-08 23:00",
-    "odds_home": 2.0,
-    "odds_draw": 3.0,
-    "odds_away": 2.0,
+    "odds_home": 2,
+    "odds_draw": 3,
+    "odds_away": 2,
     "status": "upcoming"
   },
   {
@@ -1017,9 +1017,9 @@
     "home": "待定",
     "away": "待定",
     "match_time": "2026-07-08 20:00",
-    "odds_home": 2.0,
-    "odds_draw": 3.0,
-    "odds_away": 2.0,
+    "odds_home": 2,
+    "odds_draw": 3,
+    "odds_away": 2,
     "status": "upcoming"
   },
   {
@@ -1028,9 +1028,9 @@
     "home": "待定",
     "away": "待定",
     "match_time": "2026-07-08 21:00",
-    "odds_home": 2.0,
-    "odds_draw": 3.0,
-    "odds_away": 2.0,
+    "odds_home": 2,
+    "odds_draw": 3,
+    "odds_away": 2,
     "status": "upcoming"
   },
   {
@@ -1039,9 +1039,9 @@
     "home": "待定",
     "away": "待定",
     "match_time": "2026-07-08 08:00",
-    "odds_home": 2.0,
-    "odds_draw": 3.0,
-    "odds_away": 2.0,
+    "odds_home": 2,
+    "odds_draw": 3,
+    "odds_away": 2,
     "status": "upcoming"
   },
   {
@@ -1050,9 +1050,9 @@
     "home": "待定",
     "away": "待定",
     "match_time": "2026-07-08 22:00",
-    "odds_home": 2.0,
-    "odds_draw": 3.0,
-    "odds_away": 2.0,
+    "odds_home": 2,
+    "odds_draw": 3,
+    "odds_away": 2,
     "status": "upcoming"
   },
   {
@@ -1061,9 +1061,9 @@
     "home": "待定",
     "away": "待定",
     "match_time": "2026-07-11 14:00",
-    "odds_home": 2.0,
-    "odds_draw": 3.0,
-    "odds_away": 2.0,
+    "odds_home": 2,
+    "odds_draw": 3,
+    "odds_away": 2,
     "status": "upcoming"
   },
   {
@@ -1072,9 +1072,9 @@
     "home": "待定",
     "away": "待定",
     "match_time": "2026-07-11 17:00",
-    "odds_home": 2.0,
-    "odds_draw": 3.0,
-    "odds_away": 2.0,
+    "odds_home": 2,
+    "odds_draw": 3,
+    "odds_away": 2,
     "status": "upcoming"
   },
   {
@@ -1083,9 +1083,9 @@
     "home": "待定",
     "away": "待定",
     "match_time": "2026-07-11 20:00",
-    "odds_home": 2.0,
-    "odds_draw": 3.0,
-    "odds_away": 2.0,
+    "odds_home": 2,
+    "odds_draw": 3,
+    "odds_away": 2,
     "status": "upcoming"
   },
   {
@@ -1094,9 +1094,9 @@
     "home": "待定",
     "away": "待定",
     "match_time": "2026-07-11 23:00",
-    "odds_home": 2.0,
-    "odds_draw": 3.0,
-    "odds_away": 2.0,
+    "odds_home": 2,
+    "odds_draw": 3,
+    "odds_away": 2,
     "status": "upcoming"
   },
   {
@@ -1105,9 +1105,9 @@
     "home": "待定",
     "away": "待定",
     "match_time": "2026-07-14 14:00",
-    "odds_home": 2.0,
-    "odds_draw": 3.0,
-    "odds_away": 2.0,
+    "odds_home": 2,
+    "odds_draw": 3,
+    "odds_away": 2,
     "status": "upcoming"
   },
   {
@@ -1116,9 +1116,9 @@
     "home": "待定",
     "away": "待定",
     "match_time": "2026-07-14 17:00",
-    "odds_home": 2.0,
-    "odds_draw": 3.0,
-    "odds_away": 2.0,
+    "odds_home": 2,
+    "odds_draw": 3,
+    "odds_away": 2,
     "status": "upcoming"
   },
   {
@@ -1127,9 +1127,9 @@
     "home": "待定",
     "away": "待定",
     "match_time": "2026-07-17 14:00",
-    "odds_home": 2.0,
-    "odds_draw": 3.0,
-    "odds_away": 2.0,
+    "odds_home": 2,
+    "odds_draw": 3,
+    "odds_away": 2,
     "status": "upcoming"
   },
   {
@@ -1138,9 +1138,9 @@
     "home": "待定",
     "away": "待定",
     "match_time": "2026-07-20 14:00",
-    "odds_home": 2.0,
-    "odds_draw": 3.0,
-    "odds_away": 2.0,
+    "odds_home": 2,
+    "odds_draw": 3,
+    "odds_away": 2,
     "status": "upcoming"
   }
 ]

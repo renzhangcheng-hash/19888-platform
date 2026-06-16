@@ -685,7 +685,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 }
 .custom-confirm-btn {
   padding:10px 28px; border-radius:10px; font-size:14px;
-  font-weight:600; cursor:pointer; border:none; transition:all .15s;
+  font-weight:600; cursor:pointer; border:none; transition:transform .15s,opacity .15s,box-shadow .15s;
   min-width:100px;
 }
 .confirm-cancel-btn {
@@ -1187,3 +1187,22 @@ h1,h2,h3{font-weight:600;letter-spacing:-.02em;line-height:1.2}
 #networkBadge{backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 #txToast{backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
 #txToast a:hover{text-decoration:underline}
+
+/* ===== FP UI Performance Optimization ===== */
+/* GPU-only animation rule */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+/* Prevent layout thrash on mobile */
+html { touch-action: manipulation; }
+/* Off-screen pages cost zero paint */
+.page:not(.active) { content-visibility: hidden; contain: layout style paint; }
+/* Cards render on demand */
+.match-card { content-visibility: auto; contain-intrinsic-size: auto 140px; }
+/* Image layout stability — zero CLS */
+img { aspect-ratio: auto; }
+/* GPU layer for animations */
+.btn-bet, .cta-primary, .cta-green, .cta-outline, .dialog-box, .custom-confirm { will-change: transform; }
+/* Scroll performance */
+.scroll-container { overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
