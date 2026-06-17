@@ -2359,11 +2359,9 @@
       mainEl.appendChild(container);
     }
 
-    container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted)">加载中...</div>';
+    container.innerHTML = '<div class="section-pad" style="text-align:center;color:var(--text-muted)">加载中...</div>';
 
-    // Fetch pool status + AI hosting if wallet connected
-    var poolData = null;
-    var aiStatus = null;
+    var poolData = null, aiStatus = null;
     try {
       var poolRes = await apiFetch('/finance/pool-status');
       if (poolRes && poolRes.code === 0) poolData = poolRes.data;
@@ -2380,52 +2378,106 @@
     var pendingBets = poolData ? poolData.pending_bets : 0;
 
     container.innerHTML =
-      '<div style="padding:16px">' +
-        // Stats overview
+      '<div class="section-pad">' +
+        // ── Hero ──
+        '<div style="text-align:center;padding:20px 0;margin-bottom:16px">' +
+          '<div style="font-size:40px;margin-bottom:8px">🤖</div>' +
+          '<h2 style="font-size:20px;font-weight:700;color:var(--text);margin-bottom:4px">AI 智能预测</h2>' +
+          '<p style="font-size:13px;color:var(--text-muted)">基于深度学习 · 88.89% 理论胜率</p>' +
+        '</div>' +
+
+        // ── Stats row ──
         '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">' +
-          '<div style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:12px;text-align:center">' +
-            '<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">平台用户</div>' +
-            '<div style="font-size:20px;font-weight:700;color:var(--text)">' + userCount + '</div>' +
+          '<div class="stat-card" style="border:1px solid var(--border);border-radius:8px">' +
+            '<div class="stat-label">👥 平台用户</div>' +
+            '<div class="stat-value">' + userCount + '</div>' +
           '</div>' +
-          '<div style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:12px;text-align:center">' +
-            '<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">资金池</div>' +
-            '<div class="text-accent text-700 text-xl">$' + Number(poolBalance).toLocaleString() + '</div>' +
+          '<div class="stat-card" style="border:1px solid var(--border);border-radius:8px">' +
+            '<div class="stat-label">💰 资金池</div>' +
+            '<div class="stat-value">$' + Number(poolBalance).toLocaleString() + '</div>' +
           '</div>' +
-          '<div style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:12px;text-align:center">' +
-            '<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">进行中</div>' +
-            '<div style="font-size:20px;font-weight:700;color:var(--green)">' + pendingBets + '</div>' +
-          '</div>' +
-        '</div>' +
-
-        // AI Introduction
-        '<div style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:20px;margin-bottom:16px">' +
-          '<h3 style="font-size:16px;color:var(--accent);margin-bottom:10px">🤖 AI 智能预测引擎</h3>' +
-          '<p style="font-size:13px;color:var(--text-light);line-height:1.8;margin-bottom:10px">基于5000万场历史数据的深度学习模型，反波胆玩法理论胜率高达88.89%。AI托管自动执行投注策略，月化收益目标15%。</p>' +
-          '<div style="display:flex;gap:8px;margin-top:12px">' +
-            '<div style="flex:1;background:rgba(240,185,11,0.06);border:1px solid rgba(240,185,11,0.15);border-radius:4px;padding:12px;text-align:center">' +
-              '<div style="font-size:10px;color:var(--text-muted)">理论胜率</div><div style="font-size:22px;font-weight:800;color:var(--accent)">88.89%</div>' +
-            '</div>' +
-            '<div style="flex:1;background:rgba(14,203,129,0.06);border:1px solid rgba(14,203,129,0.15);border-radius:4px;padding:12px;text-align:center">' +
-              '<div style="font-size:10px;color:var(--text-muted)">月化收益</div><div style="font-size:22px;font-weight:800;color:var(--green)">+15%</div>' +
-            '</div>' +
+          '<div class="stat-card" style="border:1px solid var(--border);border-radius:8px">' +
+            '<div class="stat-label">🎯 进行中</div>' +
+            '<div class="stat-value" style="color:var(--green)">' + pendingBets + '</div>' +
           '</div>' +
         '</div>' +
 
-        // AI Hosting CTA
-        (_wallet ?
-          '<div style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:16px">' +
-            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
-              '<div><div style="font-size:14px;font-weight:600;color:var(--text)">AI 自动托管</div><div style="font-size:11px;color:var(--text-muted)">' + (aiStatus && aiStatus.active ? '运行中' : '未激活') + '</div></div>' +
-              '<button onclick="app.toggleAIHosting()" style="background:' + (aiStatus && aiStatus.active ? 'var(--surface-hover)' : 'var(--accent)') + ';color:' + (aiStatus && aiStatus.active ? 'var(--text)' : '#0B0E11') + ';border:none;padding:8px 16px;border-radius:4px;font-size:12px;font-weight:700;cursor:pointer">' + (aiStatus && aiStatus.active ? '停用' : '激活托管') + '</button>' +
+        // ── What is Anti-Score Betting ──
+        '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px">' +
+          '<div style="font-size:22px;margin-bottom:6px">🎓 什么是反波胆？</div>' +
+          '<p style="font-size:13px;color:var(--text-light);line-height:1.9;margin-bottom:12px">' +
+            '传统竞猜需要猜<span style="color:var(--accent);font-weight:600">「会进几个球」</span>，反波胆刚好相反——你猜' +
+            '<span style="color:#E53935;font-weight:600">「不会出现」</span>某个比分。' +
+            '比如一场足球比赛，你选择"不会是1-0"，只要终场不是1-0你就赢。' +
+          '</p>' +
+          '<div style="background:rgba(83,58,253,.06);border-radius:8px;padding:12px;margin-bottom:12px">' +
+            '<div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">📊 概率优势</div>' +
+            '<div style="font-size:13px;color:var(--text);line-height:1.6">一场足球比赛有<span style="font-weight:700">18种常见比分</span>（0-0到4-4），' +
+            '猜"不会是比分X"的理论概率为 <span style="font-weight:700;color:var(--accent)">17/18 ≈ 94.4%</span>。' +
+            '扣除庄家抽水后，长期理论胜率约 <span style="font-weight:700;color:var(--accent)">88.89%</span>。</div>' +
+          '</div>' +
+        '</div>' +
+
+        // ── How AI Helps ──
+        '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px">' +
+          '<div style="font-size:22px;margin-bottom:6px">🧠 AI 如何帮你赢？</div>' +
+          '<p style="font-size:13px;color:var(--text-light);line-height:1.9;margin-bottom:12px">' +
+            '我们的AI基于<span style="font-weight:600">5000万场历史数据</span>训练，实时分析：</p>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">' +
+            '<div style="background:var(--bg);border-radius:8px;padding:10px;text-align:center">' +
+              '<div style="font-size:16px;margin-bottom:2px">⚽</div>' +
+              '<div style="font-size:11px;color:var(--text)">球队近期状态</div>' +
             '</div>' +
-            '<p style="font-size:11px;color:var(--text-muted);line-height:1.6">AI自动执行反波胆投注，最小冻结10 USDT，双阶段链上确认，可随时停用。</p>' +
-            (aiStatus && aiStatus.active ? '<button onclick="app.showAISettings()" style="background:transparent;border:1px solid var(--border);border-radius:4px;padding:6px 12px;font-size:11px;color:var(--text);cursor:pointer;margin-top:8px">⚙️ 托管设置</button>' : '') +
-          '</div>'
-        :
-          '<div style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:16px;text-align:center">' +
-            '<p style="color:var(--text-muted);font-size:13px;margin-bottom:12px">连接钱包以激活AI自动托管</p>' +
-            '<button onclick="app.connectWallet()" style="background:var(--accent);color:#0B0E11;border:none;padding:10px 24px;border-radius:4px;font-size:13px;font-weight:700;cursor:pointer">🔗 连接钱包</button>' +
-          '</div>') +
+            '<div style="background:var(--bg);border-radius:8px;padding:10px;text-align:center">' +
+              '<div style="font-size:16px;margin-bottom:2px">🏥</div>' +
+              '<div style="font-size:11px;color:var(--text)">伤病阵容变化</div>' +
+            '</div>' +
+            '<div style="background:var(--bg);border-radius:8px;padding:10px;text-align:center">' +
+              '<div style="font-size:16px;margin-bottom:2px">🌧️</div>' +
+              '<div style="font-size:11px;color:var(--text)">天气场地条件</div>' +
+            '</div>' +
+            '<div style="background:var(--bg);border-radius:8px;padding:10px;text-align:center">' +
+              '<div style="font-size:16px;margin-bottom:2px">📈</div>' +
+              '<div style="font-size:11px;color:var(--text)">历史交锋数据</div>' +
+            '</div>' +
+          '</div>' +
+          '<p style="font-size:12px;color:var(--text-muted);line-height:1.6">' +
+            'AI自动排除高风险比分，选择最优"反波胆"组合。月化收益目标 <span style="font-weight:700;color:var(--green)">+15%</span>。' +
+          '</p>' +
+        '</div>' +
+
+        // ── AI Hosting ──
+        '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px">' +
+          '<div style="font-size:22px;margin-bottom:6px">⚡ AI 自动托管</div>' +
+          '<p style="font-size:13px;color:var(--text-light);line-height:1.8;margin-bottom:16px">' +
+            '激活后AI 7×24小时自动执行投注。最低冻结 <span style="font-weight:700">10 USDT</span>，双阶段链上确认，可随时停用。托管期间无需手动操作。' +
+          '</p>' +
+          (_wallet ?
+            '<div>' +
+              '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
+                '<div><span style="font-size:14px;font-weight:600;color:var(--text)">当前状态</span> · <span style="font-size:12px;color:' + (aiStatus && aiStatus.active ? 'var(--green)' : 'var(--text-muted)') + '">' + (aiStatus && aiStatus.active ? '🟢 运行中' : '⚪ 未激活') + '</span></div>' +
+                '<button onclick="app.toggleAIHosting()" style="background:' + (aiStatus && aiStatus.active ? 'var(--surface-hover)' : 'var(--accent)') + ';color:' + (aiStatus && aiStatus.active ? 'var(--text)' : '#fff') + ';border:none;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">' + (aiStatus && aiStatus.active ? '停用' : '🔗 激活托管') + '</button>' +
+              '</div>' +
+              (aiStatus && aiStatus.active ?
+                '<button onclick="app.showAISettings()" style="width:100%;background:transparent;border:1px solid var(--border);padding:10px;border-radius:8px;font-size:13px;color:var(--text);cursor:pointer">⚙️ 托管设置</button>' : '') +
+            '</div>'
+          :
+            '<div style="text-align:center">' +
+              '<p style="color:var(--text-muted);font-size:13px;margin-bottom:12px">连接钱包以激活AI自动托管</p>' +
+              '<button onclick="app.connectWallet()" class="cta-primary">🔗 连接钱包</button>' +
+            '</div>') +
+        '</div>' +
+
+        // ── Tips ──
+        '<div style="background:rgba(240,185,11,.06);border:1px solid rgba(240,185,11,.15);border-radius:12px;padding:16px">' +
+          '<div style="font-size:14px;font-weight:600;color:var(--accent);margin-bottom:6px">💡 新手提示</div>' +
+          '<ul style="font-size:12px;color:var(--text-light);line-height:2;padding-left:18px;margin:0">' +
+            '<li>反波胆的核心优势是<span style="font-weight:600">高概率</span>，单次胜率远高于传统猜胜负</li>' +
+            '<li>建议从小额开始（10-50 USDT），熟悉后再加大投入</li>' +
+            '<li>AI托管会自动管理资金和风险，适合没有时间盯盘的用户</li>' +
+            '<li>所有投注由BSC链上智能合约执行，透明可查</li>' +
+          '</ul>' +
+        '</div>' +
       '</div>';
   }
 
