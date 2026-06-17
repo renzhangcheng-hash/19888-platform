@@ -1,6 +1,13 @@
 (function() {
   'use strict';
 
+  // Debug logger (wraps console.log, safe for production)
+  function log() {
+    if (typeof console !== 'undefined' && console.log) {
+      console.log.apply(console, arguments);
+    }
+  }
+
   // ===== CONFIG =====
   const DEFAULT_API_BASE = 'https://one9888-api.onrender.com/api';
   function resolveApiBase() {
@@ -1222,7 +1229,13 @@
 
   function connectWebSocket() {
     if (_wsSocket) {
-      try { _wsSocket.close(); } catch(e){ console.error("[19888]",e) }
+      try {
+        if (typeof io !== 'undefined' && _wsSocket.io) {
+          _wsSocket.disconnect();
+        } else {
+          _wsSocket.close();
+        }
+      } catch(e){ console.error("[19888]",e) }
       _wsSocket = null;
     }
 
@@ -1366,7 +1379,7 @@
     }
     if (_wsSocket) {
       try {
-        if (typeof io !== 'undefined' && _wsSocket.id) {
+        if (typeof io !== 'undefined' && _wsSocket.io) {
           _wsSocket.disconnect();
         } else {
           _wsSocket.close();
