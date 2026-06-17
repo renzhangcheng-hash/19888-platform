@@ -9,7 +9,7 @@
     if (stored) {
       // Invalidate stale tunnel URLs
       if (stored.includes('trycloudflare.com')) {
-        console.log('[19888] Clearing stale tunnel URL from cache');
+        log('[19888] Clearing stale tunnel URL from cache');
         cacheRemove('19888_api_base');
       } else {
         return stored;
@@ -62,7 +62,7 @@
       header.parentNode.insertBefore(banner, header.nextSibling);
     }
     // Auto-hide when API recovers
-    setTimeout(function() {
+    _t1 = setTimeout(function() {
       var el = document.getElementById('api-offline-banner');
       if (el && apiAvailable) { el.style.display = 'none'; _apiOfflineBannerShown = false; }
     }, 10000);
@@ -197,9 +197,9 @@
     el.className = 'toast-center';
     el.innerHTML = msg || '未检测到钱包。<br>请安装 <a href="https://metamask.io" target="_blank">MetaMask</a>，或在 <strong>TP Wallet</strong> 内置浏览器中打开。';
     document.body.appendChild(el);
-    setTimeout(function() {
+    _t2 = setTimeout(function() {
       el.classList.add('fade-out');
-      setTimeout(function() { if (el.parentNode) el.remove(); }, 350);
+      _t3 = setTimeout(function() { if (el.parentNode) el.remove(); }, 350);
     }, 4000);
   }
 
@@ -337,7 +337,7 @@
           if (usdtEl) usdtEl.textContent = Number(balRes.data.available || 0).toFixed(2) + ' USDT';
           if (topEl) topEl.textContent = Number(balRes.data.available || 0).toFixed(2);
         }
-      } catch(e) {}
+      } catch(e){ console.error("[19888]",e) }
     }
     // Also try on-chain balance via dapp
     if (typeof dapp !== 'undefined') {
@@ -345,7 +345,7 @@
         const bal = await dapp.getPoolBalance();
         const balEl = document.getElementById('profilePoolBalance');
         if (balEl) balEl.textContent = Number(bal).toFixed(2) + ' USDT';
-      } catch(e) {}
+      } catch(e){ console.error("[19888]",e) }
     }
   }
 
@@ -353,8 +353,8 @@
   async function syncAllUserData() {
     if (!_wallet) return;
     await Promise.all([
-      loadPnLData().catch(function(){}),
-      loadVIPData().catch(function(){}),
+      loadPnLData().catch(function(e){ console.error("[19888]",e) }),
+      loadVIPData().catch(function(e){ console.error("[19888]",e) }),
     ]);
   }
 
@@ -444,7 +444,7 @@
         var betsEl = document.getElementById('poolPendingBets');
         if (betsEl) betsEl.textContent = d.pending_bets || '0';
       }
-    } catch(e) {}
+    } catch(e){ console.error("[19888]",e) }
   }
 
   function disconnectWallet() {
@@ -817,7 +817,7 @@
     try {
       var obRes = await apiFetch('/market/orderbook');
       if (obRes && obRes.code === 0 && obRes.data) obData = obRes.data;
-    } catch(e) {}
+    } catch(e){ console.error("[19888]",e) }
     if (!obData) obData = generateMockOrderbook();
 
     // Normalize orderbook format (arrays → objects)
@@ -1036,7 +1036,7 @@
             }
           }
         }
-      }).catch(function() {});
+      }).catch(function(e){ console.error("[19888]",e) });
     }, 10000);
   }
 
@@ -1219,12 +1219,12 @@
 
   function connectWebSocket() {
     if (_wsSocket) {
-      try { _wsSocket.close(); } catch(e) {}
+      try { _wsSocket.close(); } catch(e){ console.error("[19888]",e) }
       _wsSocket = null;
     }
 
     var url = resolveWsUrl();
-    console.log('[19888] WS connecting to', url);
+    log('[19888] WS connecting to', url);
 
     try {
       // Use Socket.IO if CDN loaded (it has built-in reconnection)
@@ -1236,7 +1236,7 @@
         });
 
         _wsSocket.on('connect', function() {
-          console.log('[19888] WebSocket connected');
+          log('[19888] WebSocket connected');
           _wsConnected = true;
           _wsReconnectAttempts = 0;
           _wsReconnectDelay = 1000;
@@ -1268,7 +1268,7 @@
         });
 
         _wsSocket.on('disconnect', function(reason) {
-          console.log('[19888] WS disconnected:', reason);
+          log('[19888] WS disconnected:', reason);
           _wsConnected = false;
           startLongPolling();
           scheduleReconnect();
@@ -1285,7 +1285,7 @@
         _wsSocket = new WebSocket(url);
 
         _wsSocket.onopen = function() {
-          console.log('[19888] WebSocket connected');
+          log('[19888] WebSocket connected');
           _wsConnected = true;
           _wsReconnectAttempts = 0;
           _wsReconnectDelay = 1000;
@@ -1319,7 +1319,7 @@
         };
 
         _wsSocket.onclose = function(event) {
-          console.log('[19888] WebSocket closed:', event.code, event.reason);
+          log('[19888] WebSocket closed:', event.code, event.reason);
           _wsConnected = false;
           startLongPolling();
           scheduleReconnect();
@@ -1349,7 +1349,7 @@
     }
     _wsReconnectAttempts++;
     var delay = Math.min(_wsReconnectDelay, 30000);
-    console.log('[19888] WS reconnecting in ' + (delay / 1000) + 's... (attempt ' + _wsReconnectAttempts + '/' + _wsMaxRetries + ')');
+    log('[19888] WS reconnecting in ' + (delay / 1000) + 's... (attempt ' + _wsReconnectAttempts + '/' + _wsMaxRetries + ')');
     _wsReconnectTimer = setTimeout(function() {
       _wsReconnectDelay = Math.min(_wsReconnectDelay * 2, 30000);
       connectWebSocket();
@@ -1368,7 +1368,7 @@
         } else {
           _wsSocket.close();
         }
-      } catch(e) {}
+      } catch(e){ console.error("[19888]",e) }
       _wsSocket = null;
     }
   }
@@ -1385,7 +1385,7 @@
           var poolEl = document.getElementById('profilePoolBalance');
           if (poolEl) poolEl.textContent = Number(res.data.total_balance || 0).toFixed(2) + ' USDT';
         }
-      }).catch(function() {});
+      }).catch(function(e){ console.error("[19888]",e) });
     }, 10000);
   }
 
@@ -1667,7 +1667,7 @@
             };
           });
         }
-      } catch(e) {}
+      } catch(e){ console.error("[19888]",e) }
     }
 
     // Fallback: try API
@@ -1687,7 +1687,7 @@
             };
           });
         }
-      } catch(e) {}
+      } catch(e){ console.error("[19888]",e) }
     }
 
     if (records.length === 0) {
@@ -1925,7 +1925,7 @@
           inviteCode = genRes.data.invite_code || genRes.data.code || '';
         }
       }
-    } catch(e) {}
+    } catch(e){ console.error("[19888]",e) }
   }
 
   function showInviteModal() {
@@ -2006,7 +2006,7 @@
     if (!inviteCode) { showToast('邀请码未生成'); return; }
     var shareText = '🎯 快来加入19888反波胆竞猜平台！使用我的邀请码注册: ' + inviteCode;
     if (navigator.share) {
-      navigator.share({ title: '19888邀请', text: shareText }).catch(function() {});
+      navigator.share({ title: '19888邀请', text: shareText }).catch(function(e){ console.error("[19888]",e) });
     } else {
       copyInviteCode();
       showToast('邀请码已复制，请分享给好友');
@@ -2021,7 +2021,7 @@
       if (res && res.code === 0 && res.data) {
         window._agentInfo = res.data;
       }
-    } catch(e) {}
+    } catch(e){ console.error("[19888]",e) }
   }
 
   // ===== INVITE LEVELS =====
@@ -2033,7 +2033,7 @@
       if (res && res.code === 0 && Array.isArray(res.data)) {
         _inviteLevels = res.data;
       }
-    } catch(e) {}
+    } catch(e){ console.error("[19888]",e) }
   }
 
   function renderInviteLevels(container, agentInfo) {
@@ -2175,7 +2175,7 @@
       if (res && res.code === 0) {
         showToast('VIP升级检查: ' + (res.data.can_upgrade ? '✅ 可升级到 ' + res.data.next_level : '当前已是最高等级'));
       }
-    } catch(e) {}
+    } catch(e){ console.error("[19888]",e) }
   }
 
   // ===== AI HOSTING HISTORY =====
@@ -2346,12 +2346,12 @@
     try {
       var poolRes = await apiFetch('/finance/pool-status');
       if (poolRes && poolRes.code === 0) poolData = poolRes.data;
-    } catch(e) {}
+    } catch(e){ console.error("[19888]",e) }
     if (_wallet) {
       try {
         var aiRes = await apiFetch('/ai-hosting/status?address=' + encodeURIComponent(_wallet));
         if (aiRes && aiRes.code === 0) aiStatus = aiRes.data;
-      } catch(e) {}
+      } catch(e){ console.error("[19888]",e) }
     }
 
     var userCount = poolData ? poolData.user_count : 0;
@@ -2434,7 +2434,7 @@
       if (res && res.code === 0 && res.data && res.data.transactions) {
         txData = res.data.transactions;
       }
-    } catch(e) {}
+    } catch(e){ console.error("[19888]",e) }
 
     if (txData.length === 0) {
       container.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-muted)">暂无交易记录</div>';
@@ -2513,7 +2513,7 @@
     }
 
     // Inject score-bet button after grid
-    setTimeout(function() {
+    _t4 = setTimeout(function() {
       var existBtn = document.getElementById('scoreBetBtn');
       if (!existBtn) {
         var sg = document.getElementById('scoreGrid');
@@ -2708,7 +2708,7 @@
     try {
       localStorage.setItem('19888_bet_records', JSON.stringify(betRecords));
       localStorage.setItem('19888_balance', userBalance);
-    } catch(e) {}
+    } catch(e){ console.error("[19888]",e) }
   }
 
   function loadData() {
@@ -2716,7 +2716,7 @@
       var r = localStorage.getItem('19888_bet_records');
       if (r) betRecords = JSON.parse(r);
       userBalance = +localStorage.getItem('19888_balance') || 0;
-    } catch(e) {}
+    } catch(e){ console.error("[19888]",e) }
   }
 
   // ===== LIVE STATS =====
@@ -2732,7 +2732,7 @@
         if (users) users.textContent = d.user_count || 0;
         if (payout) payout.textContent = '$' + Number(d.total_balance || 0).toLocaleString();
       }
-    } catch(e) {}
+    } catch(e){ console.error("[19888]",e) }
     var online = document.getElementById('statOnline');
     if (online) {
       if (!_cachedOnlineUsers) _cachedOnlineUsers = Math.floor(Math.random() * 200 + 50);
@@ -2755,7 +2755,7 @@
           card.style.display = 'block';
         }
       }
-    } catch(e) {}
+    } catch(e){ console.error("[19888]",e) }
   }
 
   async function loadTrustSignals() {
@@ -2768,7 +2768,7 @@
           if (el) el.innerHTML = sanitize('<div style="color:#667eea;font-weight:700">🔥 奖池</div><div>$' + Number(recent).toLocaleString() + '</div>');
         }
       }
-    } catch(e) {}
+    } catch(e){ console.error("[19888]",e) }
   }
 
   // ===== LANGUAGE =====
@@ -2783,7 +2783,7 @@
 
   function setLanguage(langCode) {
     lang = langCode;
-    try { localStorage.setItem('19888_lang', langCode); } catch(e) {}
+    try { localStorage.setItem('19888_lang', langCode); } catch(e){ console.error("[19888]",e) }
     // Update modal selection (if exists)
     document.querySelectorAll('.global-lang-option').forEach(function(o) {
       o.classList.toggle('selected', o.getAttribute('data-lang') === langCode);
@@ -3176,7 +3176,7 @@
     });
 
     // API health check
-    apiFetch('/status').then(function() {}).catch(function() {});
+    apiFetch('/status').then(function() {}).catch(function(e){ console.error("[19888]",e) });
 
     // Render home
     renderMatchCards();
@@ -3192,15 +3192,23 @@
       if (savedLang) {
         setLanguage(savedLang);
       }
-    } catch(e) {}
+    } catch(e){ console.error("[19888]",e) }
 
-    console.log('19888 platform initialized');
+    log('19888 platform initialized');
 
     // Init WebSocket client for real-time updates
     setTimeout(initWebSocket, 2000);
   }
 
   if (document.readyState === 'loading') {
+    // Cleanup timers on page unload
+    window.addEventListener('beforeunload', function() {
+      for (var i = 1; i <= 20; i++) {
+        var t = window['_t' + i];
+        if (t) { clearTimeout(t); clearInterval(t); }
+      }
+    });
+
     document.addEventListener('DOMContentLoaded', init);
   } else {
     init();
@@ -3241,7 +3249,7 @@
     });
     window.addEventListener('offline', showBanner);
     // Check on init
-    setTimeout(function() {
+    _t5 = setTimeout(function() {
       if (!navigator.onLine) showBanner();
     }, 3000);
   })();
@@ -3271,7 +3279,7 @@
       if (!provider) return;
       var accounts = await provider.request({ method: 'eth_accounts' });
       if (accounts && accounts.length > 0) {
-        console.log('[19888] Auto-connecting wallet: ' + accounts[0].slice(0, 6) + '...');
+        log('[19888] Auto-connecting wallet: ' + accounts[0].slice(0, 6) + '...');
         await connectWallet();
       }
     } catch(e) {
