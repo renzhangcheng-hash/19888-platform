@@ -500,7 +500,7 @@
     return '<img src="img/teams/' + encodeURIComponent(name) + '.png" width="' + s + '" height="' + s + '" style="border-radius:50%;object-fit:contain;background:#E2E8F0;flex-shrink:0" alt="' + safeName + '" loading="eager" decoding="sync" onerror="this.onerror=null;this.src=\'' + f + '\'">';
   }
 
-  // ===== MATCH CARD (19888 DOM — enhanced with odds) =====
+  // ===== MATCH CARD (Champion-style — team-card layout) =====
   function matchCardHTML(m) {
     var t = m.time || m.match_time || '';
     var parts = t.split(' ');
@@ -510,31 +510,34 @@
     var away = sanitize(m.away || m.away_team || '');
     var league = sanitize(m.league || m.league_name || '');
     var hO = Number(m.odds_home || m.home_odds || 0);
-    var dO = Number(m.odds_draw || m.draw_odds || 0);
     var aO = Number(m.odds_away || m.away_odds || 0);
-    var oddsRow = '</div>' +
-      '<div class="odds-row">' +
-        '<span style="color:#03A66D;font-weight:600">主 ' + (hO ? hO.toFixed(2) : '—') + '</span>' +
-        '<span style="color:#999">平 ' + (dO ? dO.toFixed(2) : '—') + '</span>' +
-        '<span style="color:#E53935;font-weight:600">客 ' + (aO ? aO.toFixed(2) : '—') + '</span>' +
-      '</div>';
-    return '<li><a href="javascript:;" class="con" data-match-id="' + m.id + '">' +
-      '<div class="league-name"><p class="p1">' + league + '</p></div>' +
-      '<div class="match-content">' +
-        '<div class="team-left">' +
-          '<div class="team-logo">' + teamLogoImg(home, 44) + '</div>' +
-          '<div class="team-name"><a href="javascript:;" onclick="event.stopPropagation();app.openTeamDetail(\'' + home.replace(/'/g, "\\'") + '\')" style="color:inherit;text-decoration:none">' + home + '</a></div>' +
+    var safeHome = home.replace(/'/g, "\\'");
+    var safeAway = away.replace(/'/g, "\\'");
+    return '<div class="team-card match-card-item" onclick="app.openMatchDetail(\'' + m.id + '\')">' +
+      '<div class="team-card-header">' + league + '</div>' +
+      '<div class="team-card-vs">' +
+        '<div class="team-card-side">' +
+          teamLogoImg(home, 48) +
+          '<div class="team-name">' + home + '</div>' +
         '</div>' +
-        '<div class="match-center">' +
+        '<div class="team-card-vs-center">' +
           '<div class="time">' + timeStr + '</div>' +
           '<div class="date">' + dateStr + '</div>' +
         '</div>' +
-        '<div class="team-right">' +
-          '<div class="team-logo">' + teamLogoImg(away, 44) + '</div>' +
-          '<div class="team-name"><a href="javascript:;" onclick="event.stopPropagation();app.openTeamDetail(\'' + away.replace(/'/g, "\\'") + '\')" style="color:inherit;text-decoration:none">' + away + '</a></div>' +
+        '<div class="team-card-side">' +
+          teamLogoImg(away, 48) +
+          '<div class="team-name">' + away + '</div>' +
         '</div>' +
-        oddsRow +
-    '</a></li>';
+      '</div>' +
+      '<div class="odds-group">' +
+        '<div class="odds-item"><span class="odds-label">主胜</span><span class="odds-value" style="color:#03A66D">' + (hO ? hO.toFixed(2) : '—') + '</span></div>' +
+        '<div class="odds-item"><span class="odds-label">客胜</span><span class="odds-value" style="color:#E53935">' + (aO ? aO.toFixed(2) : '—') + '</span></div>' +
+      '</div>' +
+      '<div class="bet-buttons">' +
+        '<button class="bet-btn bet-champion" onclick="event.stopPropagation();app.openChampionBet(\'' + safeHome + '\',\'' + m.id + '\',\'home\',' + (hO||2).toFixed(2) + ')">主胜</button>' +
+        '<button class="bet-btn bet-runner-up" onclick="event.stopPropagation();app.openChampionBet(\'' + safeAway + '\',\'' + m.id + '\',\'away\',' + (aO||2).toFixed(2) + ')">客胜</button>' +
+      '</div>' +
+    '</div>';
   }
 
   // ===== MATCHES PAGE CARD (with odds) =====

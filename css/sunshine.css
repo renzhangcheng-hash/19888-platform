@@ -1113,6 +1113,15 @@ h1,h2,h3{font-weight:600;letter-spacing:-.02em;line-height:1.2}
 }
 .team-card:hover{border-color:var(--primary-light);box-shadow:var(--shadow)}
 .team-card .team-name{font-size:14px;font-weight:600;margin:8px 0 4px;color:var(--text)}
+
+/* Match card in champion-style */
+.match-card-item{cursor:pointer;padding:12px}
+.match-card-item .team-card-header{font-size:11px;color:var(--text-muted);margin-bottom:8px;text-align:center}
+.match-card-item .team-card-vs{display:flex;align-items:center;justify-content:space-around;gap:8px;margin-bottom:8px}
+.match-card-item .team-card-side{display:flex;flex-direction:column;align-items:center;flex:1}
+.match-card-item .team-card-vs-center{text-align:center;min-width:50px}
+.match-card-item .team-card-vs-center .time{font-size:16px;font-weight:700;color:var(--accent)}
+.match-card-item .team-card-vs-center .date{font-size:11px;color:var(--text-muted)}
 .team-card .team-odds{font-size:13px;color:var(--text-light)}
 .team-card .team-odds em{font-style:normal;font-weight:700;color:var(--primary);font-size:15px}
 .team-card .action-btn{margin-top:8px}
