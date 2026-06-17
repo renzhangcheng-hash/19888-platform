@@ -3060,6 +3060,7 @@
     // Deposit / Withdraw
     showDepositModal: showDepositModal,
     hideDepositModal: hideDepositModal,
+    hideWithdrawModal: hideWithdrawModal,
     updateGasEstimate: updateGasEstimate,
     showApprovalLimitInfo: showApprovalLimitInfo,
     confirmDeposit: confirmDeposit,

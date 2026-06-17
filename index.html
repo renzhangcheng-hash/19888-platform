@@ -65,8 +65,8 @@
       · <a href="javascript:;" onclick="app.showApprovalLimitInfo()" style="color:var(--accent);text-decoration:underline">授权限额</a>
     </div>
     <div class="dialog-actions">
-      <button class="dialog-btn primary" id="depositConfirm">确认充值</button>
-      <button class="dialog-btn secondary" id="depositCancel">取消</button>
+      <button class="dialog-btn primary" id="depositConfirm" onclick="event.preventDefault();app.confirmDeposit()">确认充值</button>
+      <button class="dialog-btn secondary" id="depositCancel" onclick="app.hideDepositModal()">取消</button>
     </div>
   </div>
 </div>
@@ -78,8 +78,8 @@
     <input id="withdrawAmount" type="number" placeholder="金额" min="10">
     <input id="withdrawAddress" type="text" placeholder="提现地址">
     <div class="dialog-actions">
-      <button class="dialog-btn primary" id="withdrawConfirm">确认提现</button>
-      <button class="dialog-btn secondary" id="withdrawCancel">取消</button>
+      <button class="dialog-btn primary" id="withdrawConfirm" onclick="event.preventDefault();app.confirmWithdraw()">确认提现</button>
+      <button class="dialog-btn secondary" id="withdrawCancel" onclick="app.hideWithdrawModal()">取消</button>
     </div>
   </div>
 </div>
