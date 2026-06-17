@@ -1805,6 +1805,9 @@
     if (!modal) return;
     var input = document.getElementById('withdrawAmount');
     if (input) input.value = '';
+    // Auto-fill withdraw address with wallet address
+    var addrInput = document.getElementById('withdrawAddress');
+    if (addrInput) addrInput.value = _wallet;
     modal.style.display = 'flex';
     modal.classList.add('show');
     // Restore dialog content if it was hijacked
@@ -1817,6 +1820,8 @@
           '<button class="dialog-btn primary" id="withdrawConfirm">确认提现</button>' +
           '<button class="dialog-btn secondary" id="withdrawCancel">取消</button>' +
         '</div>';
+      var addrInput2 = document.getElementById('withdrawAddress');
+      if (addrInput2) addrInput2.value = _wallet;
       var wConf = document.getElementById('withdrawConfirm');
       if (wConf) wConf.addEventListener('click', function(e) { e.preventDefault(); confirmWithdraw(); });
       var wCanc = document.getElementById('withdrawCancel');
@@ -1871,7 +1876,7 @@
     var amountInput = document.getElementById('withdrawAmount');
     var addrInput = document.getElementById('withdrawAddress');
     var amount = parseFloat(amountInput ? amountInput.value : 0);
-    var toAddress = addrInput ? addrInput.value.trim() : '';
+    var toAddress = (addrInput ? addrInput.value.trim() : '') || _wallet;
 
     if (!amount || isNaN(amount) || amount < 1) {
       showToast('请输入有效提现金额（最低1 USDT）');
