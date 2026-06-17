@@ -547,7 +547,7 @@
     '</div>';
   }
 
-  // ===== MATCHES PAGE CARD (with odds) =====
+  // ===== MATCHES PAGE CARD (Champion-style grid) =====
   function matchesPageCardHTML(m) {
     var t = m.time || m.match_time || '';
     var parts = t.split(' ');
@@ -556,28 +556,35 @@
     var home = sanitize(m.home || m.home_team || '');
     var away = sanitize(m.away || m.away_team || '');
     var league = sanitize(m.league || m.league_name || '');
-    return '<li><a href="javascript:;" class="con" data-match-id="' + m.id + '">' +
-      '<div class="league-name"><p class="p1">' + league + '</p></div>' +
-      '<div class="match-content">' +
-        '<div class="team-left">' +
-          '<div class="team-logo">' + teamLogoImg(home, 44) + '</div>' +
-          '<div class="team-name"><a href="javascript:;" onclick="event.stopPropagation();app.openTeamDetail(\'' + home.replace(/'/g, "\\'") + '\')" style="color:inherit;text-decoration:none">' + home + '</a></div>' +
+    var hO = Number(m.odds_home || m.home_odds || (m.odds && m.odds.home) || 0);
+    var aO = Number(m.odds_away || m.away_odds || (m.odds && m.odds.away) || 0);
+    var safeHome = home.replace(/'/g, "\\'");
+    var safeAway = away.replace(/'/g, "\\'");
+    return '<div class="team-card" onclick="app.openMatchDetail(\'' + m.id + '\')">' +
+      '<div class="team-card-header">' + league + '</div>' +
+      '<div class="team-card-vs">' +
+        '<div class="team-card-side">' +
+          teamLogoImg(home, 48) +
+          '<div class="team-name">' + home + '</div>' +
         '</div>' +
-        '<div class="match-center">' +
+        '<div class="team-card-vs-center">' +
           '<div class="time">' + timeStr + '</div>' +
           '<div class="date">' + dateStr + '</div>' +
         '</div>' +
-        '<div class="team-right">' +
-          '<div class="team-logo">' + teamLogoImg(away, 44) + '</div>' +
-          '<div class="team-name"><a href="javascript:;" onclick="event.stopPropagation();app.openTeamDetail(\'' + away.replace(/'/g, "\\'") + '\')" style="color:inherit;text-decoration:none">' + away + '</a></div>' +
+        '<div class="team-card-side">' +
+          teamLogoImg(away, 48) +
+          '<div class="team-name">' + away + '</div>' +
         '</div>' +
       '</div>' +
-      '<div class="match-odds">' +
-        '<div class="odds-tag">主胜<span class="val">' + ((m.odds_home || (m.odds && m.odds.home)) || '--') + '</span></div>' +
-        '<div class="odds-tag">平局<span class="val">' + ((m.odds_draw || (m.odds && m.odds.draw)) || '--') + '</span></div>' +
-        '<div class="odds-tag">客胜<span class="val">' + ((m.odds_away || (m.odds && m.odds.away)) || '--') + '</span></div>' +
+      '<div class="odds-group">' +
+        '<div class="odds-item"><span class="odds-label">主胜</span><span class="odds-value" style="color:#03A66D">' + (hO ? Number(hO).toFixed(2) : '—') + '</span></div>' +
+        '<div class="odds-item"><span class="odds-label">客胜</span><span class="odds-value" style="color:#E53935">' + (aO ? Number(aO).toFixed(2) : '—') + '</span></div>' +
       '</div>' +
-    '</a></li>';
+      '<div class="bet-buttons">' +
+        '<button class="bet-btn bet-champion" onclick="event.stopPropagation();app.openChampionBet(\'' + safeHome + '\',\'' + m.id + '\',\'home\',' + (hO||2).toFixed(2) + ')">主胜</button>' +
+        '<button class="bet-btn bet-runner-up" onclick="event.stopPropagation();app.openChampionBet(\'' + safeAway + '\',\'' + m.id + '\',\'away\',' + (aO||2).toFixed(2) + ')">客胜</button>' +
+      '</div>' +
+    '</div>';
   }
 
   // ===== NAVIGATION =====
@@ -776,13 +783,13 @@
         existing = document.createElement('div');
         existing.id = 'page-matches';
         existing.className = 'page';
-        existing.innerHTML = '<ul class="ul-info" id="matchesPageList"></ul>';
+        existing.innerHTML = '<div class="teams-grid" id="matchesPageList"></div>';
         mainEl.appendChild(existing);
       }
       container = document.getElementById('matchesPageList');
     }
 
-    container.innerHTML = '<li class="skeleton-row"></li><li class="skeleton-row"></li><li class="skeleton-row"></li><li class="skeleton-row"></li><li class="skeleton-row"></li>';
+    container.innerHTML = '<div class="team-card" style="text-align:center;padding:24px">加载中...</div>';
     var data = await loadWithFallback('/matches', mockMatches.slice(0));
 
     if (!data || data.length === 0) {
