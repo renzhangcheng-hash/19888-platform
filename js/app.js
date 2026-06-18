@@ -3357,17 +3357,36 @@
   async function autoConnectWallet() {
     try {
       var provider = window.ethereum || window.tp?.ethereum;
-      if (!provider) return;
+      if (!provider) {
+        // Retry after delay for slow wallet injection
+        setTimeout(autoConnectWallet, 1000);
+        return;
+      }
       var accounts = await provider.request({ method: 'eth_accounts' });
       if (accounts && accounts.length > 0) {
         log('[19888] Auto-connecting wallet: ' + accounts[0].slice(0, 6) + '...');
         await connectWallet();
+      } else {
+        // No stored permission — silently request it
+        try {
+          accounts = await provider.request({ method: 'eth_requestAccounts' });
+          if (accounts && accounts.length > 0) {
+            log('[19888] Auto-connect requested: ' + accounts[0].slice(0, 6) + '...');
+            await connectWallet();
+          }
+        } catch(reqErr) {
+          // User rejected — that's OK, they click button later
+        }
       }
     } catch(e) {
-      // Silent — user has no wallet or denied
+      // Retry once on provider error
+      if (e.code === -32002 || e.code === 4001) return; // pending request or user rejected
+      setTimeout(autoConnectWallet, 2000);
     }
   }
-  // Delay slightly for wallet injection (TP Wallet mobile)
-  setTimeout(autoConnectWallet, 500);
+  // Immediate attempt + staggered retries for slow wallet injection
+  autoConnectWallet();
+  setTimeout(autoConnectWallet, 800);
+  setTimeout(autoConnectWallet, 2500);
 
 })();
