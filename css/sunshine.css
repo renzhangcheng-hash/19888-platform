@@ -405,7 +405,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,107,53,0.12
 .stats-bar .stat-value.users{color:var(--text)}
 
 /* ===== ANNOUNCE BAR ===== */
-.announce-bar{display:flex;align-items:center;gap:8px;background:linear-gradient(90deg,var(--bg-alt),#FFE0B2);border-radius:8px;padding:8px 12px;margin-bottom:8px;font-size:11px;color:#E65100;overflow:hidden}
+.announce-bar{display:flex;align-items:center;gap:8px;background:linear-gradient(90deg,var(--bg-alt),#FFE0B2);border-radius:8px;padding:8px 12px;margin-bottom:8px;font-size:11px;color:#E65100;overflow:hidden;justify-content:flex-start}
 .announce-bar .announce-text{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:marquee-scroll 15s linear infinite}
 
 @keyframes marquee-scroll {
@@ -913,7 +913,6 @@ input:focus, select:focus, textarea:focus{
 .stats-bar{justify-content:center;text-align:center}
 .ai-rec-card{text-align:center}
 .trust-signals{justify-content:center}
-.announce-bar{justify-content:center;text-align:center}
 
 /* --- Cohesive transitions --- */
 .match-content, .team-card, .dialog-box, .stats-bar, 
