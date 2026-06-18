@@ -36,6 +36,8 @@ const DATA_DIR = path.join(__dirname, 'data');
 
 // ── JWT Config ──────────────────────────────────
 // JWT_SECRET: env var required in production
+// Load .env if exists
+try { require('fs').readFileSync('.env','utf8').split('\n').forEach(function(l){var p=l.split('=');if(p[0]&&p[1]&&!process.env[p[0]])process.env[p[0]]=p[1].trim()}) } catch(e){}
 let JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
   // Fallback for local dev only — warn prominently
@@ -56,12 +58,16 @@ const CONTRACT_ADDRESSES = {
   CHAIN_ID: parseInt(process.env.CHAIN_ID || '56'),
 };
 
-// Lazy ethers provider (created on first use)
-let _provider = null;
+const RPC_URLS = (process.env.RPC_URLS || 'https://bsc-dataseed.binance.org,https://bsc-dataseed1.defibit.io,https://bsc-dataseed1.ninicoin.io').split(',');
+let _rpcIndex = 0;
 function getProvider() {
-  if (!_provider) _provider = new ethers.JsonRpcProvider(RPC_URL);
+  if (!_provider || _attemptRefresh) {
+    _provider = new ethers.JsonRpcProvider(RPC_URLS[_rpcIndex % RPC_URLS.length]);
+    _rpcIndex++;
+  }
   return _provider;
 }
+let _provider = null, _attemptRefresh = false;
 
 // ── Verify a transaction on-chain ───────────────
 async function verifyOnChainTx(txHash, expectedFrom, expectedTo, expectedAmountWei) {
@@ -2957,9 +2963,51 @@ process.on('unhandledRejection', (reason) => {
     console.error(`[${new Date().toISOString()}] UNHANDLED REJECTION:`, reason);
 });
 
+// ── Chain Event Listener ──────────────────────────
+function startChainEventListener() {
+  if (process.env.DISABLE_CHAIN_LISTENER) return;
+  console.log('[ChainListener] Starting BSC event monitor...');
+  var pool = getContract('LuckyPool');
+  var antiScore = getContract('AntiScoreBet');
+  var score = getContract('ScoreBet');
+  var champion = getContract('ChampionBet');
+  
+  var lastBlock = 0;
+  setInterval(async function() {
+    try {
+      var block = await getProvider().getBlockNumber();
+      if (lastBlock === 0) { lastBlock = block - 10; return; }
+      if (block <= lastBlock) return;
+      
+      // Listen for USDT transfers to LuckyPool (deposits)
+      var usdt = new ethers.Contract(USDT_ADDRESS, [
+        'event Transfer(address indexed from, address indexed to, uint256 value)'
+      ], getProvider());
+      var events = await usdt.queryFilter(
+        usdt.filters.Transfer(null, LUCKY_POOL_ADDRESS),
+        lastBlock + 1, block
+      );
+      for (var ev of events) {
+        var amount = Number(ev.args.value) / 1e18;
+        console.log(`[ChainListener] 💰 Deposit: ${ev.args.from.slice(0,8)} → ${amount} USDT (block ${ev.blockNumber})`);
+        // Auto-record deposit
+        try {
+          var users = read('users');
+          var user = users.find(function(u) { return u.wallet_address.toLowerCase() === ev.args.from.toLowerCase(); });
+          if (user) user.balance = (Number(user.balance||0) + amount).toFixed(2);
+          write('users', users);
+        } catch(e){}
+      }
+      lastBlock = block;
+    } catch(e) { /* RPC failure — retry next cycle */ }
+  }, 30000);
+}
+
 try {
   server.listen(PORT, '0.0.0.0', () => {
     console.log('PORT=' + PORT + ' STARTED');
+    // ── Chain event listener (deposits, bets, withdrawals) ──
+    startChainEventListener();
   });
   server.on('error', (err) => {
     console.error('LISTEN ERROR:', err.message);

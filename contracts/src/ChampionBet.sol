@@ -19,8 +19,7 @@ contract ChampionBet is Initializable, UUPSUpgradeable, OwnableUpgradeable, Paus
     
     constructor() { _disableInitializers(); }
     function initialize(address _pool) public initializer {
-        __Ownable_init();
-        __UUPSUpgradeable_init();
+        __Ownable_init(msg.sender);
         __Pausable_init();
         pool = LuckyPool(_pool);
     }
