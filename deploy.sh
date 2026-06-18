@@ -1,51 +1,11 @@
 #!/bin/bash
-# 19888 Platform Deployment
-# One-command deploy to Render.com
-set -e
-
-echo "🏆 19888 部署脚本"
-echo "================="
-echo ""
-
-# Check if gh CLI exists
-if command -v gh &>/dev/null; then
-  echo "✅ GitHub CLI found"
-else
-  echo "⚠️  GitHub CLI not installed. Install with: brew install gh"
-  echo "   Then run: gh auth login"
-  echo ""
-  echo "Alternatively, create a repo manually at:"
-  echo "   https://github.com/new"
-  echo "   Then run: git remote add origin <your-repo-url>"
-  echo "   And:      git push -u origin main"
-  exit 1
-fi
-
-# Create GitHub repo
-echo "📦 Creating GitHub repository..."
-gh repo create 19888-platform --public --source=. --remote=origin --push 2>/dev/null || {
-  echo "⚠️  Repo may already exist, pushing..."
-  git push -u origin main
-}
-
-echo ""
-echo "✅ Code pushed to GitHub!"
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  NEXT STEP: Deploy on Render.com"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
-echo "1. Go to https://dashboard.render.com"
-echo "2. Sign up (free) with GitHub"
-echo "3. Click 'New Web Service'"
-echo "4. Select '19888-platform' repo"
-echo "5. Settings:"
-echo "   - Build Command: npm install"
-echo "   - Start Command: node backend/server.js"
-echo "6. Click 'Create Web Service'"
-echo ""
-echo "That's it! Your platform will be live in 2 minutes."
-echo ""
-echo "Admin panel: https://YOUR-APP.onrender.com/admin.html"
-echo "Username: admin"
-echo "Password: 19888admin"
+# 19888 Deploy Script — auto-zip → Desktop
+cd /Users/jack/Desktop/19888-platform
+rm -f /Users/jack/Desktop/19888-deploy.zip
+zip -r /Users/jack/Desktop/19888-deploy.zip . \
+  -x ".git/*" "node_modules/*" ".hermes/*" "*.log" \
+  "backend/data/*.json" "backend/node_modules/*" \
+  "contracts/lib/*" ".env*" \
+  -q
+echo "✅ /Users/jack/Desktop/19888-deploy.zip ($(ls -lh /Users/jack/Desktop/19888-deploy.zip | awk '{print $5}'))"
+echo "👉 拖入 https://app.netlify.com/drop"
