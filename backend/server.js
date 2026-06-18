@@ -2967,10 +2967,6 @@ process.on('unhandledRejection', (reason) => {
 function startChainEventListener() {
   if (process.env.DISABLE_CHAIN_LISTENER) return;
   console.log('[ChainListener] Starting BSC event monitor...');
-  var pool = getContract('LuckyPool');
-  var antiScore = getContract('AntiScoreBet');
-  var score = getContract('ScoreBet');
-  var champion = getContract('ChampionBet');
   
   var lastBlock = 0;
   setInterval(async function() {
@@ -2979,18 +2975,16 @@ function startChainEventListener() {
       if (lastBlock === 0) { lastBlock = block - 10; return; }
       if (block <= lastBlock) return;
       
-      // Listen for USDT transfers to LuckyPool (deposits)
-      var usdt = new ethers.Contract(USDT_ADDRESS, [
+      var usdt = new ethers.Contract(NETWORK.USDT, [
         'event Transfer(address indexed from, address indexed to, uint256 value)'
       ], getProvider());
       var events = await usdt.queryFilter(
-        usdt.filters.Transfer(null, LUCKY_POOL_ADDRESS),
+        usdt.filters.Transfer(null, NETWORK.LUCKY_POOL),
         lastBlock + 1, block
       );
       for (var ev of events) {
         var amount = Number(ev.args.value) / 1e18;
         console.log(`[ChainListener] 💰 Deposit: ${ev.args.from.slice(0,8)} → ${amount} USDT (block ${ev.blockNumber})`);
-        // Auto-record deposit
         try {
           var users = read('users');
           var user = users.find(function(u) { return u.wallet_address.toLowerCase() === ev.args.from.toLowerCase(); });
