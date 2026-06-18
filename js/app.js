@@ -3353,40 +3353,34 @@
     console.error('[19888 Unhandled Promise]', e.reason);
   });
 
-  // Auto-connect wallet on page load (if previously authorized)
+  // Auto-connect wallet on page load
   async function autoConnectWallet() {
+    if (_wallet) return;
     try {
       var provider = window.ethereum || window.tp?.ethereum;
-      if (!provider) {
-        // Retry after delay for slow wallet injection
-        setTimeout(autoConnectWallet, 1000);
-        return;
-      }
+      if (!provider) { setTimeout(autoConnectWallet, 1200); return; }
+      
+      // Check if user already granted permission
       var accounts = await provider.request({ method: 'eth_accounts' });
       if (accounts && accounts.length > 0) {
-        log('[19888] Auto-connecting wallet: ' + accounts[0].slice(0, 6) + '...');
+        log('[19888] Auto-connect via stored permission');
+        await connectWallet(); // handles dapp loading + chain switching + UI
+        return;
+      }
+      
+      // No stored permission — proactively request
+      accounts = await provider.request({ method: 'eth_requestAccounts' });
+      if (accounts && accounts.length > 0) {
+        log('[19888] Auto-connect via request');
         await connectWallet();
-      } else {
-        // No stored permission — silently request it
-        try {
-          accounts = await provider.request({ method: 'eth_requestAccounts' });
-          if (accounts && accounts.length > 0) {
-            log('[19888] Auto-connect requested: ' + accounts[0].slice(0, 6) + '...');
-            await connectWallet();
-          }
-        } catch(reqErr) {
-          // User rejected — that's OK, they click button later
-        }
       }
     } catch(e) {
-      // Retry once on provider error
-      if (e.code === -32002 || e.code === 4001) return; // pending request or user rejected
+      if (e.code === -32002 || e.code === 4001) return; // pending popup or user rejected
       setTimeout(autoConnectWallet, 2000);
     }
   }
-  // Immediate attempt + staggered retries for slow wallet injection
   autoConnectWallet();
-  setTimeout(autoConnectWallet, 800);
-  setTimeout(autoConnectWallet, 2500);
+  setTimeout(autoConnectWallet, 1500);
+  setTimeout(autoConnectWallet, 3500);
 
 })();
