@@ -717,8 +717,8 @@
     var end = Math.min(_homeMatchPage * _homeMatchPageSize, total);
     var slice = _homeMatchesData.slice(0, end);
     var hasMore = end < total;
-    container.innerHTML = sanitize(slice.map(function(m) { return matchCardHTML(m); }).join('') +
-      (hasMore ? '<li class="load-more-li"><a href="javascript:;" class="load-more-btn" onclick="app.loadMoreMatches()">▼ 加载更多 (' + (total - end) + ')</a></li>' : ''));
+    container.innerHTML = '<div class="teams-grid">' + slice.map(function(m) { return matchCardHTML(m); }).join('') + '</div>' +
+      (hasMore ? '<div class="load-more-wrap"><a href="javascript:;" class="load-more-btn" onclick="app.loadMoreMatches()">▼ 加载更多 (' + (total - end) + ')</a></div>' : '');
   }
 
   function loadMoreMatches() {
