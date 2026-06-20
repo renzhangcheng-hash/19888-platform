@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @title VIPStaking — 5-level VIP system based on cumulative turnover
 /// @notice VIP tiers determined by total turnover, with tiered rebates on anti-score, score, and AI bets
-contract VIPStaking is Initializable, UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable {
+contract VIPStaking is Initializable, UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable, ReentrancyGuard {
     struct VIPInfo {
         uint256 turnoverThreshold;  // Cumulative turnover required for this level (in USDT * 1e18)
         uint256 antiScoreRebate;    // Anti-score rebate in bps (e.g. 20 = 0.2%)
@@ -42,7 +42,7 @@ contract VIPStaking is Initializable, UUPSUpgradeable, OwnableUpgradeable, Pausa
     function initialize() public initializer {
         __Ownable_init(msg.sender);
         __Pausable_init();
-        __ReentrancyGuard_init();
+        // ReentrancyGuard uses constructor (non-upgradeable), no init call needed
 
         // VIP 1: $20K turnover, 0.2% anti-score / 1% score / 0.1% AI rebate
         vipTiers[1] = VIPInfo(20_000 * 1e18, 20, 100, 10);
