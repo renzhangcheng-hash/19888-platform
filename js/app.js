@@ -2593,7 +2593,7 @@
     }
 
     // Inject score-bet button after grid
-    _t4 = setTimeout(function() {
+    setTimeout(function() {
       var existBtn = document.getElementById('scoreBetBtn');
       if (!existBtn) {
         var sg = document.getElementById('scoreGrid');
