@@ -1,46 +1,478 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <meta name="renderer" content="webkit" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no" />
     <meta name="format-detection" content="telephone=no" />
-    <meta name="theme-color" content="#533afd">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="19888">
-    <link rel="apple-touch-icon" href="/img/icon-192.png">
-    <link rel="manifest" href="/manifest.json" crossorigin="use-credentials">
-    <link rel="preload" href="js/app.js?v=20260617" as="script">
     <title>19888|首页</title>
     <meta name="description" content="19888 - 专业的反波胆竞猜平台，提供实时赛事投注、AI智能分析、安全便捷的钱包连接服务。立即加入开始您的体育竞猜之旅！" />
     <meta name="keywords" content="反波胆竞猜,体育投注,足球竞猜,19888,在线投注" />
-    <!-- Open Graph -->
-    <meta property="og:title" content="19888 - 全球体育竞猜平台">
-    <meta property="og:description" content="实时赛事投注、AI智能分析、安全便捷的钱包连接">
-    <meta property="og:type" content="website">
-    <!-- Structured Data -->
-    <script type="application/ld+json">
-    {"@context":"https://schema.org","@type":"SportsOrganization","name":"19888","url":"https://19888.asia","description":"全球体育竞猜平台"}
-    </script>
-    <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
-    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
-    <style>@font-face{font-display:swap}</style>
-    <link rel="stylesheet" href="css/sunshine.css?v=20260617" />
-    <link rel="dns-prefetch" href="https://one9888-api.onrender.com">
-    <link rel="preconnect" href="https://one9888-api.onrender.com" crossorigin>
-    <link rel="preconnect" href="https://bsc-dataseed.binance.org" crossorigin>
-    <link rel="preload" href="css/sunshine.css?v=20260617" as="style">
-    <script src="js/vendor/purify.min.js"></script>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🎯</text></svg>" type="image/svg+xml">
+    <link rel="shortcut icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🎯</text></svg>" type="image/svg+xml">
+    <style>
+        /* ===== Slick CSS ===== */
+        .slick-slider{position:relative;display:block;-moz-box-sizing:border-box;box-sizing:border-box;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;-webkit-touch-callout:none;-khtml-user-select:none;-ms-touch-action:pan-y;touch-action:pan-y;-webkit-tap-highlight-color:transparent}
+        .slick-list{position:relative;display:block;overflow:hidden;margin:0;padding:0}
+        .slick-list:focus{outline:0}
+        .slick-list.dragging{cursor:pointer;cursor:hand}
+        .slick-slider .slick-list,.slick-slider .slick-track{-webkit-transform:translate3d(0,0,0);-moz-transform:translate3d(0,0,0);-ms-transform:translate3d(0,0,0);-o-transform:translate3d(0,0,0);transform:translate3d(0,0,0)}
+        .slick-track{position:relative;top:0;left:0;display:block}
+        .slick-track:after,.slick-track:before{display:table;content:''}
+        .slick-track:after{clear:both}
+        .slick-loading .slick-track{visibility:hidden}
+        .slick-slide{display:none;float:left;height:100%;min-height:1px}
+        [dir=rtl] .slick-slide{float:right}
+        .slick-slide img{display:block}
+        .slick-slide.slick-loading img{display:none}
+        .slick-slide.dragging img{pointer-events:none}
+        .slick-initialized .slick-slide{display:block}
+        .slick-loading .slick-slide{visibility:hidden}
+        .slick-vertical .slick-slide{display:block;height:auto;border:1px solid transparent}
+        .slick-arrow.slick-hidden{display:none}
+        /* ===== Style.css ===== */
+        blockquote,body,dd,div,dl,dt,fieldset,form,h1,h2,h3,h4,h5,h6,input,li,ol,p,pre,td,textarea,th,ul{margin:0;padding:0}
+        table{border-collapse:collapse;border-spacing:0}
+        abbr,acronym,fieldset,img{border:0}
+        ol,ul{list-style:none}
+        caption,th{text-align:left}
+        q:after,q:before{content:''}
+        .clear{clear:both;display:block;overflow:hidden;visibility:hidden;width:0;height:0}
+        .col-c,.col-l,.col_c,.col_l,.l{float:left}
+        .col-r,.col_r,.r,.ul-txt li span,.ul_txt li span,dt span{float:right}
+        .c{clear:both}
+        .n,em{font-weight:400;font-style:normal}
+        .b{font-weight:700}
+        .i{font-style:italic}
+        .fa{font-family:Arial}
+        .fg{font-family:Georgia}
+        .ft{font-family:Tahoma}
+        .fl{font-family:Lucida Console}
+        .fs{font-family:'宋体'}
+        .fw{font-family:'微软雅黑'}
+        .tc{text-align:center}
+        .tr{text-align:right}
+        .tl{text-align:left}
+        .tdu{text-decoration:underline}
+        .tdn,.tdn:hover,a.tdl:hover{text-decoration:none}
+        .fc0{color:#000}
+        .fc3{color:#333}
+        .fc6{color:#666}
+        .fc9{color:#999}
+        .fcr{color:red}
+        .fcw{color:#fff}
+        .fcb{color:#00f}
+        .fcg{color:green}
+        .f0{font-size:0}
+        .f10{font-size:10px}
+        .f12{font-size:12px}
+        .f13{font-size:13px}
+        .f14{font-size:14px}
+        .f16{font-size:16px}
+        .f20{font-size:20px}
+        .f24{font-size:24px}
+        .vm{vertical-align:middle}
+        .vtb{vertical-align:text-bottom}
+        .vt{vertical-align:top}
+        .vn{vertical-align:-2px}
+        .vimg{margin-bottom:-3px}
+        .m0{margin:0}
+        .ml0{margin-left:0}
+        .ml5{margin-left:5px}
+        .ml10{margin-left:10px}
+        .ml20{margin-left:20px}
+        .mr0{margin-right:0}
+        .mr5{margin-right:5px}
+        .mr10{margin-right:10px}
+        .mr20{margin-right:20px}
+        .mt5{margin-top:5px}
+        .mt10{margin-top:10px}
+        .mt20{margin-top:20px}
+        .mb5{margin-bottom:5px}
+        .mb10{margin-bottom:10px}
+        .mb20{margin-bottom:20px}
+        .ml-1{margin-left:-1px}
+        .mt-1{margin-top:-1px}
+        .p1{padding:1px}
+        .pl5{padding-left:5px}
+        .p5{padding:5px}
+        .pt5{padding-top:5px}
+        .pr5{padding-right:5px}
+        .pb5{padding-bottom:5px}
+        .p10{padding:10px}
+        .pl10{padding-left:10px}
+        .pt10{padding-top:10px}
+        .pr10{padding-right:10px}
+        .pb10{padding-bottom:10px}
+        .p20{padding:20px}
+        .pl20{padding-left:20px}
+        .pt20{padding-top:20px}
+        .pr20{padding-right:20px}
+        .pb20{padding-bottom:20px}
+        .pr,.rel{position:relative}
+        .abs,.pa{position:absolute}
+        .dn{display:none}
+        .db{display:block}
+        .dib{-moz-inline-stack:inline-block;display:inline-block}
+        .di{display:inline}
+        .ovh{overflow:hidden}
+        .ovs{overflow:scroll}
+        .vh{visibility:hidden}
+        .vv{visibility:visible}
+        .lh14{line-height:14px}
+        .lh16{line-height:16px}
+        .lh18{line-height:18px}
+        .lh20{line-height:20px}
+        .lh22{line-height:22px}
+        .lh24{line-height:24px}
+        .fix{*zoom:1}
+        .fix:after,.fix:before{display:block;content:"clear";height:0;clear:both;overflow:hidden;visibility:hidden}
+        .z{_zoom:1}
+        .h1{height:1px}
+        .h5{height:5px}
+        .h,.h10{height:10px}
+        .h15{height:15px}
+        .h20{height:20px}
+        .h,.h1,.h10,.h15,.h20,.h5{font-size:0;line-height:0;overflow:hidden;clear:both}
+        body{font:14px/1.5 "微软雅黑","Microsoft Yahei";color:#333;background:#f0f2f5;max-width:750px;margin:0 auto;padding-top:50px}
+        a{text-decoration:none;color:#0931ff}
+        a:hover{color:#3c6}
+        img{max-width:100%;transition:.3s;-ms-transition:.3s;-moz-transition:.3s;-webkit-transition:.3s;-o-transition:.3s}
+        input,select,textarea{font-size:12px;color:#f90000;font-family:"微软雅黑","Microsoft Yahei";outline:0}
+        input[type=button],input[type=reset],input[type=submit],select{-webkit-appearance:none;-moz-appearance:none;appearance:none}
+        input[type=button],input[type=reset],input[type=submit]{cursor:pointer}
+        ::-webkit-input-placeholder{color:#78899e}
+        ::-moz-placeholder{color:#78899e}
+        ::-ms-input-placeholder{color:#78899e}
+        input::-webkit-inner-spin-button,input::-webkit-outer-spin-button{-webkit-appearance:none}
+        input[type=password]:focus,input[type=tel]:focus,input[type=text]:focus{background:#fff;border:1px solid #bbb;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;-o-box-sizing:border-box;box-sizing:border-box}
+        input.false:focus{border:2px solid #ff1531;background:#fff}
+        .ani{transition:.3s;-ms-transition:.3s;-moz-transition:.3s;-webkit-transition:.3s;-o-transition:.3s}
+        .unselect{-moz-user-select:none;-khtml-user-select:none;-webkit-user-select:none;-o-user-select:none;user-select:none}
+        .wp{padding:0 12px}
+        .h50{height:50px;clear:both;overflow:hidden}
+        .h100{height:100px;clear:both;overflow:hidden}
+        *{outline:0;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;-o-box-sizing:border-box;box-sizing:border-box}
+        .header{height:45px;background:linear-gradient(135deg,#ffffff 0%,#ffffff 100%);background-color:#4C8BF5;background-size:100% 45px;position:fixed;top:0;left:0;width:100%;z-index:999}
+        .header .back,.header .menuBtn{position:absolute;top:0;left:12px;width:12px;height:100%;background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAcAAAAJCAYAAAD+WDajAAAANklEQVQoU2NkYPj/n4EBBJgYKAQMDAz/MbgMDAz/GRgYaOoyRgYGBko0MTAwUBKaDIOBAAAA//8DEEwBhbTRWXoAAAAASUVORK5CYII=) center left no-repeat;background-size:auto 20px}
+        .header .menuBtn{display:none}
+        .header .tit{text-align:center;font-size:16px;color:#000000;line-height:45px;font-weight:400}
+        .logo{display:none;line-height:45px;font-size:0;text-align:center}
+        .logo img{display:inline-block;vertical-align:middle;height:30px}
+        .banner{position:relative}
+        .banner .item{display:block;height:200px;background-repeat:no-repeat;background-size:cover;background-position:center center}
+        .ul-tabbar{position:fixed;bottom:0;left:0;width:100%;height:60px;display:flex;justify-content:space-between;background-color:#ffffff;box-shadow:0 -2px 8px rgba(0,0,0,0.1)}
+        .ul-tabbar li{flex:1;text-align:center}
+        .ul-tabbar li a{display:flex;width:100%;height:100%;padding-top:5px;flex-direction:column;align-items:center;justify-content:center;font-size:10px;color:#999999}
+        .ul-tabbar .txt,.ul-tabbar i{font-size:12px;display:block;width:100%}
+        .ul-tabbar i{background-repeat:no-repeat;background-position:center center;background-size:auto 20px;height:20px;margin-bottom:3px}
+        .ul-tabbar .on .txt{font-size:12px;color:#ff0000 !important;background:none;-webkit-background-clip:initial;-webkit-text-fill-color:initial}
+        .ul-tabbar li .i1{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23999'%3E%3Cpath d='M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z'/%3E%3C/svg%3E")}
+        .ul-tabbar li .i2{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23999'%3E%3Cpath d='M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z'/%3E%3C/svg%3E")}
+        .ul-tabbar li .i3{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23999'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-6v4h4l-5 6z'/%3E%3C/svg%3E")}
+        .ul-tabbar li .i4{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23999'%3E%3Cpath d='M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z'/%3E%3C/svg%3E")}
+        .ul-tabbar li .i5{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23999'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E")}
+        .ul-tabbar .on .i1{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff0000'%3E%3Cpath d='M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z'/%3E%3C/svg%3E")}
+        .ul-tabbar .on .i2{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff0000'%3E%3Cpath d='M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z'/%3E%3C/svg%3E")}
+        .ul-tabbar .on .i3{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff0000'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-6v4h4l-5 6z'/%3E%3C/svg%3E")}
+        .ul-tabbar .on .i4{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff0000'%3E%3Cpath d='M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z'/%3E%3C/svg%3E")}
+        .ul-tabbar .on .i5{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff0000'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E")}
+        .m-pay_b.hs .group{margin-bottom:28px;margin-top:10px}
+        .m-table.s1 .table tbody td{font-size:11px}
+        body.index{padding-top:0}
+        body.index .tit{display:none}
+        body.index .logo{display:block}
+        body.index .header .back{display:none}
+        body.index .header .menuBtn{display:block;width:20px;background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAcAAAAHCAYAAADEUlfTAAAALklEQVQoU2NkYPj/n4EBBJgYKAQMDAz/MbgMDAz/GRgYAOq5jAwMDJRIMjAwAAAm7AMBos/GuQAAAABJRU5ErkJggg==);background-size:auto 17px}
+        .h55{height:55px}
+        .m-vs{height:115px;border:1px solid #636363;box-shadow:0 11px 25px 0 rgba(0,0,0,.2);background-color:#505050}
+        .m-vs .top{display:-webkit-box;display:flex;-webkit-box-orient:horizontal;-webkit-box-direction:normal;flex-direction:row;-webkit-box-pack:justify;justify-content:space-between;padding:10px 19px;font-size:11px;color:#fff;line-height:24px}
+        .m-vs .top .date{color:#bdc3ff}
+        .m-vs .top .name{-webkit-box-flex:1;flex:1;text-align:center}
+        .m-vs .top .vs{display:block;width:45px;color:#fff;text-align:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;border-radius:2px;border:1px solid #797eb1}
+        .m-vs .con{background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==) center bottom no-repeat;background-size:80% 5px;overflow:hidden;padding-bottom:15px}
+        .m-vs .con .team{float:left;width:33.33%;color:#fff;font-size:16px;text-align:center}
+        .m-vs .con .team .home{color:#17f3cc}
+        .ul-tabs_b{display:-webkit-box;display:flex;justify-content:space-around}
+        .ul-tabs_b li{-webkit-box-flex:1;flex:1;text-align:center;font-size:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+        .ul-tabs_b li.on a{color:#ffc900;border-bottom:1px solid #ffc900}
+        .ul-tabs_b li a{font-size:13px;padding-bottom:3px;color:#fff}
+        .m-table{border:1px solid #636363;box-shadow:0 11px 25px 0 rgba(0,0,0,.2);background-color:#505050}
+        .m-table.noData{background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==) center center no-repeat;-webkit-background-size:50px auto;background-size:50px auto}
+        .m-table .top{display:-webkit-box;display:flex;-webkit-box-orient:horizontal;-webkit-box-direction:normal;flex-direction:row;-webkit-box-pack:justify;justify-content:space-between;font-size:0;color:#fff;padding:0 15px;height:48px;line-height:48px}
+        .m-table .top span{font-size:13px;display:inline-block;vertical-align:middle}
+        .m-table .top em{color:#f66;margin-left:5px}
+        .m-table .top a{display:inline-block;vertical-align:middle;margin-top:-2px;height:48px;background:center center no-repeat}
+        .m-table .top .i1{width:20px;background-size:auto 12px;margin-right:6px}
+        .m-table .top .i2{width:18px;background-size:auto 17px}
+        .m-table .top .i3{width:35px;text-align:center;font-size:10px;color:#fff;line-height:44px;margin-bottom:-5px;margin-left:18px;background-size:auto 30px}
+        .m-table .table{width:100%;border-collapse:collapse;table-layout:fixed}
+        .m-table .table thead{background-color:#585858;font-size:11px;color:#bdc3ff;line-height:30px}
+        .m-table .table thead th{width:33.33%;text-align:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+        .m-table .table tbody .tr .t1{white-space:normal;line-height:1.5;padding:0 10px;height:50px}
+        .m-table .table tbody td{width:33.33%;text-align:center;font-size:13px;color:#fff;line-height:40px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+        .m-table .table tbody .t2{color:#ff6464}
+        .m-table table,.m-table table tr td,.m-table table tr th{border:1px solid #777}
+        .m-table.nodata table,.m-table.nodata table tr td,.m-table.nodata table tr th{border:none}
+        .m-pop{position:fixed;top:0;left:0;right:0;bottom:0;z-index:100;display:none}
+        .m-pop .inner{width:294px;position:absolute;top:50%;left:50%;-webkit-transform:translate(-50%,-50%);transform:translate(-50%,-50%);background-color:#fff;border-radius:6px;overflow:hidden;box-shadow:0 0 10px rgba(0,0,0,.3)}
+        .pop-bg{position:absolute;top:0;left:0;right:0;bottom:0;background-color:rgba(0,0,0,.3)}
+        .s_pop .inner{background:none}
+        .g-box_b .wp{background-color:#ff0000}
+        .g-box_b.c1 .wp{background-color:#505050;overflow:hidden;min-height:275px}
+        .g-box_b.c1 h3{background-color:#4d528f;color:#fff}
+        .g-box_b.c1 .top{display:-webkit-box;display:flex;-webkit-box-orient:horizontal;-webkit-box-direction:normal;flex-direction:row;-webkit-box-pack:justify;justify-content:space-between;font-size:13px;line-height:30px;background-color:#505587;border-bottom:1px solid #727599}
+        .g-box_b.c1 .top .p2{-webkit-box-flex:1;flex:1;text-align:left;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:#fff}
+        .g-box_b.c1 .top .p1{color:#fff;text-align:center;width:90px}
+        .g-box_b.c1 .bot{padding-right:20px;text-align:right;font-size:13px;font-family:PingFangSC;color:#fff;line-height:45px;border-top:1px solid #727599;background-color:#505587}
+        .g-box_b h3{text-align:center;font-size:16px;color:#fff;line-height:40px;border-bottom:2px solid #999999;font-weight:400}
+        .g-box_b .info{text-align:center;font-size:12px;color:#000;line-height:30px;color:#fff}
+        .g-box_b .info em{color:#ff5d5d}
+        .g-box_b .item{background:#0369A1;box-shadow:0 3px 6px 0 rgba(58,75,110,.15);border-radius:4px;overflow:hidden;margin-bottom:10px}
+        .g-box_b .item .con{display:-webkit-box;display:flex;-webkit-box-orient:horizontal;-webkit-box-direction:normal;flex-direction:row;-webkit-box-pack:justify;justify-content:space-between}
+        .g-box_b .item .date{-webkit-box-flex:1;flex:1;padding-top:12px;padding-left:12px}
+        .g-box_b .item .date .time{display:block;font-size:11px;color:#fff;margin-bottom:9px}
+        .g-box_b .item .date .name{font-size:17px;font-family:PingFangSC;color:#fff}
+        .g-box_b .item .date .name span{color:#17f3cc}
+        .g-box_b .item .right{width:58px;height:68px;text-align:center;background-color:#ffce49;font-size:12px;color:#fff;padding-top:10px}
+        .g-box_b .item .grade{font-size:19px}
+        .g-box_b .item .con1{padding:0 12px}
+        .g-box_b .item .con1 .top{display:-webkit-box;display:flex;-webkit-box-orient:horizontal;-webkit-box-direction:normal;flex-direction:row;-webkit-box-pack:justify;justify-content:space-between;padding-top:8px;margin-bottom:10px;color:#fff}
+        .g-box_b .item .con1 .top .p{-webkit-box-flex:1;flex:1;text-align:center;font-size:11px;font-family:PingFangSC;color:#fff;opacity:.66}
+        .g-box_b .item .con1 .top1{margin-bottom:0}
+        .g-box_b .item .con1 .top1 .inp{display:block;width:100%;border-radius:3px;border:1px solid #848ac3;opacity:1;height:27px;padding:0 5px}
+        .g-box_b .item .con1 .top1 .p1{font-size:12px;line-height:27px;font-family:PingFangSC;color:#fff;opacity:1}
+        .g-box_b .item .con1 .top1 .p2{line-height:27px;color:#0eeeb7;opacity:1;font-size:19px}
+        .g-box_b .item .con1 .rate{text-align:right;font-size:10px;line-height:1.3;font-family:PingFangSC;color:#fff;opacity:.66}
+        .g-box_b .item .con1 .sum{text-align:right;font-size:14px;color:#000;margin-bottom:19px}
+        .g-box_b .item .con1 .sum em{color:#ff6060}
+        .g-box_b .submit{display:block;width:100%;border:none;line-height:32px;background-color:#999999;border-radius:5px;color:#fff;font-size:18px}
+        .g-box_b .cancel{display:block;width:100%;border:none;text-align:center;font-size:12px;color:#000;line-height:38px;margin-top:-10px;background-color:transparent}
+        .g-box_b .see{display:block;text-align:center;color:#464749;padding-bottom:17px}
+        .ul-num{overflow:hidden;border-radius:3px;margin-bottom:15px}
+        .ul-num li{float:left;text-align:center;line-height:28px;margin-right:-1px}
+        .ul-num li em{display:block;color:#fff}
+        .g-close_b{position:absolute;top:14px;right:10px;display:block;width:11px;height:11px;background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAcAAAAHCAYAAADEUlfTAAAAIklEQVQoU2NkYPj/n4EBBJgYKAQMDAz/MbgMDAz/GRgYAAPqAgMAxfXOGgAAAABJRU5ErkJggg==) center center no-repeat;background-size:auto 10px}
+        .ul-info_b{margin-bottom:30px}
+        .ul-info_b li{display:-webkit-box;display:flex;border-bottom:1px solid #e0e3eb;font-size:12px;color:#212122;line-height:28px}
+        .ul-info_b .left{text-align:right;width:60px;padding:0 5px;color:#7d7f82;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+        .ul-info_b .right{-webkit-box-flex:1;flex:1;padding-left:20px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+        .ul-info_b .right.c1{color:#fc6b6c}
+        .ul-info_b .right.c2{color:#61c440}
+        .dl-record{margin-top:12px}
+        .dl-record .con{line-height:30px;text-align:center;font-size:11px;overflow:hidden;background-color:#3b3f6b}
+        .dl-record .con .box1,.dl-record .con .box3{width:36%;color:#fff;float:left;border-right:1px solid #444877}
+        .dl-record .con .box2,.dl-record .con .box4{width:14%;color:#e94e53;float:left;border-right:1px solid #444877}
+        .dl-record .con .box4{border-right:none}
+        .dl-record dt .con{background-color:#505587}
+        .dl-record dt .con .box1,.dl-record dt .con .box2,.dl-record dt .con .box3,.dl-record dt .con .box4{color:#a1a5d9;border-top:1px solid #575c90;border-right:1px solid #575c90}
+        .dl-record dd{text-align:center;color:#fff;line-height:30px;font-size:11px;margin-bottom:6px}
+        .dl-record dd .time{margin-bottom:2px;background-color:#3b3f6b}
+        .ul-list_b{padding:13px 0;background-color:#505587;overflow:hidden;min-height:275px;max-height:400px;overflow-y:scroll}
+        .ul-list_b li{display:-webkit-box;display:flex;-webkit-box-orient:horizontal;-webkit-box-direction:normal;flex-direction:row;-webkit-box-pack:justify;justify-content:space-between}
+        .ul-list_b .left,.ul-list_b .right{width:65px;font-size:11px;color:#fff;line-height:20px;text-align:right;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+        .ul-list_b .right{text-align:left}
+        .ul-list_b .center{-webkit-box-flex:1;flex:1;margin:5px 8px 0;position:relative;border-radius:10px;height:10px;background-color:#424674;overflow:hidden}
+        .ul-list_b .sub{background:-webkit-linear-gradient(right,#728aff,#7bb6ff);background:linear-gradient(270deg,#728aff,#7bb6ff);height:10px;position:absolute;top:0;left:0;padding-left:4px}
+        .ul-list_b .sub .dots{width:8px;height:8px;border-radius:50%;background-color:#fff;position:absolute;top:1px;right:-4px}
+        .m-notice{overflow:hidden;position:relative;z-index:100;margin-top:-11px;line-height:29px;margin-bottom:18px;color:#333;font-size:14px;border:none;box-shadow:0 2px 8px rgba(0,0,0,.08);background-color:#e8e8e8;border-radius:12px;padding:0 11px}
+        .m-notice .icon{float:left;width:15px;height:29px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23e53935'%3E%3Cpath d='M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z'/%3E%3C/svg%3E") center center no-repeat;background-size:auto 13px;margin-right:12px;margin-left:2px}
+        .ul-tabs_b1{overflow-x:scroll;font-size:0;margin-bottom:5px}
+        .ul-tabs_b1 li{display:inline-block}
+        .ul-tabs_b1 li.on a{color:#4C8BF5;position:relative}
+        .ul-tabs_b1 li.on a::after{content:"";display:block;width:16px;height:3px;border-radius:3px;background:linear-gradient(90deg,#4C8BF5 0%,#6BA3FF 100%);position:absolute;bottom:0;left:50%;margin-left:-11px}
+        .ul-tabs_b1 li a{display:block;font-size:16px;color:#fff;margin-right:25px;padding-bottom:5px}
+        .ul-info .con{background:linear-gradient(135deg,#ffffff 0%,#f8f9fa 100%);border:1px solid #e8e8e8;box-shadow:0 2px 12px rgba(0,0,0,.08);border-radius:12px;margin-bottom:9px;padding:15px;display:flex;align-items:center}
+        .ul-info li{border:none;box-shadow:none;background-color:transparent}
+        .ul-info .con .pic{float:none;flex-shrink:0;width:94px;height:94px;border-radius:50%;margin-top:0;margin-right:14px;padding-top:28px;border:1px solid #545781;position:relative;color:#fff;text-align:center}
+        .ul-info .con .pic:after{content:'';position:absolute;left:7px;top:7px;right:7px;bottom:7px;background:linear-gradient(#fe4a49,#ffa579);z-index:1;border-radius:50%}
+        .ul-info .con .pic1:after{background:linear-gradient(#12b961,#4dff85)}
+        .ul-info .con .pic2:after{background:linear-gradient(#b25dff,#478ffe)}
+        .ul-info .con .pic3:after{background:linear-gradient(#f87e3b,#fcd04c)}
+        .ul-info .con .pic:before{content:'';position:absolute;left:15px;top:15px;right:15px;bottom:15px;background-color:#3a3e61;z-index:2;border-radius:50%}
+        .ul-info .con .pic .num,.ul-info .con .pic .txt{position:relative;z-index:3}
+        .ul-info .con .pic .num{font-size:14px;display:block}
+        .ul-info .con .pic .num em{font-size:18px;font-weight:700}
+        .ul-info .con .pic .txt{display:block;font-size:9px;margin-top:-5px}
+        .ul-info .con .info{overflow:hidden;font-size:10px;color:#333;padding-top:0;flex:1}
+        .ul-info .con .info .top{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;margin-bottom:6px}
+
+        .color-primary{color:#4C8BF5!important}
+        .main{background:#f0f2f5 !important;padding-bottom:70px !important}
+        .header{background:#ffffff !important;background-color:#ffffff !important;box-shadow:0 2px 8px rgba(0,0,0,0.1) !important}
+        .header .tit{color:#000000 !important}
+        .ul-tabbar{background-color:#ffffff !important;box-shadow:0 -2px 8px rgba(0,0,0,0.1) !important;z-index:99999 !important;height:60px !important;padding-bottom:10px !important}
+        .ul-tabbar li a{padding-top:2px !important}
+        .wallet-connect{position:absolute;top:50%;right:12px;transform:translateY(-50%);display:flex;align-items:center;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);border-radius:20px;padding:5px 12px;cursor:pointer;transition:all 0.3s ease;z-index:1000}
+        .wallet-connect:hover{opacity:0.9}
+        .wallet-connect.connected{background:linear-gradient(135deg,#8b2626 0%,#a63232 100%);box-shadow:0 2px 8px rgba(139,38,38,0.3)}
+        .wallet-icon{display:inline-block;width:18px;height:18px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z'/%3E%3C/svg%3E") center center no-repeat;background-size:contain;margin-right:5px}
+        .wallet-label{color:#ffffff;font-size:12px;font-weight:500;white-space:nowrap}
+        .wallet-address{color:#ffffff;font-size:12px;font-weight:500}
+        .banner{padding:10px 12px;background:transparent !important}
+        .banner .slick-slide{padding:0}
+        .slick-dots{bottom:20px !important;text-align:center;padding:0;margin:0;list-style:none}
+        .slick-dots li{position:relative;display:inline-block;width:8px;height:8px;margin:0 4px;padding:0;cursor:pointer}
+        .slick-dots li button{font-size:0 !important;line-height:0 !important;display:block !important;width:8px !important;height:8px !important;padding:0 !important;cursor:pointer !important;color:transparent !important;border:0 !important;outline:none !important;background:rgba(255,255,255,0.5) !important;border-radius:50% !important}
+        .slick-dots li button:before{content:'' !important;display:none !important}
+        .slick-dots li.slick-active button{background:#e53935 !important;opacity:1 !important}
+        .banner .item{border-radius:15px !important;overflow:hidden}
+        .m-notice{background:#e8e8e8 !important;border-radius:12px !important;padding:2px 15px !important;box-shadow:none !important;border:none !important;margin-top:-5px !important;margin-bottom:20px !important}
+        .m-notice .icon{width:18px !important;height:29px !important;margin-right:10px !important;filter:brightness(0.5)}
+        .m-notice .notice{font-size:13px;font-weight:400;color:#333}
+        .m-notice marquee{font-weight:500}
+        .ul-info{list-style:none;padding:0 12px}
+        .ul-info .con{background:linear-gradient(135deg,#ffffff 0%,#f8f9fa 100%) !important;border-radius:12px !important;padding:15px !important;margin-bottom:15px !important;box-shadow:0 2px 12px rgba(0,0,0,0.08) !important;border:1px solid #e8e8e8 !important;overflow:hidden;display:block !important}
+        .ul-info .info{width:100% !important;color:#333 !important}
+
+        /* 语言切换按钮 */
+        body.index .header .global-lang-switch-btn{position:absolute !important;left:25px !important;top:11px !important;width:22px !important;height:22px !important;display:flex !important;align-items:center !important;justify-content:center !important;cursor:pointer !important;z-index:10001 !important;padding:0 !important;margin:0 !important;overflow:hidden !important}
+        body.index .header .global-lang-switch-btn img{width:100% !important;height:100% !important;object-fit:contain !important;display:block !important}
+
+        /* Toast */
+        .custom-toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.75);color:#fff;padding:15px 25px;border-radius:8px;font-size:14px;line-height:1.6;white-space:pre-line;max-width:80%;text-align:center;z-index:999999;opacity:0;transition:opacity 0.3s ease;box-shadow:0 4px 12px rgba(0,0,0,0.3)}
+        .custom-toast.show{opacity:1}
+        .custom-confirm-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:999998;display:none}
+        .custom-confirm{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:12px;padding:20px;max-width:85%;width:320px;z-index:999999;display:none;box-shadow:0 8px 24px rgba(0,0,0,0.3)}
+        .custom-confirm-title{font-size:16px;font-weight:bold;color:#333;margin-bottom:15px;text-align:center}
+        .custom-confirm-content{font-size:14px;color:#666;line-height:1.6;margin-bottom:20px;white-space:pre-line}
+        .custom-confirm-buttons{display:flex;gap:10px}
+        .custom-confirm-btn{flex:1;padding:10px;border:none;border-radius:6px;font-size:14px;cursor:pointer;transition:opacity 0.2s}
+        .custom-confirm-btn:active{opacity:0.7}
+        .confirm-cancel-btn{background:#f5f5f5;color:#666}
+        .confirm-ok-btn{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff}
+
+        /* Tabs */
+        .tab-header-wrapper{position:relative !important;margin-bottom:5px !important}
+        .ul-tabs_b1{margin-bottom:0 !important}
+        .more-link{position:absolute !important;right:15px !important;top:50% !important;transform:translateY(-50%) !important;color:#fa2933 !important;font-size:16px !important;text-decoration:none !important;display:flex !important;align-items:center !important;gap:3px !important;transition:all 0.3s ease !important;z-index:10 !important}
+        .more-link:hover{color:#3d7ae0 !important;transform:translateY(-50%) translateX(2px) !important}
+        .more-link::after{content:'»' !important;font-size:16px !important;font-weight:bold !important}
+
+        /* Lang modal */
+        .global-lang-modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999}
+        .global-lang-modal.active{display:block}
+        .global-lang-modal-mask{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5)}
+        .global-lang-modal-content{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:white;border-radius:12px;width:280px;max-width:90%;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.2)}
+        .global-lang-modal-header{padding:16px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;text-align:center;font-size:16px;font-weight:bold}
+        .global-lang-modal-body{padding:8px 0;max-height:340px;overflow-y:auto}
+        .global-lang-option{padding:14px 20px;cursor:pointer;transition:background 0.2s;font-size:14px;color:#333;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between}
+        .global-lang-option:last-child{border-bottom:none}
+        .global-lang-option:active{background:#f0f4ff}
+        .global-lang-option.selected{background:#e8f0fe;color:#4C8BF5;font-weight:bold}
+        .global-lang-option.selected::after{content:'✓';font-size:18px}
+
+        /* Champion bet section */
+        .champion-bet-section{padding:0 15px 20px}
+        .panel-header{display:flex !important;justify-content:space-between !important;align-items:center !important;margin-bottom:20px !important;flex-wrap:wrap !important;gap:15px !important}
+        .panel-header h3{font-size:16px !important;font-weight:bold !important}
+        .user-stats{display:flex !important;gap:20px !important}
+        .user-stats span{font-size:13px !important;color:#666 !important}
+        .user-stats em{color:#fa2933 !important;font-style:normal !important;font-weight:bold !important}
+        .teams-grid{display:grid !important;grid-template-columns:repeat(auto-fill,minmax(140px,1fr)) !important;gap:12px !important;margin-bottom:20px !important}
+        .team-card{border:1px solid #ddd !important;border-radius:8px !important;padding:10px !important;text-align:center !important;transition:all 0.3s !important;background:#fff !important}
+        .team-card:hover{border-color:#fa2933 !important;box-shadow:0 2px 8px rgba(0,0,0,0.1) !important}
+        .team-card .team-logo{width:60px !important;height:60px !important;margin:0 auto 8px !important;display:flex !important;align-items:center !important;justify-content:center !important}
+        .team-card .team-logo img{width:100% !important;height:100% !important;object-fit:contain !important}
+        .team-card .team-name{font-weight:bold !important;margin-bottom:8px !important;font-size:13px !important;word-break:break-word !important}
+        .odds-group{display:flex !important;justify-content:space-around !important;margin-bottom:8px !important;font-size:11px !important}
+        .odds-item{display:flex !important;flex-direction:column !important}
+        .odds-item .odds-label{color:#999 !important;font-size:10px !important;margin-bottom:2px !important}
+        .odds-item .odds-value{color:#fa2933 !important;font-weight:bold !important;font-size:13px !important}
+        .bet-buttons{display:flex !important;gap:5px !important}
+        .bet-btn{flex:1 !important;padding:6px 4px !important;border:none !important;border-radius:4px !important;font-size:11px !important;cursor:pointer !important;transition:all 0.3s !important;color:white !important}
+        .bet-champion{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%) !important}
+        .bet-runner-up{background:linear-gradient(135deg,#f093fb 0%,#f5576c 100%) !important}
+        .bet-btn:active{opacity:0.8 !important}
+
+        /* Bet dialog */
+        .bet-amount-dialog{display:none !important;position:fixed !important;top:0 !important;left:0 !important;right:0 !important;bottom:0 !important;z-index:10000 !important;align-items:center !important;justify-content:center !important}
+        .bet-amount-dialog.show{display:flex !important}
+        .dialog-overlay-bet{position:absolute !important;top:0 !important;left:0 !important;right:0 !important;bottom:0 !important;background:rgba(0,0,0,0.5) !important}
+        .dialog-box-bet{position:relative !important;background:white !important;border-radius:12px !important;width:90% !important;max-width:400px !important;z-index:10001 !important}
+        .dialog-title-bet{padding:15px !important;border-bottom:1px solid #eee !important;font-weight:bold !important;font-size:14px !important}
+        .dialog-content-bet{padding:20px !important}
+        .team-display{text-align:center !important;margin-bottom:15px !important}
+        .team-display img{width:50px !important;height:50px !important;object-fit:contain !important}
+        .team-display div{font-size:12px;margin-top:5px}
+        .form-group{margin-bottom:15px !important}
+        .form-group label{display:block;font-size:13px;color:#666;margin-bottom:5px}
+        .form-group input[type=number]{width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;box-sizing:border-box}
+        .quick-amounts{display:flex;gap:8px;margin-top:8px}
+        .quick-amounts button{padding:6px 16px;border:1px solid #ddd;border-radius:4px;background:#f5f5f5;cursor:pointer;font-size:13px}
+        .quick-amounts button:active{background:#e0e0e0}
+        .odds-display{display:flex;justify-content:space-between;font-size:13px;color:#666;margin-bottom:15px;padding:10px;background:#f9f9f9;border-radius:6px}
+        .odds-display em{color:#fa2933;font-weight:bold;font-size:15px}
+        .dialog-footer-bet{display:flex;gap:10px;padding:15px;border-top:1px solid #eee}
+        .btn-cancel{flex:1;padding:10px;border:1px solid #ddd;border-radius:6px;background:white;cursor:pointer;font-size:14px}
+        .btn-confirm{flex:1;padding:10px;border:none;border-radius:6px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;cursor:pointer;font-size:14px;font-weight:bold}
+
+        /* About tab */
+        .tab_con .platform-intro{padding:20px 15px;background:#fff;border-radius:8px}
+        .tab_con .platform-intro .intro-content{line-height:1.8}
+        .tab_con .platform-intro .intro-content p{margin-bottom:15px;color:#333;font-size:14px;text-align:left;word-break:break-word}
+
+        /* Match card styles */
+        .ul-info li{position:relative !important;padding:0 !important;margin-bottom:15px !important}
+        .ul-info li .con{overflow:visible !important}
+        .ul-info li::before{content:'⚽';position:absolute !important;right:-60px !important;top:-60px !important;font-size:80px !important;opacity:0.05 !important;z-index:0 !important;pointer-events:none !important;line-height:1 !important}
+        .ul-info li::after{content:'⚽';position:absolute !important;left:-72px !important;top:-72px !important;font-size:80px !important;opacity:0.05 !important;z-index:0 !important;pointer-events:none !important;line-height:1 !important}
+        .ul-info li .con::before{content:'⚽';position:absolute !important;right:-16px !important;bottom:-16px !important;font-size:80px !important;opacity:0.05 !important;z-index:0 !important;pointer-events:none !important;line-height:1 !important}
+        .ul-info li .con>*{position:relative !important;z-index:1 !important}
+        .ul-info li .match-content{display:flex !important;align-items:center !important;justify-content:space-between !important;width:100% !important;padding:10px 5px !important}
+        .ul-info li .team-left,.ul-info li .team-right{width:80px !important;min-width:80px !important;max-width:80px !important;display:flex !important;flex-direction:column !important;align-items:center !important;justify-content:center !important}
+        .ul-info li .team-name{width:100% !important;max-width:80px !important;overflow:hidden !important;text-overflow:ellipsis !important;white-space:nowrap !important;display:block !important;text-align:center !important;font-size:12px !important;line-height:1.4 !important;margin-top:5px !important}
+        .ul-info li .team-logo{width:50px !important;height:50px !important;display:flex !important;align-items:center !important;justify-content:center !important}
+        .ul-info li .match-time{flex:0 0 auto !important;text-align:center !important;padding:0 10px !important}
+
+        /* Slick tab content */
+        .slick_tab{background:transparent !important}
+        .slick_tab .tab_con{background:transparent !important}
+        .wp{background:transparent !important}
+        .ul-tabs_b1{background:transparent !important;padding:0 12px;margin-bottom:15px !important}
+        .ul-tabs_b1 li a{color:#666 !important;transition:all 0.3s ease}
+        .ul-tabs_b1 li.on a{color:#e53935 !important;font-weight:bold !important}
+        .ul-tabs_b1 li.on a::after{background:linear-gradient(90deg,#e53935 0%,#ef5350 100%) !important;box-shadow:0 2px 8px rgba(229,57,53,0.5);height:3px !important}
+
+        /* Partners */
+        .partners-grid-dark{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-top:20px;padding:0 5px}
+        .partners-grid-dark .partner-item{display:flex;align-items:center;justify-content:center;transition:transform 0.3s ease}
+        .partners-grid-dark .partner-item:active{transform:scale(0.95)}
+        .partners-grid-dark .partner-item img{width:100%;height:auto;display:block}
+
+        /* World cup countdown */
+        .worldcup-countdown{text-align:center;padding:15px;font-size:16px;font-weight:bold;color:#e53935;background:linear-gradient(135deg,#fff 0%,#f8f9fa 100%);border-radius:12px;margin:10px 12px 15px;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+
+        /* Scrollbar */
+        ::-webkit-scrollbar{width:6px;height:6px}
+        ::-webkit-scrollbar-track{background:#f1f1f1;border-radius:3px}
+        ::-webkit-scrollbar-thumb{background:#e53935;border-radius:3px}
+
+        .empty-tips{text-align:center;padding:30px;color:#999;font-size:14px}
+
+        /* My bets section */
+        .my-bets-section{margin-top:20px !important}
+        .section-header{display:flex !important;justify-content:space-between !important;align-items:center !important;margin-bottom:15px !important}
+        .section-header h4{font-size:14px !important}
+        .filter-tabs{display:flex !important;gap:8px !important}
+        .filter-btn{padding:6px 12px !important;border:1px solid #ddd !important;background:white !important;cursor:pointer !important;border-radius:4px !important;font-size:12px !important;transition:all 0.3s !important}
+        .filter-btn.active{background:#fa2933 !important;color:white !important;border-color:#fa2933 !important}
+        .bets-list{margin-top:15px !important}
+        .bet-item{display:grid !important;grid-template-columns:80px 60px 80px 60px 80px auto !important;gap:10px !important;padding:10px !important;border:1px solid #eee !important;border-radius:4px !important;align-items:center !important;margin-bottom:10px !important;font-size:12px !important;background:#fafafa !important}
+        .bet-item>div{overflow:hidden !important;text-overflow:ellipsis !important;white-space:nowrap !important}
+        .bet-status{padding:4px 8px !important;border-radius:3px !important;font-size:11px !important;text-align:center !important}
+        .status-pending{background:#ffeaea !important;color:#fa2933 !important}
+        .status-won{background:#eaeaff !important;color:#667eea !important}
+        .status-lost{background:#f5f5f5 !important;color:#999 !important}
+        .bet-item .cancel-btn{padding:4px 8px !important;border:1px solid #fa2933 !important;background:white !important;color:#fa2933 !important;border-radius:3px !important;cursor:pointer !important;font-size:11px !important}
+    </style>
 </head>
+
 <body class="index">
-<h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">19888 - 全球体育竞猜平台</h1>
-<main>
-<!-- 自定义确认对话框（默认隐藏 display:none）-->
+
+<!-- 自定义确认对话框 -->
 <div class="custom-confirm-overlay" id="customConfirmOverlay" style="display:none"></div>
 <div class="custom-confirm" id="customConfirm" style="display:none">
     <div class="custom-confirm-title" id="confirmTitle">确认操作</div>
@@ -51,496 +483,743 @@
     </div>
 </div>
 
-<!-- 充值弹窗 -->
-<div id="depositModal" class="dialog-overlay" style="display:none">
-  <div class="dialog-box">
-    <h3>充值 USDT</h3>
-    <input id="depositAmount" type="number" placeholder="金额" min="10">
-    <div class="quick-amounts">
-      <button class="quick-amount" data-amt="100">100</button>
-      <button class="quick-amount" data-amt="500">500</button>
-      <button class="quick-amount" data-amt="1000">1000</button>
+<!-- 语言切换弹窗 -->
+<div class="global-lang-modal" id="globalLangModal">
+    <div class="global-lang-modal-mask" id="globalLangModalMask"></div>
+    <div class="global-lang-modal-content">
+        <div class="global-lang-modal-header">选择语言 / Language</div>
+        <div class="global-lang-modal-body">
+            <div class="global-lang-option selected" data-lang="cn">简体中文</div>
+            <div class="global-lang-option" data-lang="en">English</div>
+            <div class="global-lang-option" data-lang="vn">Tiếng Việt</div>
+            <div class="global-lang-option" data-lang="jp">日本語</div>
+            <div class="global-lang-option" data-lang="kr">한국어</div>
+            <div class="global-lang-option" data-lang="cntw">繁體中文</div>
+        </div>
     </div>
-    <div style="font-size:10px;color:var(--text-muted);margin:8px 0;text-align:center">
-      ⛽ BSC Gas: <span id="gasEstimate" style="font-weight:600;color:var(--accent)">~0.0001 BNB</span>
-      · <a href="javascript:;" onclick="app.showApprovalLimitInfo()" style="color:var(--accent);text-decoration:underline">授权限额</a>
-    </div>
-    <div class="dialog-actions">
-      <button class="dialog-btn primary" id="depositConfirm" onclick="event.preventDefault();app.confirmDeposit()">确认充值</button>
-      <button class="dialog-btn secondary" id="depositCancel" onclick="app.hideDepositModal()">取消</button>
-    </div>
-  </div>
-</div>
-
-<!-- 提现弹窗 -->
-<div id="withdrawModal" class="dialog-overlay" style="display:none">
-  <div class="dialog-box">
-    <h3>提现 USDT</h3>
-    <input id="withdrawAmount" type="number" placeholder="金额" min="10">
-    <input id="withdrawAddress" type="text" placeholder="提现地址">
-    <div class="dialog-actions">
-      <button class="dialog-btn primary" id="withdrawConfirm" onclick="event.preventDefault();app.confirmWithdraw()">确认提现</button>
-      <button class="dialog-btn secondary" id="withdrawCancel" onclick="app.hideWithdrawModal()">取消</button>
-    </div>
-  </div>
-</div>
-
-<!-- 邀请弹窗 -->
-<div id="inviteModal" class="dialog-overlay" style="display:none">
-  <div class="dialog-box">
-    <h3>邀请好友</h3>
-    <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px;text-align:center">您的专属邀请码</p>
-    <div class="invite-code-display" id="inviteCode">加载中...</div>
-    <button class="invite-full-btn primary" onclick="app.copyInviteCode()" style="margin-bottom:8px">📋 复制邀请码</button>
-    <div class="invite-stats" id="inviteStats">加载中...</div>
-    <div style="font-size:12px;color:var(--text-light);margin-bottom:8px" id="inviteLevels"></div>
-    <div style="display:flex;gap:8px;margin-bottom:8px">
-      <button class="invite-full-btn green" onclick="app.shareInvite()">📤 分享</button>
-      <button class="invite-full-btn gold" onclick="app.claimInviteRewards()">🎁 领取返佣</button>
-    </div>
-    <button class="invite-full-btn gray" id="inviteClose">关闭</button>
-  </div>
-</div>
-
-<!-- 管理面板弹窗 -->
-<div id="adminModal" class="dialog-overlay" style="display:none">
-  <div class="dialog-box admin-panel">
-    <h3>管理面板</h3>
-    <div class="admin-tabs">
-      <button class="admin-tab active" data-tab="admin-users">用户管理</button>
-      <button class="admin-tab" data-tab="admin-matches">赛事管理</button>
-      <button class="admin-tab" data-tab="admin-settings">系统设置</button>
-    </div>
-    <div class="admin-content" id="adminContent">
-      <!-- JS-populated admin content -->
-    </div>
-    <button id="adminClose">关闭</button>
-  </div>
-</div>
-
-<!-- 投注确认对话框 -->
-<div id="betAmountDialog" class="custom-confirm-overlay">
-  <div class="dialog-box" style="max-width:360px;border-radius:16px;padding:24px 20px 16px">
-    <div style="text-align:center;margin-bottom:16px">
-      <div id="betDialogTeamName" style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px"></div>
-      <div id="betDialogTypeName" style="font-size:12px;color:var(--text-muted)"></div>
-    </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--bg,#f5f7fa);border-radius:12px;margin-bottom:16px">
-      <span style="font-size:13px;color:var(--text-muted)">赔率</span>
-      <span id="betDialogOdds" style="font-size:20px;font-weight:700;color:var(--accent)">—</span>
-    </div>
-    <div style="margin-bottom:14px">
-      <div style="font-size:13px;color:var(--text-muted);margin-bottom:6px">投注金额 (USDT)</div>
-      <input id="betAmountInput" type="number" value="100" min="1" step="1" style="width:100%;padding:12px;border:2px solid var(--border);border-radius:10px;font-size:18px;text-align:center;font-weight:700;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
-    </div>
-    <div class="quick-amounts" style="display:flex;justify-content:center;gap:8px;margin-bottom:14px">
-      <button class="quick-amount" data-amount="10">10</button>
-      <button class="quick-amount" data-amount="50">50</button>
-      <button class="quick-amount" data-amount="100" style="background:var(--accent,#533afd);color:#fff">100</button>
-      <button class="quick-amount" data-amount="500">500</button>
-    </div>
-    <div style="display:flex;justify-content:center;align-items:center;gap:8px;padding:10px;background:rgba(3,166,109,.06);border-radius:10px;margin-bottom:16px">
-      <span style="font-size:13px;color:var(--text-muted)">预计收益</span>
-      <span id="betDialogProfit" style="font-size:20px;font-weight:700;color:#03A66D">0.00</span>
-      <span style="font-size:12px;color:var(--text-muted)">USDT</span>
-    </div>
-    <div style="display:flex;gap:10px">
-      <button id="betDialogCancel" style="flex:1;padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);font-size:14px;cursor:pointer;transition:all.15s">取消</button>
-      <button id="betDialogConfirm" style="flex:1.5;padding:14px;border:none;border-radius:12px;background:var(--accent-grad,linear-gradient(135deg,#533afd,#764ba2));color:#fff;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(83,58,253,.3)">🎯 确认投注</button>
-    </div>
-  </div>
-</div>
-
-<!-- 语言栏 -->
-<div class="lang-bar" id="langBar">
-  <span class="lang-item active" data-lang="cn" onclick="app.setLanguage('cn')">简中</span>
-  <span class="lang-item" data-lang="en" onclick="app.setLanguage('en')">EN</span>
-  <span class="lang-item" data-lang="vn" onclick="app.setLanguage('vn')">VI</span>
-  <span class="lang-item" data-lang="jp" onclick="app.setLanguage('jp')">日</span>
-  <span class="lang-item" data-lang="kr" onclick="app.setLanguage('kr')">한</span>
-  <span class="lang-item" data-lang="cntw" onclick="app.setLanguage('cntw')">繁</span>
 </div>
 
 <!-- 头部 -->
 <div class="header">
     <div class="wp">
+        <a href="javascript:;" id="langSwitchBtn" class="global-lang-switch-btn">
+            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%234C8BF5'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z'/%3E%3C/svg%3E" alt="语言切换">
+        </a>
         <div class="logo">
-            <img src="img/logo.svg" alt="19888" width="120" height="36" loading="eager" decoding="async">
+            <span style="font-size:22px;font-weight:bold;color:#4C8BF5;display:inline-block;vertical-align:middle;line-height:45px">19888</span>
         </div>
-        <h3 class="tit"></h3>
+        <h3 class="tit">19888</h3>
         <div class="wallet-connect" id="walletBtn">
             <i class="wallet-icon"></i>
-            <span class="wallet-label">连接钱包</span>
+            <span class="wallet-label" id="walletLabel">连接钱包</span>
             <span class="wallet-address" id="walletAddress"></span>
         </div>
     </div>
 </div>
 
-<!-- 余额条 -->
-<div class="balance-bar" id="topBalanceBar" style="display:none">
-    <span>💰 <span id="topUSDTBal">0.00</span> USDT</span>
-</div>
-<!-- 头部 -->
-
-<!-- 内容 -->
 <div class="main">
     <div class="wp">
-        <!-- Live Stats Bar -->
-        <div class="stats-bar" id="liveStatsBar">
-            <div class="stat-cell"><div class="stat-label">今日投注</div><div class="stat-value bets" id="statBets">0</div></div>
-            <div class="stat-cell"><div class="stat-label">在线用户</div><div class="stat-value online" id="statOnline">0</div></div>
-            <div class="stat-cell"><div class="stat-label">今日派奖</div><div class="stat-value payout" id="statPayout">$0</div></div>
-            <div class="stat-cell"><div class="stat-label">累计用户</div><div class="stat-value users" id="statUsers">0</div></div>
+
+        <!-- 轮播 -->
+        <div class="banner">
+            <div class="item" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);display:flex;align-items:center;justify-content:center;color:white;font-size:24px;font-weight:bold">🎯 19888 体育竞猜</div>
+            <div class="item" style="background:linear-gradient(135deg,#f093fb 0%,#f5576c 100%);display:flex;align-items:center;justify-content:center;color:white;font-size:24px;font-weight:bold">⚽ 反波胆胜率88.89%</div>
+            <div class="item" style="background:linear-gradient(135deg,#4facfe 0%,#00f2fe 100%);display:flex;align-items:center;justify-content:center;color:white;font-size:24px;font-weight:bold">💰 新用户首充送10U体验金</div>
         </div>
-        <!-- Announcement -->
-        <div class="announce-bar" id="announceBar">
-            <span class="announce-icon">📢</span>
-            <span class="announce-text" id="announceText">🎯 世界杯竞猜火热进行中！新用户首充送10U体验金 | 🔥 AI反波胆胜率88.89% | 💰 每日提现秒到账</span>
-        </div>
-        <!-- AI Recommendation -->
-        <div class="ai-rec-card" id="aiRecCard" style="display:none">
-            <div class="rec-header">
-                <div>
-                    <div class="rec-label">🤖 AI 今日推荐</div>
-                    <div class="rec-text" id="aiRecText">加载中...</div>
-                    <div class="rec-stars" id="aiRecStars">★★★★★</div>
-                </div>
-                <button class="rec-btn" onclick="app.navigateTo('ai')">查看预测 →</button>
+
+        <!-- 公告 -->
+        <div class="m-notice">
+            <div class="icon"></div>
+            <div class="notice" style="overflow:hidden">
+                <marquee scrollamount="4" style="font-size:13px;color:#333">🎯 世界杯竞猜火热进行中！新用户首充送10U体验金 | 🔥 AI反波胆胜率88.89% | 💰 每日提现秒到账 | ⚡ 邀请好友享20%返佣</marquee>
             </div>
         </div>
-        <!-- Trust Signals -->
-        <div class="trust-signals" id="trustSignalsBar">
-            <div class="trust-signal"><div class="signal-title">✅ 安全</div><div class="signal-sub">智能合约审计</div></div>
-            <div class="trust-signal"><div class="signal-title">💰 秒到</div><div class="signal-sub">提现即时到账</div></div>
-            <div class="trust-signal"><div class="signal-title">🎯 88.89%</div><div class="signal-sub">AI反波胆胜率</div></div>
-            <div class="trust-signal" id="recentPayout"><div class="signal-title" style="color:#667eea">🔥 最新提现</div><div class="signal-sub">加载中...</div></div>
-        </div>
-        <div class="tab-header-wrapper" id="tabHeaderWrapper">
+
+        <!-- 世界杯倒计时 -->
+        <div class="worldcup-countdown" id="worldCupCountdown">世界杯倒计时：加载中...</div>
+
+        <!-- 标签页 -->
+        <div class="tab-header-wrapper">
             <ul class="ul-tabs_b1 slick_tab_btn">
-                <li class="on"><a href="javascript:;" data-i18n="推荐赛事"><i class="icon-recommend"></i>推荐赛事</a></li>
-                <li><a href="javascript:;" data-i18n="冠亚预测"><i class="icon-champion"></i>冠亚预测</a></li>
-                <li><a href="javascript:;" data-i18n="关于我们"><i class="icon-info"></i>关于我们</a></li>
+                <li class="on"><a href="javascript:;">推荐赛事</a></li>
+                <li><a href="javascript:;">冠亚预测</a></li>
+                <li><a href="javascript:;">关于我们</a></li>
             </ul>
-            <a href="javascript:;" class="more-link" onclick="app.navigateTo('matches')">更多</a>
+            <a href="javascript:;" class="more-link">更多</a>
         </div>
 
         <div class="slick_tab">
-            <!-- Page 1: 推荐赛事 (Home) -->
-            <div class="tab_con page active" id="page-home">
+            <!-- Tab 0: 推荐赛事 -->
+            <div class="tab_con page active">
                 <ul class="ul-info" id="matchList">
                     <!-- JS-populated match cards -->
                 </ul>
             </div>
 
-            <!-- Page 2: 冠亚预测 -->
-            <div class="tab_con page" id="page-champion">
+            <!-- Tab 1: 冠亚预测 -->
+            <div class="tab_con page">
                 <div class="champion-bet-section">
-                    <div class="bet-panel">
-                        <div class="panel-header">
-                            <h3 style="margin: 0;">冠亚预测投注</h3>
-                            <div class="user-stats" style="font-size: 12px;">
-                                <span>总投注额: <em id="totalBetAmount">0</em></span>
-                                <span>潜在收益: <em id="totalPotentialWin">0</em></span>
-                            </div>
+                    <div class="panel-header">
+                        <h3>冠亚预测投注</h3>
+                        <div class="user-stats">
+                            <span>总投注额: <em id="totalBetAmount">0</em></span>
+                            <span>潜在收益: <em id="totalPotentialWin">0</em></span>
                         </div>
-                        <div class="teams-grid" id="teamsGrid">
-                            <!-- JS-populated team cards -->
-                        </div>
+                    </div>
+                    <div class="teams-grid" id="teamsGrid">
+                        <!-- JS-populated team cards -->
                     </div>
                 </div>
             </div>
 
-            <!-- Page 3: 关于我们 -->
-            <div class="tab_con page" id="page-about">
+            <!-- Tab 2: 关于我们 -->
+            <div class="tab_con page">
                 <div class="platform-intro">
-                    <div class="section-title">平台介绍</div>
                     <div class="intro-content">
                         <p>19888 是一家专业的反波胆竞猜平台，致力于为用户提供安全、公平、透明的体育竞猜体验。平台由 Winsupreme Technology Limitada 拥有并营运，依据哥斯大黎加法律设立，为有限责任公司。</p>
                         <p>平台基于 5000 万场历史数据进行 AI 深度学习训练，反波胆玩法理论胜率高达 88.89%。平台持有 Anjouan 合法牌照运营，用户资金链上合约托管，定期第三方审计。</p>
                     </div>
                 </div>
             </div>
-
-            <!-- Page 4: 赛事列表 -->
-            <div class="tab_con page" id="page-matches">
-                <div class="match-list-page">
-                    <ul class="ul-info" id="fullMatchList">
-                        <!-- JS-populated full match list -->
-                    </ul>
-                </div>
-            </div>
-
-            <!-- Page 4b: 行情 K线 + 订单簿 -->
-            <div class="tab_con page" id="page-market" style="display:none">
-                <div class="market-page" style="padding:12px">
-                    <div id="marketContent">
-                        <div style="text-align:center;padding:40px;color:var(--text-muted)">加载中...</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Page 4c: API 文档 -->
-            <div class="tab_con page" id="page-docs" style="display:none">
-                <div class="docs-page" style="padding:12px">
-                    <div id="docsContent">
-                        <div style="text-align:center;padding:40px;color:var(--text-muted)">加载中...</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Page 5: 投注记录 -->
-            <div class="tab_con page" id="page-records">
-                <div class="records-page">
-                    <div class="section-header">
-                        <h4>我的投注</h4>
-                        <div class="filter-tabs">
-                            <button class="filter-btn active" data-filter="all" onclick="app.filterRecords('all', event)">全部</button>
-                            <button class="filter-btn" data-filter="pending" onclick="app.filterRecords('pending', event)">进行中</button>
-                            <button class="filter-btn" data-filter="won" onclick="app.filterRecords('won', event)">已赢</button>
-                            <button class="filter-btn" data-filter="lost" onclick="app.filterRecords('lost', event)">已输</button>
-                        </div>
-                    </div>
-                    <div class="bets-list" id="betsList">
-                        <!-- JS-populated bet records -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Page 6: 我的 -->
-            <div class="tab_con page" id="page-profile">
-                <div class="profile-page">
-                    <!-- 用户头部 -->
-                    <div class="profile-header">
-                        <div class="avatar">
-                            <img src="img/default-avatar.svg" alt="avatar" id="profileAvatar" width="56" height="56" loading="lazy" decoding="async">
-                        </div>
-                        <div class="user-info">
-                            <div class="nickname" id="profileNickname">未连接钱包</div>
-                            <div class="wallet-addr" id="profileWalletAddr"></div>
-                        </div>
-                    </div>
-
-                    <!-- 余额卡片 -->
-                    <div class="balance-cards">
-                        <div class="balance-card">
-                            <div class="card-label">USDT 钱包余额</div>
-                            <div class="card-value" id="profileUSDTBalance">0.00</div>
-                        </div>
-                        <div class="balance-card">
-                            <div class="card-label">资金池余额</div>
-                            <div class="card-value" id="profilePoolBalance">0.00</div>
-                        </div>
-                    </div>
-
-                    <!-- VIP 卡片 -->
-                    <div class="vip-card-sunshine" id="vipCard" style="display:none">
-                        <div style="display:flex;justify-content:space-between;align-items:center">
-                            <div>
-                                <div class="vip-label">VIP 等级</div>
-                                <div class="vip-level" id="vipLevelName">普通</div>
-                            </div>
-                            <div style="text-align:right">
-                                <div class="vip-label">累计投注</div>
-                                <div class="vip-stat" id="vipWagered">0</div>
-                            </div>
-                        </div>
-                        <div style="margin-top:10px">
-                            <div style="display:flex;justify-content:space-between" class="vip-progress-label">
-                                <span id="vipProgressLabel">距下一级还需</span>
-                                <span id="vipNextLevel">-</span>
-                            </div>
-                            <div class="vip-progress-track" style="margin-top:4px">
-                                <div class="vip-progress-bar" id="vipProgressBar"></div>
-                            </div>
-                        </div>
-                        <div style="display:flex;gap:8px;margin-top:10px;font-size:10px">
-                            <span class="vip-badge" id="vipCashback">返佣0%</span>
-                            <span class="vip-badge odds-badge" id="vipOdds">赔率+0%</span>
-                        </div>
-                    </div>
-
-                    <!-- PnL 面板 -->
-                    <div class="pnl-panel">
-                        <div class="pnl-item">
-                            <span class="pnl-label">总投注</span>
-                            <span class="pnl-value" id="pnlWagered">0</span>
-                        </div>
-                        <div class="pnl-item">
-                            <span class="pnl-label">总赢利</span>
-                            <span class="pnl-value" id="pnlWon">0</span>
-                        </div>
-                        <div class="pnl-item">
-                            <span class="pnl-label">净收益</span>
-                            <span class="pnl-value" id="pnlNet" style="color:#03A66D">0</span>
-                        </div>
-                        <div class="pnl-item">
-                            <span class="pnl-label">ROI</span>
-                            <span class="pnl-value" id="pnlROI">0%</span>
-                        </div>
-                    </div>
-
-                    <!-- 操作按钮 -->
-                    <div class="profile-actions">
-                        <button class="action-btn deposit-btn" onclick="app.showDeposit()"><i class="icon-deposit"></i>充值</button>
-                        <button class="action-btn withdraw-btn" onclick="app.showWithdraw()"><i class="icon-withdraw"></i>提现</button>
-                        <button class="action-btn invite-btn" onclick="app.showInvite()">🎁 邀请好友</button>
-                    </div>
-
-                    <!-- 最近投注 -->
-                    <div class="recent-bets-section">
-                        <div class="section-title">最近投注</div>
-                        <div class="recent-bets-list" id="recentBetsList">
-                            <div class="empty-state">暂无投注记录</div>
-                        </div>
-                    </div>
-
-                    <!-- 菜单 -->
-                    <div class="profile-menu">
-                        <div class="menu-item" onclick="app.navigateTo('transactions')">
-                            <i class="menu-icon icon-transactions"></i>
-                            <span>交易流水</span>
-                            <i class="arrow"></i>
-                        </div>
-                        <div class="menu-item" onclick="app.navigateTo('records')">
-                            <i class="menu-icon icon-bets"></i>
-                            <span>投注记录</span>
-                            <i class="arrow"></i>
-                        </div>
-                        <div class="menu-item" onclick="app.navigateTo('about')">
-                            <i class="menu-icon icon-about"></i>
-                            <span>关于我们</span>
-                            <i class="arrow"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Page 7: 赛事详情 -->
-            <div class="tab_con page" id="page-detail">
-                <div class="detail-page">
-                    <!-- 赛事信息 -->
-                    <div class="match-header">
-                        <div class="match-teams">
-                            <span class="team home-team" id="detailHomeTeam">主队</span>
-                            <span class="vs">VS</span>
-                            <span class="team away-team" id="detailAwayTeam">客队</span>
-                        </div>
-                        <div class="match-meta">
-                            <span class="match-time" id="detailMatchTime">时间</span>
-                            <span class="match-venue" id="detailMatchVenue">地点</span>
-                        </div>
-                    </div>
-
-                    <!-- 18格反波胆投注选择 -->
-                    <div class="bet-grid-section">
-                        <div class="section-title">反波胆投注 - 18格选择</div>
-                        <div class="score-grid" id="scoreGrid">
-                            <!-- JS-populated 18-grid bet options -->
-                        </div>
-                    </div>
-
-                    <!-- 赔率显示 -->
-                    <div class="odds-section">
-                        <div class="odds-row">
-                            <span class="odds-label">当前赔率</span>
-                            <span class="odds-value" id="detailOdds">1.12</span>
-                        </div>
-                    </div>
-
-                    <!-- 快捷投注 -->
-                    <div class="quick-bet-section">
-                        <div class="quick-amounts">
-                            <button class="quick-amount active" data-amt="10" style="background:var(--accent);color:#fff">10</button>
-                            <button class="quick-amount" data-amt="50">50</button>
-                            <button class="quick-amount" data-amt="100">100</button>
-                            <button class="quick-amount" data-amt="500">500</button>
-                        </div>
-                        <button class="place-bet-btn" id="placeBetBtn">🎯 确认投注</button>
-                    </div>
-                </div>
-            </div>
         </div>
+
     </div>
 </div>
-<!-- 内容 -->
 
 <!-- 底部导航栏 -->
 <div class="footer">
-    <!-- 法律链接栏 -->
-    <div class="footer-links-bar">
-      <a href="tos.html">服务条款</a>
-      <span>·</span>
-      <a href="privacy.html">隐私政策</a>
-      <span>·</span>
-      <a href="https://t.me/19888official" target="_blank">💬 Telegram</a>
-      <span>·</span>
-      <a href="javascript:;" onclick="var m=document.getElementById('helpModal');m.style.display='flex';m.classList.add('show')">🆘 帮助</a>
-    </div>
     <ul class="ul-tabbar">
         <li class="on">
-            <a href="javascript:;" onclick="app.navigateTo('home')">
-                <i class="icon_home"></i>
-                <p data-i18n="home">首页</p>
+            <a href="javascript:;" class="tab-nav" data-tab="home">
+                <i class="i1"></i>
+                <p class="txt">首页</p>
             </a>
         </li>
         <li>
-            <a href="javascript:;" onclick="app.navigateTo('ai')">
-                <i class="icon_ai"></i>
-                <p data-i18n="ai">AI预测</p>
+            <a href="javascript:;" class="tab-nav" data-tab="ai">
+                <i class="i2"></i>
+                <p class="txt">AI预测</p>
             </a>
         </li>
         <li>
-            <a href="javascript:;" onclick="app.navigateTo('matches')">
-                <i class="icon_match"></i>
-                <p data-i18n="matches">赛事</p>
+            <a href="javascript:;" class="tab-nav" data-tab="matches">
+                <i class="i3"></i>
+                <p class="txt">赛事</p>
             </a>
         </li>
         <li>
-            <a href="javascript:;" onclick="app.navigateTo('market')">
-                <i class="icon_market"></i>
-                <p data-i18n="market">行情</p>
+            <a href="javascript:;" class="tab-nav" data-tab="records">
+                <i class="i4"></i>
+                <p class="txt">投注记录</p>
             </a>
         </li>
         <li>
-            <a href="javascript:;" onclick="app.navigateTo('profile')">
-                <i class="icon_user"></i>
-                <p data-i18n="profile">我的</p>
+            <a href="javascript:;" class="tab-nav" data-tab="profile">
+                <i class="i5"></i>
+                <p class="txt">我的</p>
             </a>
         </li>
     </ul>
 </div>
-<!-- 底部 -->
 
 <!-- 自定义Toast -->
 <div class="custom-toast" id="customToast"></div>
 
-<script src="js/socket.io.min.js?v=20260617"></script>
 <script>
-// Force Service Worker refresh — unregister old cache-consuming versions
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(function(regs) {
-    regs.forEach(function(r) { r.unregister(); });
-  });
-}
+(function(){
+    'use strict';
+
+    var API_BASE = window.location.hostname === 'localhost' ? '/api' : 'https://one9888-api.onrender.com/api';
+
+    // ======== Helpers ========
+    var $ = function(sel, ctx) { return (ctx || document).querySelector(sel); };
+    var $$ = function(sel, ctx) { return Array.from((ctx || document).querySelectorAll(sel)); };
+
+    function showToast(msg, duration) {
+        duration = duration || 2500;
+        var el = document.getElementById('customToast');
+        el.textContent = msg;
+        el.className = 'custom-toast show';
+        clearTimeout(el._timeout);
+        el._timeout = setTimeout(function(){ el.className = 'custom-toast'; }, duration);
+    }
+
+    function showConfirm(title, content, onOk) {
+        $('#confirmTitle').textContent = title;
+        $('#confirmContent').textContent = content;
+        $('#customConfirmOverlay').style.display = 'block';
+        $('#customConfirm').style.display = 'block';
+        $('#confirmOkBtn').onclick = function() {
+            $('#customConfirmOverlay').style.display = 'none';
+            $('#customConfirm').style.display = 'none';
+            if (onOk) onOk();
+        };
+        $('#confirmCancelBtn').onclick = function() {
+            $('#customConfirmOverlay').style.display = 'none';
+            $('#customConfirm').style.display = 'none';
+        };
+    }
+
+    function shortenAddress(addr) {
+        return addr ? addr.substring(0,6) + '...' + addr.substring(addr.length - 4) : '';
+    }
+
+    // ======== Slick polyfill (minimal carousel) ========
+    function initSlick() {
+        // Banner carousel
+        var banner = document.querySelector('.banner');
+        if (banner) {
+            var items = banner.querySelectorAll('.item');
+            var idx = 0;
+            (function autoBanner() {
+                items.forEach(function(el,i){ el.style.display = i === idx ? 'flex' : 'none'; });
+                idx = (idx + 1) % items.length;
+                setTimeout(autoBanner, 4000);
+            })();
+            // Dots
+            var dotsDiv = document.createElement('div');
+            dotsDiv.className = 'slick-dots';
+            dotsDiv.style.cssText = 'position:absolute;bottom:10px;left:0;right:0;text-align:center';
+            for (var i = 0; i < items.length; i++) {
+                var li = document.createElement('li');
+                var btn = document.createElement('button');
+                btn.textContent = i + 1;
+                (function(j){ btn.onclick = function(){ idx = j; }; })(i);
+                li.appendChild(btn);
+                dotsDiv.appendChild(li);
+            }
+            banner.style.position = 'relative';
+            banner.appendChild(dotsDiv);
+        }
+
+        // Tab carousel
+        var tabContainer = document.querySelector('.slick_tab');
+        var pages = tabContainer ? tabContainer.querySelectorAll('.tab_con') : [];
+        var tabBtns = document.querySelectorAll('.slick_tab_btn li');
+        var currentTab = 0;
+
+        function showTab(index) {
+            pages.forEach(function(p,i){ p.style.display = i === index ? 'block' : 'none'; });
+            tabBtns.forEach(function(btn,i){ btn.classList.toggle('on', i === index); });
+            currentTab = index;
+
+            // Load champion data when tab 1 selected
+            if (index === 1 && document.getElementById('teamsGrid').children.length === 0) {
+                loadChampionBetData();
+            }
+        }
+
+        tabBtns.forEach(function(btn, i) {
+            btn.onclick = function(e) {
+                e.preventDefault();
+                showTab(i);
+                // Update more link
+                var moreLink = document.querySelector('.more-link');
+                if (moreLink) {
+                    moreLink.style.display = i === 0 ? 'flex' : 'none';
+                }
+            };
+        });
+
+        showTab(0);
+    }
+
+    // ======== World Cup Countdown ========
+    function updateWorldCupCountdown() {
+        var el = document.getElementById('worldCupCountdown');
+        if (!el) return;
+        var worldCupDate = new Date('2026-06-11T00:00:00').getTime();
+        var now = new Date().getTime();
+        var distance = worldCupDate - now;
+        if (distance < 0) {
+            el.innerHTML = '世界杯倒计时：已开幕';
+            return;
+        }
+        var days = Math.floor(distance / (86400000));
+        var hours = Math.floor((distance % 86400000) / 3600000);
+        var minutes = Math.floor((distance % 3600000) / 60000);
+        var seconds = Math.floor((distance % 60000) / 1000);
+        el.innerHTML = '世界杯倒计时：' + days + '天' + hours + '小时' + minutes + '分' + seconds + '秒';
+    }
+
+    // ======== API Calls ========
+    var walletAddress = null;
+    var currentWalletProvider = null;
+    var selectedTeamData = null;
+    var selectedBetType = null;
+
+    // Match data samples (fallback)
+    var sampleMatches = [
+        {id:1,match_name:'西甲',home_team:'皇家马德里',away_team:'巴塞罗那',match_time:'2026-06-21 20:00',home_logo:'',away_logo:'',home_odds:2.10,draw_odds:3.40,away_odds:3.20},
+        {id:2,match_name:'英超',home_team:'曼彻斯特联',away_team:'利物浦',match_time:'2026-06-22 22:30',home_logo:'',away_logo:'',home_odds:2.50,draw_odds:3.30,away_odds:2.80},
+        {id:3,match_name:'意甲',home_team:'尤文图斯',away_team:'AC米兰',match_time:'2026-06-23 21:00',home_logo:'',away_logo:'',home_odds:1.95,draw_odds:3.50,away_odds:3.60},
+        {id:4,match_name:'欧冠',home_team:'拜仁慕尼黑',away_team:'巴黎圣日耳曼',match_time:'2026-06-24 03:00',home_logo:'',away_logo:'',home_odds:2.20,draw_odds:3.35,away_odds:3.10}
+    ];
+
+    function loadMatches() {
+        var container = document.getElementById('matchList');
+        if (!container) return;
+        container.innerHTML = '<div class="empty-tips">加载中...</div>';
+
+        fetch(API_BASE + '/matches')
+            .then(function(r){ return r.json(); })
+            .then(function(res){
+                var matches = (res && (res.data || res.matches)) || sampleMatches;
+                renderMatches(matches);
+            })
+            .catch(function(){
+                renderMatches(sampleMatches);
+            });
+    }
+
+    function renderMatches(matches) {
+        var container = document.getElementById('matchList');
+        if (!container) return;
+        container.innerHTML = '';
+        if (!matches || matches.length === 0) {
+            container.innerHTML = '<div class="empty-tips">暂无赛事</div>';
+            return;
+        }
+        matches.forEach(function(m){
+            var timeStr = m.match_time || m.time || '';
+            var dateStr = '';
+            var clockStr = '';
+            if (timeStr) {
+                var parts = timeStr.split(' ');
+                dateStr = parts[0] || '';
+                clockStr = parts[1] || '';
+            }
+            var homeName = m.home_team || m.home || '主队';
+            var awayName = m.away_team || m.away || '客队';
+            var leagueName = m.match_name || m.league || '热门赛事';
+
+            var li = document.createElement('li');
+            li.innerHTML = '<div class="con">' +
+                '<div class="match-content">' +
+                    '<div class="team-left">' +
+                        '<div class="team-logo"><span style="font-size:30px">⚽</span></div>' +
+                        '<div class="team-name">' + homeName + '</div>' +
+                    '</div>' +
+                    '<div class="match-time">' +
+                        '<div style="font-size:18px;font-weight:bold;color:#333">' + (clockStr || '--:--') + '</div>' +
+                        '<div style="font-size:12px;color:#666;margin-top:4px">' + dateStr + '</div>' +
+                        '<div style="font-size:11px;color:#999;margin-top:4px">' + leagueName + '</div>' +
+                    '</div>' +
+                    '<div class="team-right">' +
+                        '<div class="team-logo"><span style="font-size:30px">⚽</span></div>' +
+                        '<div class="team-name">' + awayName + '</div>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+            container.appendChild(li);
+        });
+    }
+
+    function loadChampionBetData() {
+        var grid = document.getElementById('teamsGrid');
+        if (!grid) return;
+        grid.innerHTML = '<div class="empty-tips">加载中...</div>';
+
+        fetch(API_BASE + '/teams')
+            .then(function(r){ return r.json(); })
+            .then(function(res){
+                var teams = res && (res.data || res.teams);
+                if (teams && teams.length > 0) {
+                    renderTeams(teams);
+                } else {
+                    loadSampleTeams();
+                }
+            })
+            .catch(function(){
+                loadSampleTeams();
+            });
+    }
+
+    function loadSampleTeams() {
+        var sampleTeams = [
+            {id:1,team_name:'巴西',championship_odds:3.50,runner_up_odds:4.00},
+            {id:2,team_name:'阿根廷',championship_odds:4.00,runner_up_odds:4.50},
+            {id:3,team_name:'法国',championship_odds:4.50,runner_up_odds:5.00},
+            {id:4,team_name:'英格兰',championship_odds:5.00,runner_up_odds:5.50},
+            {id:5,team_name:'德国',championship_odds:6.00,runner_up_odds:6.50},
+            {id:6,team_name:'西班牙',championship_odds:7.00,runner_up_odds:7.50}
+        ];
+        renderTeams(sampleTeams);
+    }
+
+    function renderTeams(teams) {
+        var grid = document.getElementById('teamsGrid');
+        if (!grid) return;
+        grid.innerHTML = '';
+        teams.forEach(function(team){
+            var card = document.createElement('div');
+            card.className = 'team-card';
+            card.setAttribute('data-team-id', team.id || team.team_id);
+            var champOdds = parseFloat(team.championship_odds || team.champion_odds || 0).toFixed(2);
+            var runnerOdds = parseFloat(team.runner_up_odds || 0).toFixed(2);
+            card.innerHTML =
+                '<div class="team-logo"><span style="font-size:36px">🏆</span></div>' +
+                '<div class="team-name">' + (team.team_name || '未知球队') + '</div>' +
+                '<div class="odds-group">' +
+                    '<div class="odds-item">' +
+                        '<span class="odds-label">冠军</span>' +
+                        '<span class="odds-value championship-odds">' + champOdds + '</span>' +
+                    '</div>' +
+                    '<div class="odds-item">' +
+                        '<span class="odds-label">亚军</span>' +
+                        '<span class="odds-value runner-up-odds">' + runnerOdds + '</span>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="bet-buttons">' +
+                    '<button class="bet-btn bet-champion" data-bet-type="1">投冠军</button>' +
+                    '<button class="bet-btn bet-runner-up" data-bet-type="2">投亚军</button>' +
+                '</div>';
+            grid.appendChild(card);
+
+            // Bind bet buttons
+            var btns = card.querySelectorAll('.bet-btn');
+            btns.forEach(function(btn){
+                btn.onclick = function(e) {
+                    e.preventDefault();
+                    selectedTeamData = {
+                        id: card.getAttribute('data-team-id'),
+                        name: card.querySelector('.team-name').textContent
+                    };
+                    selectedBetType = parseInt(btn.getAttribute('data-bet-type'));
+                    var odds = selectedBetType === 1
+                        ? card.querySelector('.championship-odds').textContent
+                        : card.querySelector('.runner-up-odds').textContent;
+                    var betTypeName = selectedBetType === 1 ? '冠军' : '亚军';
+                    showBetDialog(selectedTeamData.name, betTypeName, odds);
+                };
+            });
+        });
+    }
+
+    function showBetDialog(teamName, betTypeName, odds) {
+        var existing = document.getElementById('betAmountDialog');
+        if (existing) existing.remove();
+
+        var dialog = document.createElement('div');
+        dialog.className = 'bet-amount-dialog show';
+        dialog.id = 'betAmountDialog';
+        dialog.style.cssText = 'display:flex !important';
+        dialog.innerHTML =
+            '<div class="dialog-overlay-bet"></div>' +
+            '<div class="dialog-box-bet">' +
+                '<div class="dialog-title-bet">投注</div>' +
+                '<div class="dialog-content-bet">' +
+                    '<div class="team-display">' +
+                        '<span style="font-size:40px">🏆</span>' +
+                        '<div><strong>' + teamName + '</strong></div>' +
+                        '<div style="color:#fa2933;font-weight:bold;font-size:13px">' + betTypeName + '</div>' +
+                    '</div>' +
+                    '<div class="form-group">' +
+                        '<label>投注金额 (USDT)</label>' +
+                        '<input type="number" id="betAmountInput" placeholder="请输入投注金额" min="1" step="0.01" value="100">' +
+                        '<div class="quick-amounts">' +
+                            '<button class="quick-amount" data-amount="100">100</button>' +
+                            '<button class="quick-amount" data-amount="500">500</button>' +
+                            '<button class="quick-amount" data-amount="1000">1000</button>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="odds-display">' +
+                        '<span>赔率: <em>' + odds + '</em></span>' +
+                        '<span>潜在收益: <em id="displayProfit">0.00</em></span>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="dialog-footer-bet">' +
+                    '<button class="btn-cancel" id="betCancelBtn">取消</button>' +
+                    '<button class="btn-confirm" id="confirmBetBtn">确认投注</button>' +
+                '</div>' +
+            '</div>';
+        document.body.appendChild(dialog);
+
+        var currentOdds = parseFloat(odds);
+
+        // Amount input
+        var amountInput = document.getElementById('betAmountInput');
+        var profitDisplay = document.getElementById('displayProfit');
+        function updateProfit() {
+            var amt = parseFloat(amountInput.value) || 0;
+            profitDisplay.textContent = amt > 0 ? (amt * currentOdds - amt).toFixed(2) : '0.00';
+        }
+        amountInput.addEventListener('input', updateProfit);
+        updateProfit();
+
+        // Quick amounts
+        dialog.querySelectorAll('.quick-amount').forEach(function(btn){
+            btn.onclick = function(e) {
+                e.preventDefault();
+                amountInput.value = btn.getAttribute('data-amount');
+                updateProfit();
+            };
+        });
+
+        // Confirm
+        document.getElementById('confirmBetBtn').onclick = function(e) {
+            e.preventDefault();
+            var amount = parseFloat(amountInput.value);
+            if (!amount || amount < 1 || isNaN(amount)) {
+                showToast('请输入正确的投注金额');
+                return;
+            }
+            if (!walletAddress) {
+                showToast('请先连接钱包');
+                return;
+            }
+
+            fetch(API_BASE + '/champion-bet/place', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    team_id: selectedTeamData.id,
+                    bet_type: selectedBetType,
+                    amount: amount,
+                    wallet_address: walletAddress
+                })
+            })
+            .then(function(r){ return r.json(); })
+            .then(function(res){
+                if (res.code === 0 || res.success) {
+                    showToast('投注成功！');
+                    dialog.remove();
+                    loadChampionBetData();
+                } else {
+                    showToast(res.msg || '投注失败');
+                }
+            })
+            .catch(function(){
+                showToast('请求失败，请检查网络');
+            });
+        };
+
+        // Cancel
+        dialog.querySelector('#betCancelBtn').onclick = function(e) {
+            e.preventDefault();
+            dialog.remove();
+        };
+        dialog.querySelector('.dialog-overlay-bet').onclick = function() {
+            dialog.remove();
+        };
+    }
+
+    // ======== Wallet ========
+    function setupAccountChangeListener(provider) {
+        if (!provider || !provider.on) return;
+        try {
+            provider.removeListener('accountsChanged', handleAccountsChanged);
+        } catch(e) {}
+        try {
+            provider.on('accountsChanged', handleAccountsChanged);
+        } catch(e) {}
+    }
+
+    function handleAccountsChanged(accounts) {
+        if (accounts.length === 0) {
+            walletAddress = null;
+            document.getElementById('walletAddress').textContent = '';
+            document.getElementById('walletBtn').classList.remove('connected');
+            document.getElementById('walletLabel').textContent = '连接钱包';
+            showToast('钱包已断开连接');
+        } else {
+            var newAddr = accounts[0];
+            if (!walletAddress || newAddr.toLowerCase() !== walletAddress.toLowerCase()) {
+                walletAddress = newAddr;
+                connectToAPI(newAddr);
+            }
+        }
+    }
+
+    function connectToAPI(addr) {
+        fetch(API_BASE + '/wallet/connect', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({wallet_address: addr})
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(res){
+            if (res.state === 1 || res.success) {
+                displayWalletAddress(addr);
+                showToast('钱包连接成功！');
+            } else {
+                showToast(res.msg || '连接失败');
+            }
+        })
+        .catch(function(){
+            displayWalletAddress(addr);
+            showToast('钱包已连接（离线模式）');
+        });
+    }
+
+    function displayWalletAddress(addr) {
+        var el = document.getElementById('walletAddress');
+        var label = document.getElementById('walletLabel');
+        var btn = document.getElementById('walletBtn');
+        if (el) el.textContent = shortenAddress(addr);
+        if (label) label.textContent = '';
+        if (btn) btn.classList.add('connected');
+    }
+
+    function connectWallet() {
+        var connectFn = function(resolve, reject) {
+            var accounts;
+            if (typeof window.ethereum !== 'undefined') {
+                window.ethereum.request({method: 'eth_requestAccounts'})
+                    .then(function(accs){
+                        currentWalletProvider = window.ethereum;
+                        setupAccountChangeListener(window.ethereum);
+                        resolve(accs);
+                    })
+                    .catch(reject);
+            } else if (typeof window.tpWallet !== 'undefined') {
+                window.tpWallet.request({method: 'eth_requestAccounts'})
+                    .then(function(accs){
+                        currentWalletProvider = window.tpWallet;
+                        setupAccountChangeListener(window.tpWallet);
+                        resolve(accs);
+                    })
+                    .catch(reject);
+            } else if (typeof window.imToken !== 'undefined') {
+                window.imToken.request({method: 'eth_requestAccounts'})
+                    .then(function(accs){
+                        currentWalletProvider = window.imToken;
+                        setupAccountChangeListener(window.imToken);
+                        resolve(accs);
+                    })
+                    .catch(reject);
+            } else {
+                // Demo mode: generate a fake address
+                var fakeAddr = '0x' + Array(40).fill(0).map(function(){ return '0123456789abcdef'[Math.floor(Math.random()*16)]; }).join('');
+                resolve([fakeAddr]);
+            }
+        };
+        connectFn(null, null).then(function(accounts) {
+            if (accounts && accounts.length > 0) {
+                walletAddress = accounts[0];
+                connectToAPI(walletAddress);
+                // Init listeners
+                if (currentWalletProvider) {
+                    setupAccountChangeListener(currentWalletProvider);
+                }
+            }
+        }).catch(function(err) {
+            // Fallback: generate demo address
+            var fakeAddr = '0x' + Array(40).fill(0).map(function(){ return '0123456789abcdef'[Math.floor(Math.random()*16)]; }).join('');
+            walletAddress = fakeAddr;
+            displayWalletAddress(fakeAddr);
+            showToast('演示模式已启用（未检测到钱包插件）');
+        });
+    }
+
+    // ======== Init ========
+    function init() {
+        initSlick();
+        updateWorldCupCountdown();
+        setInterval(updateWorldCupCountdown, 1000);
+        loadMatches();
+
+        // Wallet button
+        document.getElementById('walletBtn').onclick = function() {
+            if (walletAddress) {
+                showConfirm('断开钱包连接', '当前钱包: ' + shortenAddress(walletAddress) + '\n\n是否断开连接？', function() {
+                    walletAddress = null;
+                    document.getElementById('walletAddress').textContent = '';
+                    document.getElementById('walletLabel').textContent = '连接钱包';
+                    document.getElementById('walletBtn').classList.remove('connected');
+                    showToast('已断开连接');
+                });
+            } else {
+                connectWallet();
+            }
+        };
+
+        // Language switch
+        var langBtn = document.getElementById('langSwitchBtn');
+        var langModal = document.getElementById('globalLangModal');
+        var langMask = document.getElementById('globalLangModalMask');
+        if (langBtn) {
+            langBtn.onclick = function(e) {
+                e.preventDefault();
+                langModal.classList.add('active');
+            };
+        }
+        if (langMask) {
+            langMask.onclick = function() {
+                langModal.classList.remove('active');
+            };
+        }
+        document.querySelectorAll('.global-lang-option').forEach(function(opt){
+            opt.onclick = function() {
+                document.querySelectorAll('.global-lang-option').forEach(function(o){ o.classList.remove('selected'); });
+                opt.classList.add('selected');
+                langModal.classList.remove('active');
+            };
+        });
+
+        // Init wallet listeners
+        if (typeof window.ethereum !== 'undefined') {
+            currentWalletProvider = window.ethereum;
+            setupAccountChangeListener(window.ethereum);
+        } else if (typeof window.tpWallet !== 'undefined') {
+            currentWalletProvider = window.tpWallet;
+            setupAccountChangeListener(window.tpWallet);
+        } else if (typeof window.imToken !== 'undefined') {
+            currentWalletProvider = window.imToken;
+            setupAccountChangeListener(window.imToken);
+        }
+
+        // Check session for wallet reconnect
+        var hasVisited = sessionStorage.getItem('wallet_session_active');
+        if (!hasVisited) {
+            // New tab, clear state
+            walletAddress = null;
+            document.getElementById('walletAddress').textContent = '';
+            document.getElementById('walletLabel').textContent = '连接钱包';
+            document.getElementById('walletBtn').classList.remove('connected');
+            setTimeout(function(){ showToast('请连接您的钱包', 2000); }, 500);
+        }
+        sessionStorage.setItem('wallet_session_active', 'true');
+
+        // More link
+        var moreLink = document.querySelector('.more-link');
+        if (moreLink) {
+            moreLink.onclick = function() {
+                showToast('赛事列表功能');
+            };
+        }
+
+        // Bottom nav
+        $$('.tab-nav').forEach(function(nav) {
+            nav.onclick = function(e) {
+                e.preventDefault();
+                $$('.tab-nav').forEach(function(n){ n.parentElement.classList.remove('on'); });
+                nav.parentElement.classList.add('on');
+                var tab = nav.getAttribute('data-tab');
+                if (tab === 'home') {
+                    $$('.slick_tab_btn li')[0].click();
+                } else if (tab === 'ai') {
+                    showToast('AI预测功能开发中');
+                } else if (tab === 'matches') {
+                    showToast('赛事列表功能开发中');
+                } else if (tab === 'records') {
+                    showToast('投注记录功能开发中');
+                } else if (tab === 'profile') {
+                    showToast('个人中心功能开发中');
+                }
+            };
+        });
+    }
+
+    // Run on DOM ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+})();
 </script>
-<script src="js/app.js?v=20260617"></script>
 
-<!-- 帮助中心弹窗 -->
-<div class="dialog-overlay" id="helpModal" style="display:none" onkeydown="event.key==='Escape'&&(this.style.display='none',this.classList.remove('show'))">
-  <div class="dialog-box" style="max-width:380px;max-height:80vh;overflow-y:auto">
-    <h3>🆘 帮助中心</h3>
-    <div class="faq-list" style="text-align:left;font-size:13px">
-      <details style="margin:8px 0;padding:8px;background:var(--surface);border-radius:6px"><summary style="font-weight:600;cursor:pointer">交易失败/Revert？</summary><p style="color:var(--text-muted);margin:6px 0 0">需BNB做Gas，或滑点过低。资金安全，重试即可。</p></details>
-      <details style="margin:8px 0;padding:8px;background:var(--surface);border-radius:6px"><summary style="font-weight:600;cursor:pointer">钱包连接不上？</summary><p style="color:var(--text-muted);margin:6px 0 0">确认安装钱包，切换到BSC主网(Chain 56)。</p></details>
-      <details style="margin:8px 0;padding:8px;background:var(--surface);border-radius:6px"><summary style="font-weight:600;cursor:pointer">充值/提现未到账？</summary><p style="color:var(--text-muted);margin:6px 0 0">BSC需10-30秒确认。大额24h内审核。</p></details>
-      <details style="margin:8px 0;padding:8px;background:var(--surface);border-radius:6px"><summary style="font-weight:600;cursor:pointer">什么是反波胆？</summary><p style="color:var(--text-muted);margin:6px 0 0">猜比赛最终比分。18格对应18种可能比分。</p></details>
-    </div>
-    <div class="dialog-actions" style="margin-top:12px">
-      <button class="dialog-btn secondary" onclick="var m=document.getElementById('helpModal');m.style.display='none';m.classList.remove('show')">关闭</button>
-    </div>
-  </div>
-</div>
-
-</main>
 </body>
 </html>
