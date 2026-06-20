@@ -520,7 +520,7 @@
     var aO = Number(m.odds_away || m.away_odds || 0);
     var safeHome = home.replace(/'/g, "\\'");
     var safeAway = away.replace(/'/g, "\\'");
-    return '<div class="team-card match-card-item" onclick="app.openMatchDetail(\'' + m.id + '\')">' +
+    return '<div class="team-card match-card-item" onclick="app.openMatch(\'' + m.id + '\')">' +
       '<div class="team-card-header">' + league + '</div>' +
       '<div class="team-card-vs">' +
         '<div class="team-card-side">' +
@@ -560,7 +560,7 @@
     var aO = Number(m.odds_away || m.away_odds || (m.odds && m.odds.away) || 0);
     var safeHome = home.replace(/'/g, "\\'");
     var safeAway = away.replace(/'/g, "\\'");
-    return '<div class="team-card" onclick="app.openMatchDetail(\'' + m.id + '\')">' +
+    return '<div class="team-card" onclick="app.openMatch(\'' + m.id + '\')">' +
       '<div class="team-card-header">' + league + '</div>' +
       '<div class="team-card-vs">' +
         '<div class="team-card-side">' +
