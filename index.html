@@ -1257,18 +1257,29 @@
     async function syncAllUserData(wallet) {
         if (!wallet) return;
 
+        const w = encodeURIComponent(wallet);
         const [balanceRes, pnlRes, profileRes, betRecordsRes, depositRes,
-               inviteStatsRes, inviteEarningsRes, vipRes, aiRes, txRes] = await Promise.all([
-            fetchJSON(API_BASE + '/user/balance?wallet=' + encodeURIComponent(wallet)),
-            fetchJSON(API_BASE + '/user/pnl?wallet=' + encodeURIComponent(wallet)),
-            fetchJSON(API_BASE + '/user/profile?wallet=' + encodeURIComponent(wallet)),
-            fetchJSON(API_BASE + '/bet-records?wallet=' + encodeURIComponent(wallet)),
-            fetchJSON(API_BASE + '/deposit/history?wallet=' + encodeURIComponent(wallet)),
-            fetchJSON(API_BASE + '/invite/stats?wallet=' + encodeURIComponent(wallet)),
-            fetchJSON(API_BASE + '/invite/earnings?wallet=' + encodeURIComponent(wallet)),
-            fetchJSON(API_BASE + '/vip/status?wallet=' + encodeURIComponent(wallet)),
-            fetchJSON(API_BASE + '/ai-hosting/status?wallet=' + encodeURIComponent(wallet)),
-            fetchJSON(API_BASE + '/user/transactions?wallet=' + encodeURIComponent(wallet))
+               inviteStatsRes, inviteEarningsRes, vipRes, aiRes, txRes,
+               inviteLevelsRes, vipLevelsRes, allBetsRes, withdrawHistoryRes,
+               klineRes, orderbookRes, poolStatusRes, aiHistoryRes] = await Promise.all([
+            fetchJSON(API_BASE + '/user/balance?wallet=' + w),
+            fetchJSON(API_BASE + '/user/pnl?wallet=' + w),
+            fetchJSON(API_BASE + '/user/profile?wallet=' + w),
+            fetchJSON(API_BASE + '/bet-records?wallet=' + w),
+            fetchJSON(API_BASE + '/deposit/history?wallet=' + w),
+            fetchJSON(API_BASE + '/invite/stats?wallet=' + w),
+            fetchJSON(API_BASE + '/invite/earnings?wallet=' + w),
+            fetchJSON(API_BASE + '/vip/status?wallet=' + w),
+            fetchJSON(API_BASE + '/ai-hosting/status?wallet=' + w),
+            fetchJSON(API_BASE + '/user/transactions?wallet=' + w),
+            fetchJSON(API_BASE + '/invite/levels'),
+            fetchJSON(API_BASE + '/vip/levels'),
+            fetchJSON(API_BASE + '/bets?wallet=' + w),
+            fetchJSON(API_BASE + '/withdraw/history?wallet=' + w),
+            fetchJSON(API_BASE + '/market/kline?symbol=19888USDT&interval=1h'),
+            fetchJSON(API_BASE + '/market/orderbook?symbol=19888USDT'),
+            fetchJSON(API_BASE + '/finance/pool-status'),
+            fetchJSON(API_BASE + '/ai-hosting/history?wallet=' + w)
         ]);
 
         // 1. Balance — show in header
@@ -1287,16 +1298,31 @@
         // 5. Deposit history
         renderDepositHistory(depositRes);
 
-        // 6. Invite stats + earnings
+        // 6. Invite stats + earnings + levels + referral
         renderInviteData(inviteStatsRes, inviteEarningsRes, wallet);
+        renderInviteLevels(inviteLevelsRes, wallet);
 
-        // 7. VIP status
+        // 7. VIP status + levels + upgrade
         renderVIPStatus(vipRes);
+        renderVIPLevels(vipLevelsRes, wallet);
 
-        // 8. AI hosting status
-        renderAIStatus(aiRes);
+        // 8. AI hosting status + controls + history
+        renderAIStatus(aiRes, wallet);
+        renderAIHostingControls(aiRes, aiHistoryRes, wallet);
 
-        // 9. Generate invite code if needed
+        // 9. All bets + cancel
+        renderAllBets(allBetsRes, wallet);
+
+        // 10. Withdraw form + history
+        renderWithdrawSection(withdrawHistoryRes, wallet);
+
+        // 11. Market data (kline + orderbook)
+        renderMarketData(klineRes, orderbookRes);
+
+        // 12. Pool status
+        renderPoolStatus(poolStatusRes);
+
+        // 13. Generate invite code if needed
         tryGenerateInviteCode(wallet);
     }
 
@@ -1521,7 +1547,7 @@
     }
 
     /** Render AI hosting status */
-    function renderAIStatus(res) {
+    function renderAIStatus(res, wallet) {
         let existing = document.getElementById('aiHostingCard');
         if (existing) existing.remove();
 
@@ -1548,6 +1574,594 @@
         card.innerHTML = html;
         target.parentElement.insertBefore(card, target.nextSibling);
         card.style.display = 'block';
+    }
+
+    /** Render invite levels table + referral input + claim button */
+    function renderInviteLevels(res, wallet) {
+        let existing = document.getElementById('inviteLevelsCard');
+        if (existing) existing.remove();
+        const levels = extractData(res, []);
+        if (!levels || levels.length === 0) return;
+        const target = document.getElementById('worldCupCountdown');
+        if (!target) return;
+
+        const card = document.createElement('div');
+        card.id = 'inviteLevelsCard';
+        card.className = 'data-card';
+        card.style.margin = '0 12px 12px';
+        card.style.display = 'none';
+
+        let html = '<h4>🏆 邀请等级奖励</h4>';
+        html += '<table class="tx-table"><thead><tr><th>等级</th><th>名称</th><th>最低邀请</th><th>一级佣金</th><th>二级佣金</th></tr></thead><tbody>';
+        for (let i = 0; i < levels.length; i++) {
+            const lv = levels[i];
+            const name = lv.name || lv.level_name || '等级' + lv.level;
+            const minInv = lv.min_invites || lv.minInvites || 0;
+            const comm1 = ((lv.commission_l1 || lv.commissionL1 || 0) * 100).toFixed(1);
+            const comm2 = ((lv.commission_l2 || lv.commissionL2 || 0) * 100).toFixed(1);
+            const tierLabel = lv.level === 0 ? '普通' : 'Lv.' + lv.level;
+            html += '<tr><td>' + tierLabel + '</td><td>' + name + '</td><td>' + minInv + '</td><td>' + comm1 + '%</td><td>' + comm2 + '%</td></tr>';
+        }
+        html += '</tbody></table>';
+
+        // Referral input + claim
+        html += '<div style="margin-top:10px;border-top:1px solid #eee;padding-top:10px">';
+        html += '<label style="font-size:12px;color:#666;display:block;margin-bottom:4px">📎 填写推荐码</label>';
+        html += '<div style="display:flex;gap:6px;margin-bottom:8px">';
+        html += '<input type="text" id="referralCodeInput" placeholder="输入邀请码" style="flex:1;padding:6px 10px;border:1px solid #ddd;border-radius:4px;font-size:12px" value="">';
+        html += '<button id="referralSubmitBtn" style="padding:6px 14px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer">提交</button>';
+        html += '</div>';
+        html += '<button id="claimRewardBtn" style="width:100%;padding:8px;background:linear-gradient(135deg,#f093fb,#f5576c);color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer">🎁 领取邀请奖励</button>';
+        html += '</div>';
+
+        card.innerHTML = html;
+        target.parentElement.insertBefore(card, target.nextSibling);
+        card.style.display = 'block';
+
+        // Bind referral submit
+        const refBtn = document.getElementById('referralSubmitBtn');
+        if (refBtn) {
+            refBtn.onclick = function() {
+                const code = document.getElementById('referralCodeInput').value.trim();
+                if (!code) { showToast('请输入邀请码'); return; }
+                fetchJSON(API_BASE + '/invite/referral-tracking', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({wallet_address: wallet, ref_code: code})
+                }).then(function(r) {
+                    showToast((r && (r.msg || (r.data && r.data.msg))) || '推荐提交成功');
+                });
+            };
+        }
+
+        // Bind claim reward
+        const claimBtn = document.getElementById('claimRewardBtn');
+        if (claimBtn) {
+            claimBtn.onclick = function() {
+                showConfirm('领取邀请奖励', '请输入要领取的等级:\n(0-普通, 1-青铜, 2-白银, 3-黄金, 4-铂金, 5-钻石)', function() {
+                    const lvInput = prompt('输入等级数字 (0-5):');
+                    const level = parseInt(lvInput);
+                    if (isNaN(level) || level < 0 || level > 5) { showToast('无效等级'); return; }
+                    fetchJSON(API_BASE + '/invite/claim-reward', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({wallet_address: wallet, level: level})
+                    }).then(function(r) {
+                        showToast((r && (r.msg || (r.data && r.data.msg))) || '领取成功');
+                    });
+                });
+            };
+        }
+    }
+
+    /** Render VIP level definitions table + upgrade check button */
+    function renderVIPLevels(res, wallet) {
+        let existing = document.getElementById('vipLevelsCard');
+        if (existing) existing.remove();
+        const levels = extractData(res, []);
+        if (!levels || levels.length === 0) return;
+        const target = document.getElementById('worldCupCountdown');
+        if (!target) return;
+
+        const card = document.createElement('div');
+        card.id = 'vipLevelsCard';
+        card.className = 'data-card';
+        card.style.margin = '0 12px 12px';
+        card.style.display = 'none';
+
+        let html = '<h4>📊 VIP等级权益</h4>';
+        html += '<table class="tx-table"><thead><tr><th>等级</th><th>名称</th><th>最低投注</th><th>返现</th><th>提现优先</th><th>赔率加成</th></tr></thead><tbody>';
+        for (let i = 0; i < levels.length; i++) {
+            const lv = levels[i];
+            const name = lv.name || 'VIP ' + lv.level;
+            const minWag = lv.min_wagered || lv.minWagered || 0;
+            const cashback = ((lv.cashback || 0) * 100).toFixed(1) + '%';
+            const priority = lv.withdraw_priority || lv.withdrawPriority ? '✅' : '❌';
+            const boost = ((lv.odds_boost || lv.oddsBoost || 0) * 100).toFixed(1) + '%';
+            html += '<tr><td>' + (lv.level === 0 ? '普通' : 'VIP ' + lv.level) + '</td><td>' + name + '</td><td>' + minWag + ' USDT</td><td>' + cashback + '</td><td>' + priority + '</td><td>' + boost + '</td></tr>';
+        }
+        html += '</tbody></table>';
+
+        html += '<button id="checkUpgradeBtn" style="width:100%;margin-top:10px;padding:8px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer">🔍 检查VIP升级</button>';
+
+        card.innerHTML = html;
+        target.parentElement.insertBefore(card, target.nextSibling);
+        card.style.display = 'block';
+
+        const upgradeBtn = document.getElementById('checkUpgradeBtn');
+        if (upgradeBtn) {
+            upgradeBtn.onclick = function() {
+                fetchJSON(API_BASE + '/vip/check-upgrade', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({wallet_address: wallet})
+                }).then(function(r) {
+                    const canUp = extractValue(r, ['can_upgrade', 'canUpgrade', 'eligible'], false);
+                    const next = extractValue(r, ['next_tier', 'nextTier', 'next_level', 'nextLevel'], null);
+                    const reason = extractValue(r, ['msg', 'reason', 'message'], null);
+                    if (canUp) {
+                        showToast('🎉 恭喜！您可以升级至 ' + (next ? 'VIP ' + next : '下一级'));
+                    } else {
+                        showToast((reason || '暂不符合升级条件') + (next ? '，下一级需VIP ' + next : ''));
+                    }
+                });
+            };
+        }
+    }
+
+    /** Render all bets toggle + cancel button */
+    function renderAllBets(res, wallet) {
+        let existing = document.getElementById('allBetsCard');
+        if (existing) existing.remove();
+        const bets = extractData(res, []);
+        if (!bets || bets.length === 0) return;
+        const target = document.getElementById('worldCupCountdown');
+        if (!target) return;
+
+        const card = document.createElement('div');
+        card.id = 'allBetsCard';
+        card.className = 'data-card';
+        card.style.margin = '0 12px 12px';
+        card.style.display = 'none';
+
+        let html = '<h4>📋 全部投注 <span style="font-size:11px;color:#999;font-weight:normal">(共' + bets.length + '笔)</span></h4>';
+
+        // Collapsible toggle
+        html += '<div style="margin-bottom:8px;text-align:right">';
+        html += '<button id="allBetsToggleBtn" class="filter-btn" style="padding:4px 10px;border:1px solid #667eea;background:white;color:#667eea;border-radius:4px;font-size:11px;cursor:pointer">展开全部</button>';
+        html += '</div>';
+
+        html += '<div id="allBetsList" style="max-height:0;overflow:hidden;transition:max-height 0.3s ease">';
+        const showCount = Math.min(bets.length, 50);
+        html += '<table class="tx-table"><thead><tr><th>时间</th><th>类型</th><th>金额</th><th>状态</th><th>操作</th></tr></thead><tbody>';
+        for (let i = 0; i < showCount; i++) {
+            const b = bets[i];
+            const time = b.created_at || b.time || b.createTime || b.match_time || '--';
+            const type = b.bet_type || b.type || b.game_type || '常规';
+            const amount = b.amount || b.bet_amount || b.stake || 0;
+            const status = b.status || b.state || 'unknown';
+            const canCancel = status === 'pending' || status === 0 || status === 'active';
+            const statusLabel = status === 'won' || status === 1 ? '已赢' :
+                                status === 'lost' || status === 2 ? '已输' :
+                                status === 'cancelled' || status === 3 ? '已取消' :
+                                status === 'pending' || status === 0 ? '进行中' : status;
+            const statusColor = status === 'won' || status === 1 ? '#2e7d32' :
+                                status === 'lost' || status === 2 ? '#c62828' : '#f57f17';
+            const betId = b.id || b.bet_id || b._id || '';
+            html += '<tr><td style="font-size:10px">' + time + '</td><td>' + type + '</td><td>' + amount + '</td><td style="color:' + statusColor + '">' + statusLabel + '</td>';
+            html += '<td>';
+            if (canCancel && betId) {
+                html += '<button class="cancel-bet-btn" data-bet-id="' + betId + '" style="padding:2px 8px;border:1px solid #c62828;background:white;color:#c62828;border-radius:3px;font-size:10px;cursor:pointer">取消</button>';
+            } else {
+                html += '<span style="color:#999;font-size:10px">--</span>';
+            }
+            html += '</td></tr>';
+        }
+        html += '</tbody></table>';
+        if (bets.length > 50) {
+            html += '<div style="text-align:center;color:#999;font-size:11px;padding:4px">仅显示最近50笔</div>';
+        }
+        html += '</div>'; // allBetsList
+        card.innerHTML = html;
+        target.parentElement.insertBefore(card, target.nextSibling);
+        card.style.display = 'block';
+
+        // Toggle collapse
+        const toggleBtn = document.getElementById('allBetsToggleBtn');
+        const listDiv = document.getElementById('allBetsList');
+        if (toggleBtn && listDiv) {
+            let expanded = false;
+            toggleBtn.onclick = function() {
+                expanded = !expanded;
+                listDiv.style.maxHeight = expanded ? listDiv.scrollHeight + 'px' : '0';
+                toggleBtn.textContent = expanded ? '收起' : '展开全部';
+            };
+        }
+
+        // Cancel bets
+        card.querySelectorAll('.cancel-bet-btn').forEach(function(btn) {
+            btn.onclick = function() {
+                const betId = btn.getAttribute('data-bet-id');
+                showConfirm('取消投注', '确定取消此投注吗？\n投注ID: ' + betId, function() {
+                    fetchJSON(API_BASE + '/bets/' + encodeURIComponent(betId) + '/cancel', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({wallet_address: wallet})
+                    }).then(function(r) {
+                        if (r && (r.code === 0 || r.success)) {
+                            showToast('取消成功');
+                            syncAllUserData(wallet);
+                        } else {
+                            showToast((r && r.msg) || '取消失败');
+                        }
+                    });
+                });
+            };
+        });
+    }
+
+    /** Render withdraw form + withdraw history */
+    function renderWithdrawSection(historyRes, wallet) {
+        let existing = document.getElementById('withdrawCard');
+        if (existing) existing.remove();
+        const target = document.getElementById('worldCupCountdown');
+        if (!target) return;
+
+        const card = document.createElement('div');
+        card.id = 'withdrawCard';
+        card.className = 'data-card';
+        card.style.margin = '0 12px 12px';
+        card.style.display = 'none';
+
+        let html = '<h4>💸 提现</h4>';
+
+        // Withdraw form
+        html += '<div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #eee">';
+        html += '<label style="font-size:12px;color:#666;display:block;margin-bottom:4px">提现金额 (USDT)</label>';
+        html += '<input type="number" id="withdrawAmountInput" placeholder="输入金额" min="1" step="0.01" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;margin-bottom:8px">';
+        html += '<label style="font-size:12px;color:#666;display:block;margin-bottom:4px">接收地址</label>';
+        html += '<input type="text" id="withdrawAddressInput" placeholder="输入钱包地址 (0x...)" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;margin-bottom:8px">';
+        html += '<button id="withdrawSubmitBtn" style="width:100%;padding:8px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer">提交提现</button>';
+        html += '</div>';
+
+        // Withdraw history
+        const records = extractData(historyRes, []);
+        if (records && records.length > 0) {
+            html += '<h5 style="font-size:12px;color:#999;margin:8px 0 4px">提现记录</h5>';
+            html += '<table class="tx-table"><thead><tr><th>时间</th><th>金额</th><th>状态</th></tr></thead><tbody>';
+            const showCount = Math.min(records.length, 10);
+            for (let i = 0; i < showCount; i++) {
+                const r = records[i];
+                const time = r.created_at || r.time || r.createTime || '--';
+                const amount = r.amount || 0;
+                const status = r.status || r.state || 'unknown';
+                const statusLabel = status === 'completed' || status === 1 ? '已完成' :
+                                    status === 'pending' || status === 0 ? '处理中' : status;
+                const statusColor = status === 'completed' || status === 1 ? '#2e7d32' : '#f57f17';
+                html += '<tr><td style="font-size:10px">' + time + '</td><td>' + amount + ' USDT</td><td style="color:' + statusColor + '">' + statusLabel + '</td></tr>';
+            }
+            html += '</tbody></table>';
+        }
+
+        card.innerHTML = html;
+        target.parentElement.insertBefore(card, target.nextSibling);
+        card.style.display = 'block';
+
+        // Bind withdraw submit
+        const wdBtn = document.getElementById('withdrawSubmitBtn');
+        if (wdBtn) {
+            wdBtn.onclick = function() {
+                const amount = parseFloat(document.getElementById('withdrawAmountInput').value);
+                const addr = document.getElementById('withdrawAddressInput').value.trim();
+                if (!amount || amount < 1 || isNaN(amount)) { showToast('请输入有效金额'); return; }
+                if (!addr) { showToast('请输入接收地址'); return; }
+                fetchJSON(API_BASE + '/withdraw', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({wallet_address: wallet, amount: amount, withdraw_address: addr})
+                }).then(function(r) {
+                    if (r && (r.code === 0 || r.success)) {
+                        showToast('提现请求已提交');
+                        document.getElementById('withdrawAmountInput').value = '';
+                        document.getElementById('withdrawAddressInput').value = '';
+                    } else {
+                        showToast((r && r.msg) || '提现失败');
+                    }
+                });
+            };
+        }
+    }
+
+    /** Render market data -- kline mini-chart + orderbook as collapsible */
+    function renderMarketData(klineRes, orderbookRes) {
+        let existing = document.getElementById('marketDataCard');
+        if (existing) existing.remove();
+        const target = document.getElementById('worldCupCountdown');
+        if (!target) return;
+        const klineData = klineRes && klineRes.data && klineRes.data.klines;
+        const obData = orderbookRes && orderbookRes.data;
+        if (!klineData && !obData) return;
+
+        const card = document.createElement('div');
+        card.id = 'marketDataCard';
+        card.className = 'data-card';
+        card.style.margin = '0 12px 12px';
+        card.style.display = 'none';
+
+        let html = '<h4>📈 市场行情 <span style="font-size:11px;color:#999;font-weight:normal">19888USDT</span></h4>';
+
+        // Toggle
+        html += '<div style="margin-bottom:8px;text-align:right">';
+        html += '<button id="marketToggleBtn" class="filter-btn" style="padding:4px 10px;border:1px solid #667eea;background:white;color:#667eea;border-radius:4px;font-size:11px;cursor:pointer">展开市场数据</button>';
+        html += '</div>';
+
+        html += '<div id="marketDataContent" style="max-height:0;overflow:hidden;transition:max-height 0.3s ease">';
+
+        // Kline mini-chart (text-based sparkline)
+        if (klineData && klineData.length > 0) {
+            const closes = klineData.map(function(k) { return parseFloat(k[4]); });
+            const highs = klineData.map(function(k) { return parseFloat(k[2]); });
+            const lows = klineData.map(function(k) { return parseFloat(k[3]); });
+            const volumes = klineData.map(function(k) { return parseFloat(k[5]); });
+            const lastClose = closes[closes.length - 1] || 0;
+            const firstClose = closes[0] || 0;
+            const change = lastClose - firstClose;
+            const changePct = firstClose > 0 ? (change / firstClose * 100).toFixed(2) : '0.00';
+            const maxHigh = Math.max.apply(null, highs);
+            const minLow = Math.min.apply(null, lows);
+
+            html += '<div style="margin-bottom:8px">';
+            html += '<div style="display:flex;justify-content:space-between;align-items:center">';
+            html += '<span style="font-size:16px;font-weight:bold;color:' + (change >= 0 ? '#2e7d32' : '#c62828') + '">$' + lastClose.toFixed(4) + '</span>';
+            html += '<span style="font-size:12px;color:' + (change >= 0 ? '#2e7d32' : '#c62828') + '">' + (change >= 0 ? '+' : '') + changePct + '%</span>';
+            html += '</div>';
+            html += '<div style="display:flex;justify-content:space-between;font-size:10px;color:#999;margin-top:2px">';
+            html += '<span>高: $' + maxHigh.toFixed(4) + '</span>';
+            html += '<span>低: $' + minLow.toFixed(4) + '</span>';
+            html += '<span>量: ' + volumes.reduce(function(a,b){ return a+b; }, 0).toFixed(0) + '</span>';
+            html += '</div>';
+
+            // Simple CSS sparkline bars
+            html += '<div style="display:flex;align-items:flex-end;height:40px;gap:1px;margin-top:6px;padding:4px 0">';
+            const minPrice = minLow;
+            const maxPrice = maxHigh;
+            const range = maxPrice > minPrice ? maxPrice - minPrice : 1;
+            for (let i = 0; i < closes.length; i++) {
+                const h = ((closes[i] - minPrice) / range * 36);
+                const color = closes[i] >= (i > 0 ? closes[i-1] : closes[0]) ? '#2e7d32' : '#c62828';
+                html += '<div style="flex:1;height:' + Math.max(h, 2) + 'px;background:' + color + ';border-radius:1px;min-width:3px" title="' + closes[i].toFixed(4) + '"></div>';
+            }
+            html += '</div>';
+            html += '</div>';
+        }
+
+        // Orderbook summary
+        if (obData) {
+            const bids = obData.bids || [];
+            const asks = obData.asks || [];
+            // Aggregate by price level
+            const bidMap = {};
+            bids.forEach(function(b) {
+                const price = parseFloat(b[0]).toFixed(2);
+                bidMap[price] = (bidMap[price] || 0) + parseFloat(b[1]);
+            });
+            const askMap = {};
+            asks.forEach(function(a) {
+                const price = parseFloat(a[0]).toFixed(2);
+                askMap[price] = (askMap[price] || 0) + parseFloat(a[1]);
+            });
+
+            const bidLevels = Object.keys(bidMap).sort(function(a,b){ return parseFloat(b) - parseFloat(a); }).slice(0, 5);
+            const askLevels = Object.keys(askMap).sort(function(a,b){ return parseFloat(a) - parseFloat(b); }).slice(0, 5);
+            const maxBidVol = Math.max.apply(null, bidLevels.map(function(p){ return bidMap[p]; }), 0.001);
+
+            html += '<div style="margin-top:8px">';
+            html += '<div style="font-size:11px;font-weight:bold;color:#333;margin-bottom:4px">📊 深度盘口</div>';
+
+            // Asks (red, top)
+            html += '<div style="font-size:10px;color:#999;margin-bottom:2px">卖盘</div>';
+            for (let i = askLevels.length - 1; i >= 0; i--) {
+                const p = askLevels[i];
+                const vol = askMap[p];
+                const width = Math.min(100, (vol / maxBidVol * 100));
+                html += '<div style="display:flex;justify-content:space-between;font-size:10px;padding:1px 0;position:relative">';
+                html += '<span style="color:#c62828;font-weight:bold;z-index:1">' + p + '</span>';
+                html += '<span style="color:#666;z-index:1">' + vol.toFixed(2) + '</span>';
+                html += '<div style="position:absolute;right:0;top:0;bottom:0;width:' + width + '%;background:rgba(198,40,40,0.1);border-radius:2px"></div>';
+                html += '</div>';
+            }
+
+            // Separator
+            html += '<div style="border-top:2px solid #333;margin:4px 0"></div>';
+
+            // Bids (green, bottom)
+            html += '<div style="font-size:10px;color:#999;margin-bottom:2px">买盘</div>';
+            for (let i = 0; i < bidLevels.length; i++) {
+                const p = bidLevels[i];
+                const vol = bidMap[p];
+                const width = Math.min(100, (vol / maxBidVol * 100));
+                html += '<div style="display:flex;justify-content:space-between;font-size:10px;padding:1px 0;position:relative">';
+                html += '<span style="color:#2e7d32;font-weight:bold;z-index:1">' + p + '</span>';
+                html += '<span style="color:#666;z-index:1">' + vol.toFixed(2) + '</span>';
+                html += '<div style="position:absolute;right:0;top:0;bottom:0;width:' + width + '%;background:rgba(46,125,50,0.1);border-radius:2px"></div>';
+                html += '</div>';
+            }
+
+            html += '</div>'; // orderbook
+        }
+
+        html += '</div>'; // marketDataContent
+        card.innerHTML = html;
+        target.parentElement.insertBefore(card, target.nextSibling);
+        card.style.display = 'block';
+
+        // Toggle
+        const toggleBtn = document.getElementById('marketToggleBtn');
+        const contentDiv = document.getElementById('marketDataContent');
+        if (toggleBtn && contentDiv) {
+            let expanded = false;
+            toggleBtn.onclick = function() {
+                expanded = !expanded;
+                if (expanded) {
+                    contentDiv.style.maxHeight = contentDiv.scrollHeight + 'px';
+                } else {
+                    contentDiv.style.maxHeight = '0';
+                }
+                toggleBtn.textContent = expanded ? '收起市场数据' : '展开市场数据';
+            };
+        }
+    }
+
+    /** Render pool status card */
+    function renderPoolStatus(res) {
+        let existing = document.getElementById('poolStatusCard');
+        if (existing) existing.remove();
+        const target = document.getElementById('worldCupCountdown');
+        if (!target) return;
+        const data = res && (res.data || res);
+        if (!data) return;
+
+        const card = document.createElement('div');
+        card.id = 'poolStatusCard';
+        card.className = 'data-card';
+        card.style.margin = '0 12px 12px';
+        card.style.display = 'none';
+
+        const tvl = extractValue(res, ['tvl', 'total_value_locked', 'totalValueLocked', 'pool_balance', 'poolBalance'], 0);
+        const apy = extractValue(res, ['apy', 'apr', 'yield'], 0);
+        const totalBets = extractValue(res, ['total_bets', 'totalBets', 'total_bet', 'totalBet'], 0);
+        const userCount = extractValue(res, ['user_count', 'userCount', 'users'], 0);
+        const health = extractValue(res, ['health', 'status', 'pool_health', 'poolHealth'], null);
+
+        let html = '<h4>🏊 资金池状态</h4>' +
+            '<div class="data-row"><span class="label">总锁仓 (TVL)</span><span class="value">' + parseFloat(tvl).toFixed(2) + ' USDT</span></div>' +
+            '<div class="data-row"><span class="label">年化收益</span><span class="value fcg">' + (parseFloat(apy) * 100).toFixed(2) + '%</span></div>' +
+            '<div class="data-row"><span class="label">总投注额</span><span class="value">' + parseFloat(totalBets).toFixed(2) + ' USDT</span></div>' +
+            '<div class="data-row"><span class="label">用户数</span><span class="value">' + userCount + '</span></div>';
+        if (health) {
+            html += '<div class="data-row"><span class="label">健康状态</span><span class="value" style="color:' + (health === 'healthy' ? '#2e7d32' : '#c62828') + '">' + health + '</span></div>';
+        }
+
+        card.innerHTML = html;
+        target.parentElement.insertBefore(card, target.nextSibling);
+        card.style.display = 'block';
+    }
+
+    /** Render AI hosting controls: activate / deactivate + history + settings */
+    function renderAIHostingControls(statusRes, historyRes, wallet) {
+        let existing = document.getElementById('aiHostingControlsCard');
+        if (existing) existing.remove();
+        const target = document.getElementById('worldCupCountdown');
+        if (!target) return;
+
+        const statusData = statusRes && (statusRes.data || statusRes);
+        if (!statusData) return;
+
+        const card = document.createElement('div');
+        card.id = 'aiHostingControlsCard';
+        card.className = 'data-card';
+        card.style.margin = '0 12px 12px';
+        card.style.display = 'none';
+
+        const active = extractValue(statusRes, ['active', 'is_active', 'isActive', 'status'], false);
+        const isRunning = active === true || active === 'active' || active === 1 || active === '1';
+
+        let html = '<h4>⚙️ AI托管控制</h4>';
+
+        // Activate / Deactivate buttons
+        html += '<div style="display:flex;gap:8px;margin-bottom:10px">';
+        if (!isRunning) {
+            html += '<button id="aiActivateBtn" style="flex:1;padding:8px;background:linear-gradient(135deg,#2e7d32,#4caf50);color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer">▶ 激活AI托管</button>';
+        } else {
+            html += '<button id="aiDeactivateBtn" style="flex:1;padding:8px;background:linear-gradient(135deg,#c62828,#ef5350);color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer">⏹ 停用AI托管</button>';
+        }
+        html += '</div>';
+
+        // Settings button
+        html += '<button id="aiSettingsBtn" style="width:100%;padding:6px;background:#f5f5f5;color:#333;border:1px solid #ddd;border-radius:6px;font-size:12px;cursor:pointer;margin-bottom:10px">🔧 更新AI设置</button>';
+
+        // History
+        const histData = historyRes && historyRes.data;
+        const histList = histData && histData.list ? histData.list : (Array.isArray(historyRes) ? historyRes : []);
+        if (histList && histList.length > 0) {
+            html += '<div style="border-top:1px solid #eee;padding-top:8px">';
+            html += '<div style="font-size:12px;font-weight:bold;color:#333;margin-bottom:4px">📜 托管记录</div>';
+            html += '<table class="tx-table"><thead><tr><th>时间</th><th>状态</th><th>收益</th></tr></thead><tbody>';
+            const showCount = Math.min(histList.length, 10);
+            for (let i = 0; i < showCount; i++) {
+                const h = histList[i];
+                const time = h.created_at || h.time || h.createTime || '--';
+                const hStatus = h.status || h.state || '--';
+                const hProfit = h.profit || h.earning || h.reward || 0;
+                html += '<tr><td style="font-size:10px">' + time + '</td><td>' + hStatus + '</td><td style="color:' + (parseFloat(hProfit) >= 0 ? '#2e7d32' : '#c62828') + '">' + parseFloat(hProfit).toFixed(2) + ' USDT</td></tr>';
+            }
+            html += '</tbody></table>';
+            html += '</div>';
+        }
+
+        card.innerHTML = html;
+        target.parentElement.insertBefore(card, target.nextSibling);
+        card.style.display = 'block';
+
+        // Activate
+        const actBtn = document.getElementById('aiActivateBtn');
+        if (actBtn) {
+            actBtn.onclick = function() {
+                showConfirm('激活AI托管', '确定激活AI托管吗？\n将自动使用默认设置启动。', function() {
+                    fetchJSON(API_BASE + '/ai-hosting/activate', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({wallet_address: wallet, settings: '{}'})
+                    }).then(function(r) {
+                        if (r && (r.code === 0 || r.success)) {
+                            showToast('AI托管已激活');
+                            syncAllUserData(wallet);
+                        } else {
+                            showToast((r && r.msg) || '激活失败');
+                        }
+                    });
+                });
+            };
+        }
+
+        // Deactivate
+        const deactBtn = document.getElementById('aiDeactivateBtn');
+        if (deactBtn) {
+            deactBtn.onclick = function() {
+                showConfirm('停用AI托管', '确定停用AI托管吗？', function() {
+                    fetchJSON(API_BASE + '/ai-hosting/deactivate', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({wallet_address: wallet})
+                    }).then(function(r) {
+                        if (r && (r.code === 0 || r.success)) {
+                            showToast('AI托管已停用');
+                            syncAllUserData(wallet);
+                        } else {
+                            showToast((r && r.msg) || '停用失败');
+                        }
+                    });
+                });
+            };
+        }
+
+        // Settings
+        const setBtn = document.getElementById('aiSettingsBtn');
+        if (setBtn) {
+            setBtn.onclick = function() {
+                const settingsStr = prompt('输入AI托管设置 (JSON格式):\n例如: {"risk_level":"medium","max_bet":500}', '{"risk_level":"medium","max_bet":500}');
+                if (!settingsStr) return;
+                let settingsObj;
+                try { settingsObj = JSON.parse(settingsStr); } catch(e) { showToast('无效的JSON格式'); return; }
+                fetchJSON(API_BASE + '/ai-hosting/settings', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({wallet_address: wallet, settings: JSON.stringify(settingsObj)})
+                }).then(function(r) {
+                    showToast((r && (r.msg || '设置已更新')) || '设置已更新');
+                });
+            };
+        }
     }
 
     // ======== Auto-refresh ========
@@ -1590,7 +2204,7 @@
                     removeBalanceDisplay();
                     showToast('已断开连接');
                     // Remove user data cards
-                    ['pnlCard','profileCard','betRecordsCard','depositCard','inviteCard','vipCard','aiHostingCard'].forEach(function(id) {
+                    ['pnlCard','profileCard','betRecordsCard','depositCard','inviteCard','vipCard','aiHostingCard','inviteLevelsCard','vipLevelsCard','allBetsCard','withdrawCard','marketDataCard','poolStatusCard','aiHostingControlsCard'].forEach(function(id) {
                         const el = document.getElementById(id);
                         if (el) el.style.display = 'none';
                     });
