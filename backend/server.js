@@ -599,7 +599,7 @@ app.post('/api/wallet/connect', asyncHandler((req, res) => {
 // GET /api/user/balance?address=0x...
 // Returns: {code, data: {available, frozen_bet, frozen_ai, total}}
 app.get('/api/user/balance', asyncHandler((req, res) => {
-  const addr = (req.query.address || '').toLowerCase().trim();
+  const addr = (req.query.wallet || req.query.address || '').toLowerCase().trim();
   if (!isValidWallet(addr)) {
     return res.status(400).json({ code:1, msg:'请提供有效的钱包地址（0x开头42位十六进制）' });
   }
@@ -618,7 +618,7 @@ app.get('/api/user/balance', asyncHandler((req, res) => {
 
 // GET /api/user/profile?address=0x...
 app.get('/api/user/profile', asyncHandler((req, res) => {
-  const addr = (req.query.address || '').toLowerCase().trim();
+  const addr = (req.query.wallet || req.query.address || '').toLowerCase().trim();
   if (!isValidWallet(addr)) {
     return res.status(400).json({ code:1, msg:'请提供有效的钱包地址（0x开头42位十六进制）' });
   }
@@ -697,7 +697,7 @@ app.post('/api/user/profile', asyncHandler((req, res) => {
 
 // GET /api/ai-hosting/status?address=0x...
 app.get('/api/ai-hosting/status', asyncHandler((req, res) => {
-  const addr = (req.query.address || '').toLowerCase().trim();
+  const addr = (req.query.wallet || req.query.address || '').toLowerCase().trim();
   if (!isValidWallet(addr)) {
     return res.status(400).json({ code:1, msg:'请提供有效的钱包地址' });
   }
@@ -857,7 +857,7 @@ app.post('/api/ai-hosting/deactivate', asyncHandler((req, res) => {
 
 // GET /api/ai-hosting/history?address=0x...&page=1&page_size=20
 app.get('/api/ai-hosting/history', asyncHandler((req, res) => {
-  const addr = (req.query.address || '').toLowerCase().trim();
+  const addr = (req.query.wallet || req.query.address || '').toLowerCase().trim();
   if (!isValidWallet(addr)) {
     return res.status(400).json({ code:1, msg:'请提供有效的钱包地址' });
   }
@@ -925,7 +925,7 @@ app.post('/api/ai-hosting/settings', asyncHandler((req, res) => {
 
 // GET /api/bet-records?address=0x...&page=1&page_size=20&status=pending&type=champion&from=...&to=...
 app.get('/api/bet-records', asyncHandler((req, res) => {
-  const addr = (req.query.address || '').toLowerCase().trim();
+  const addr = (req.query.wallet || req.query.address || '').toLowerCase().trim();
   if (!isValidWallet(addr)) {
     return res.status(400).json({ code:1, msg:'请提供有效的钱包地址（0x开头42位十六进制）' });
   }
@@ -1478,7 +1478,7 @@ app.post('/api/score-bet/place', riskCheck, asyncHandler(async (req, res) => {
 // ═══════════════════════════════════════════════════
 
 app.get('/api/bets', asyncHandler((req, res) => {
-  const addr = (req.query.address || '').toLowerCase().trim();
+  const addr = (req.query.wallet || req.query.address || '').toLowerCase().trim();
   if (!isValidWallet(addr)) {
     return res.status(400).json({ code:1, msg:'请提供有效的钱包地址（0x开头42位十六进制）' });
   }
