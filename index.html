@@ -530,7 +530,7 @@
         <div class="logo">
             <a href=""><img src="img/logo-19888.svg" alt="19888"></a>
         </div>
-        <h3 class="tit">19888</h3>
+        <h3 class="tit">19888 <span id="apiStatusDot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#999;vertical-align:middle;margin-left:4px" title="API状态检测中..."></span></h3>
         <div class="wallet-connect" id="walletBtn">
             <i class="wallet-icon"></i>
             <span class="wallet-label" id="walletLabel">连接钱包</span>
@@ -945,12 +945,25 @@
     let cachedTeams = null;
     let cachedChampionOdds = null;
 
+    /** Update API status dot */
+    function updateApiStatusDot(available) {
+        const dot = document.getElementById('apiStatusDot');
+        if (!dot) return;
+        dot.style.background = available ? '#4caf50' : '#e53935';
+        dot.title = available ? 'API连接正常' : 'API离线';
+    }
+
     async function syncPublicData() {
-        const [matchesRes, teamsRes, oddsRes] = await Promise.all([
+        const [matchesRes, teamsRes, oddsRes, statusRes] = await Promise.all([
             fetchJSON(getApiBase() + '/matches'),
             fetchJSON(getApiBase() + '/teams'),
-            fetchJSON(getApiBase() + '/champion-bet/odds')
+            fetchJSON(getApiBase() + '/champion-bet/odds'),
+            fetchJSON(getApiBase() + '/status')
         ]);
+
+        // Update API status indicator
+        const apiOk = statusRes && (statusRes.status === 'ok' || statusRes.code === 0);
+        updateApiStatusDot(apiOk);
 
         const matches = extractData(matchesRes, sampleMatches);
         if (matches) {
@@ -1052,7 +1065,251 @@
                     '</div>' +
                 '</a>';
             container.appendChild(li);
+
+            // Add bet buttons row
+            const btnRow = document.createElement('div');
+            btnRow.style.cssText = 'display:flex;gap:8px;padding:8px 12px;background:#fafafa;border-top:1px solid #eee';
+            const mid = m.id || m.match_id || '';
+            btnRow.innerHTML =
+                '<button class="anti-bet-btn" data-match-id="' + mid + '" data-home="' + homeName + '" data-away="' + awayName + '" style="flex:1;padding:6px;border:1px solid #667eea;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border-radius:4px;font-size:12px;cursor:pointer">反波胆</button>' +
+                '<button class="score-bet-btn" data-match-id="' + mid + '" data-home="' + homeName + '" data-away="' + awayName + '" style="flex:1;padding:6px;border:1px solid #2e7d32;background:linear-gradient(135deg,#2e7d32,#66bb6a);color:#fff;border-radius:4px;font-size:12px;cursor:pointer">猜比分</button>';
+            li.appendChild(btnRow);
+
+            // Bind anti-score bet
+            btnRow.querySelector('.anti-bet-btn').onclick = function(e) {
+                e.preventDefault();
+                const matchId = this.getAttribute('data-match-id');
+                const home = this.getAttribute('data-home');
+                const away = this.getAttribute('data-away');
+                showScoreGridDialog(matchId, home, away, 'anti');
+            };
+
+            // Bind score bet
+            btnRow.querySelector('.score-bet-btn').onclick = function(e) {
+                e.preventDefault();
+                const matchId = this.getAttribute('data-match-id');
+                const home = this.getAttribute('data-home');
+                const away = this.getAttribute('data-away');
+                showScoreGridDialog(matchId, home, away, 'score');
+            };
         });
+    }
+
+    /** Score grid dialog for anti-score (反波胆) and score bet (猜比分) */
+    function showScoreGridDialog(matchId, home, away, mode) {
+        const existing = document.getElementById('scoreGridDialog');
+        if (existing) existing.remove();
+
+        const modeLabel = mode === 'anti' ? '反波胆' : '猜比分';
+        const apiPath = mode === 'anti' ? '/anti-bet/place' : '/score-bet/place';
+
+        // Build 18-cell score grid: 0:0 through 4:4, then 主4+, 客4+
+        const cells = [];
+        for (let i = 0; i <= 4; i++) {
+            for (let j = 0; j <= 4; j++) {
+                cells.push(i + '-' + j);
+            }
+        }
+        cells.push('5+', '客5+');
+
+        const dialog = document.createElement('div');
+        dialog.id = 'scoreGridDialog';
+        dialog.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:10002;display:flex;align-items:center;justify-content:center';
+
+        let gridHtml = '';
+        cells.forEach(function(c) {
+            gridHtml += '<div class="score-cell" data-score="' + c + '" style="padding:8px;border:1px solid #ddd;border-radius:4px;text-align:center;font-size:12px;cursor:pointer;background:#fff;transition:all 0.2s">' + c + '</div>';
+        });
+
+        dialog.innerHTML =
+            '<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5)" onclick="document.getElementById(\'scoreGridDialog\').remove()"></div>' +
+            '<div style="position:relative;background:#fff;border-radius:12px;width:320px;max-height:90vh;overflow-y:auto;padding:20px;z-index:1">' +
+                '<div style="font-size:16px;font-weight:bold;margin-bottom:4px;color:#333">' + modeLabel + ' - ' + home + ' vs ' + away + '</div>' +
+                '<div style="font-size:11px;color:#999;margin-bottom:12px">选择比分格，若该比分出现则获胜</div>' +
+                '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-bottom:16px">' + gridHtml + '</div>' +
+                '<div id="selectedScoreDisplay" style="font-size:13px;color:#667eea;font-weight:bold;margin-bottom:8px;text-align:center">请选择一个比分格</div>' +
+                '<div style="margin-bottom:12px">' +
+                    '<label style="font-size:12px;color:#666;display:block;margin-bottom:4px">投注金额 (USDT)</label>' +
+                    '<input type="number" id="scoreBetAmountInput" placeholder="输入金额" min="1" step="0.01" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:13px">' +
+                '</div>' +
+                '<div style="display:flex;gap:8px">' +
+                    '<button id="scoreGridCancelBtn" style="flex:1;padding:10px;border:1px solid #ddd;background:#fff;border-radius:6px;font-size:13px;cursor:pointer">取消</button>' +
+                    '<button id="scoreGridConfirmBtn" style="flex:1;padding:10px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer">确认' + modeLabel + '</button>' +
+                '</div>' +
+            '</div>';
+
+        document.body.appendChild(dialog);
+
+        let selectedScore = null;
+
+        // Cell selection
+        dialog.querySelectorAll('.score-cell').forEach(function(cell) {
+            cell.onclick = function() {
+                dialog.querySelectorAll('.score-cell').forEach(function(c) { c.style.background = '#fff'; c.style.borderColor = '#ddd'; });
+                this.style.background = '#667eea';
+                this.style.color = '#fff';
+                this.style.borderColor = '#667eea';
+                selectedScore = this.getAttribute('data-score');
+                document.getElementById('selectedScoreDisplay').textContent = '已选: ' + selectedScore;
+            };
+        });
+
+        // Cancel
+        document.getElementById('scoreGridCancelBtn').onclick = function() { dialog.remove(); };
+
+        // Confirm
+        document.getElementById('scoreGridConfirmBtn').onclick = function() {
+            if (!selectedScore) { showToast('请先选择一个比分格'); return; }
+            const amount = parseFloat(document.getElementById('scoreBetAmountInput').value);
+            if (!amount || amount < 1 || isNaN(amount)) { showToast('请输入有效金额（最少1 USDT）'); return; }
+            if (!walletAddress) { showToast('请先连接钱包'); return; }
+
+            fetchJSON(getApiBase() + apiPath, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    match_id: matchId,
+                    cell_score: selectedScore,
+                    amount: amount,
+                    wallet_address: walletAddress
+                })
+            }).then(function(res) {
+                if (res && (res.code === 0 || res.success)) {
+                    showToast(modeLabel + '投注成功！');
+                    dialog.remove();
+                    if (walletAddress) syncAllUserData(walletAddress);
+                } else {
+                    showToast((res && res.msg) || '投注失败');
+                }
+            });
+        };
+    }
+
+    /** Team stats popup — fetch and display team betting statistics */
+    function showTeamStatsPopup(teamId, teamName) {
+        const existing = document.getElementById('teamStatsPopup');
+        if (existing) existing.remove();
+
+        const popup = document.createElement('div');
+        popup.id = 'teamStatsPopup';
+        popup.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:10003;display:flex;align-items:center;justify-content:center';
+
+        popup.innerHTML =
+            '<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5)" onclick="document.getElementById(\'teamStatsPopup\').remove()"></div>' +
+            '<div style="position:relative;background:#fff;border-radius:12px;width:300px;padding:20px;z-index:1">' +
+                '<div style="font-size:16px;font-weight:bold;margin-bottom:12px;color:#333">📊 ' + teamName + ' - 投注统计</div>' +
+                '<div id="teamStatsContent" style="text-align:center;color:#999;font-size:13px">加载中...</div>' +
+            '</div>';
+
+        document.body.appendChild(popup);
+
+        fetchJSON(getApiBase() + '/teams/' + encodeURIComponent(teamId) + '/stats').then(function(res) {
+            const content = document.getElementById('teamStatsContent');
+            if (!content) return;
+            const data = res && (res.data || res);
+            if (!data) {
+                content.innerHTML = '<span style="color:#c62828">暂无统计数据</span>';
+                return;
+            }
+            const stats = data.betting_stats || data.stats || data;
+            const totalBets = stats.total_bets || stats.totalBets || stats.total || 0;
+            const totalVolume = stats.total_volume || stats.totalVolume || stats.volume || 0;
+            const wonCount = stats.won_count || stats.wonCount || stats.won || 0;
+            const lostCount = stats.lost_count || stats.lostCount || stats.lost || 0;
+            const pendingCount = stats.pending_count || stats.pendingCount || stats.pending || 0;
+            const winRate = totalBets > 0 ? (wonCount / totalBets * 100).toFixed(1) : '0.0';
+
+            content.innerHTML =
+                '<div style="margin-bottom:8px"><span style="color:#666">总投注: </span><strong>' + totalBets + ' 笔</strong></div>' +
+                '<div style="margin-bottom:8px"><span style="color:#666">总金额: </span><strong>' + parseFloat(totalVolume).toFixed(2) + ' USDT</strong></div>' +
+                '<div style="margin-bottom:8px"><span style="color:#666">获胜: </span><strong style="color:#2e7d32">' + wonCount + '</strong> 次</div>' +
+                '<div style="margin-bottom:8px"><span style="color:#666">失败: </span><strong style="color:#c62828">' + lostCount + '</strong> 次</div>' +
+                '<div style="margin-bottom:8px"><span style="color:#666">进行中: </span><strong style="color:#f57f17">' + pendingCount + '</strong> 笔</div>' +
+                '<div style="border-top:1px solid #eee;padding-top:8px;margin-top:8px;font-size:15px"><span style="color:#666">胜率: </span><strong style="color:' + (parseFloat(winRate) >= 50 ? '#2e7d32' : '#c62828') + '">' + winRate + '%</strong></div>';
+        });
+    }
+
+    /** Bet confirm dialog — confirm a bet with on-chain tx hash */
+    function showBetConfirmDialog() {
+        const existing = document.getElementById('betConfirmDialog');
+        if (existing) existing.remove();
+
+        const dialog = document.createElement('div');
+        dialog.id = 'betConfirmDialog';
+        dialog.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:10004;display:flex;align-items:center;justify-content:center';
+
+        dialog.innerHTML =
+            '<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5)" onclick="document.getElementById(\'betConfirmDialog\').remove()"></div>' +
+            '<div style="position:relative;background:#fff;border-radius:12px;width:320px;padding:20px;z-index:1">' +
+                '<div style="font-size:16px;font-weight:bold;margin-bottom:12px;color:#333">✅ 确认链上投注</div>' +
+                '<div style="font-size:12px;color:#999;margin-bottom:12px;line-height:1.5">通过MetaMask或其他钱包完成链上交易后，在此提交交易哈希完成确认。</div>' +
+                '<div style="margin-bottom:10px">' +
+                    '<label style="font-size:12px;color:#666;display:block;margin-bottom:4px">投注ID</label>' +
+                    '<input type="number" id="betConfirmIdInput" placeholder="输入投注ID" min="1" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:13px">' +
+                '</div>' +
+                '<div style="margin-bottom:10px">' +
+                    '<label style="font-size:12px;color:#666;display:block;margin-bottom:4px">金额 (USDT)</label>' +
+                    '<input type="number" id="betConfirmAmountInput" placeholder="输入投注金额" min="1" step="0.01" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:13px">' +
+                '</div>' +
+                '<div style="margin-bottom:10px">' +
+                    '<label style="font-size:12px;color:#666;display:block;margin-bottom:4px">交易哈希 (Tx Hash)</label>' +
+                    '<input type="text" id="betConfirmTxInput" placeholder="0x..." style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:13px">' +
+                '</div>' +
+                '<div style="margin-bottom:12px">' +
+                    '<label style="font-size:12px;color:#666;display:block;margin-bottom:4px">游戏类型</label>' +
+                    '<select id="betConfirmGameType" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:13px">' +
+                        '<option value="champion">冠军预测</option>' +
+                        '<option value="anti-score">反波胆</option>' +
+                        '<option value="score">猜比分</option>' +
+                    '</select>' +
+                '</div>' +
+                '<div style="margin-bottom:12px">' +
+                    '<label style="font-size:12px;color:#666;display:block;margin-bottom:4px">比赛ID (可选)</label>' +
+                    '<input type="number" id="betConfirmMatchId" placeholder="比赛ID" min="1" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:13px">' +
+                '</div>' +
+                '<div style="display:flex;gap:8px">' +
+                    '<button id="betConfirmCancelBtn" style="flex:1;padding:10px;border:1px solid #ddd;background:#fff;border-radius:6px;font-size:13px;cursor:pointer">取消</button>' +
+                    '<button id="betConfirmSubmitBtn" style="flex:1;padding:10px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer">确认投注</button>' +
+                '</div>' +
+            '</div>';
+
+        document.body.appendChild(dialog);
+
+        document.getElementById('betConfirmCancelBtn').onclick = function() { dialog.remove(); };
+
+        document.getElementById('betConfirmSubmitBtn').onclick = function() {
+            const betId = parseInt(document.getElementById('betConfirmIdInput').value);
+            const amount = parseFloat(document.getElementById('betConfirmAmountInput').value);
+            const txHash = document.getElementById('betConfirmTxInput').value.trim();
+            const gameType = document.getElementById('betConfirmGameType').value;
+            const matchId = parseInt(document.getElementById('betConfirmMatchId').value) || null;
+
+            if (!betId || isNaN(betId)) { showToast('请输入有效的投注ID'); return; }
+            if (!amount || amount < 1 || isNaN(amount)) { showToast('请输入有效的金额'); return; }
+            if (!txHash) { showToast('请输入交易哈希'); return; }
+            if (!walletAddress) { showToast('请先连接钱包'); return; }
+
+            fetchJSON(getApiBase() + '/bet/confirm', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    bet_id: betId,
+                    wallet_address: walletAddress,
+                    tx_hash: txHash,
+                    amount: amount,
+                    game_type: gameType,
+                    match_id: matchId
+                })
+            }).then(function(res) {
+                if (res && (res.code === 0 || res.success)) {
+                    showToast('链上投注确认成功！');
+                    dialog.remove();
+                    if (walletAddress) syncAllUserData(walletAddress);
+                } else {
+                    showToast((res && res.msg) || '确认失败');
+                }
+            });
+        };
     }
 
     // ===== AI Predictions =====
@@ -1215,12 +1472,22 @@
                 '<div class="bet-buttons">' +
                     '<button class="bet-btn bet-champion" data-bet-type="1">投冠军</button>' +
                     '<button class="bet-btn bet-runner-up" data-bet-type="2">投亚军</button>' +
+                    '<button class="bet-btn bet-stats" style="margin-top:4px;background:linear-gradient(135deg,#ff9800,#ff5722);font-size:11px;padding:4px">📊 统计</button>' +
                 '</div>';
             grid.appendChild(card);
 
             // Bind bet buttons
             const btns = card.querySelectorAll('.bet-btn');
             btns.forEach(function(btn){
+                if (btn.classList.contains('bet-stats')) {
+                    btn.onclick = function(e) {
+                        e.preventDefault();
+                        const teamId = card.getAttribute('data-team-id');
+                        const teamName = card.querySelector('.team-name').textContent;
+                        showTeamStatsPopup(teamId, teamName);
+                    };
+                    return;
+                }
                 btn.onclick = function(e) {
                     e.preventDefault();
                     selectedTeamData = {
@@ -1665,13 +1932,13 @@
         card.style.display = 'block';
     }
 
-    /** Render deposit history */
+    /** Render deposit history + deposit form */
     function renderDepositHistory(res) {
         let existing = document.getElementById('depositCard');
         if (existing) existing.remove();
 
         const records = extractData(res, []);
-        if (!records || records.length === 0) return;
+        if (!records) return;
 
         const target = document.getElementById('worldCupCountdown');
         if (!target) return;
@@ -1681,23 +1948,63 @@
         card.className = 'data-card';
         card.style.margin = '0 12px 12px';
         card.style.display = 'none';
-        let html = '<h4>💰 充值记录</h4>';
-        const showCount = Math.min(records.length, 5);
-        html += '<table class="tx-table"><thead><tr><th>时间</th><th>金额</th><th>状态</th></tr></thead><tbody>';
-        for (let i = 0; i < showCount; i++) {
-            const r = records[i];
-            const time = r.created_at || r.time || r.createTime || '--';
-            const amount = r.amount || 0;
-            const status = r.status || r.state || 'unknown';
-            const statusLabel = status === 'completed' || status === 1 ? '已完成' :
-                                status === 'pending' || status === 0 ? '处理中' : status;
-            const statusColor = status === 'completed' || status === 1 ? '#2e7d32' : '#f57f17';
-            html += '<tr><td style="font-size:10px">' + time + '</td><td>' + amount + ' USDT</td><td style="color:' + statusColor + '">' + statusLabel + '</td></tr>';
+        let html = '<h4>💰 充值</h4>';
+
+        // Deposit form
+        html += '<div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #eee">';
+        html += '<label style="font-size:12px;color:#666;display:block;margin-bottom:4px">金额 (USDT)</label>';
+        html += '<input type="number" id="depositAmountInput" placeholder="输入充值金额" min="0.01" step="0.01" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;margin-bottom:8px">';
+        html += '<label style="font-size:12px;color:#666;display:block;margin-bottom:4px">交易哈希 (Tx Hash)</label>';
+        html += '<input type="text" id="depositTxHashInput" placeholder="输入链上交易哈希" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;margin-bottom:8px">';
+        html += '<button id="depositSubmitBtn" style="width:100%;padding:8px;background:linear-gradient(135deg,#2e7d32,#4caf50);color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer">提交充值</button>';
+        html += '</div>';
+
+        // Deposit history
+        if (records && records.length > 0) {
+            html += '<h5 style="font-size:12px;color:#999;margin:8px 0 4px">充值记录</h5>';
+            html += '<table class="tx-table"><thead><tr><th>时间</th><th>金额</th><th>状态</th></tr></thead><tbody>';
+            const showCount = Math.min(records.length, 5);
+            for (let i = 0; i < showCount; i++) {
+                const r = records[i];
+                const time = r.created_at || r.time || r.createTime || '--';
+                const amount = r.amount || 0;
+                const status = r.status || r.state || 'unknown';
+                const statusLabel = status === 'completed' || status === 1 ? '已完成' :
+                                    status === 'pending' || status === 0 ? '处理中' : status;
+                const statusColor = status === 'completed' || status === 1 ? '#2e7d32' : '#f57f17';
+                html += '<tr><td style="font-size:10px">' + time + '</td><td>' + amount + ' USDT</td><td style="color:' + statusColor + '">' + statusLabel + '</td></tr>';
+            }
+            html += '</tbody></table>';
         }
-        html += '</tbody></table>';
         card.innerHTML = html;
         target.parentElement.insertBefore(card, target.nextSibling);
         card.style.display = 'block';
+
+        // Bind deposit submit
+        const depBtn = document.getElementById('depositSubmitBtn');
+        if (depBtn) {
+            depBtn.onclick = function() {
+                const amount = parseFloat(document.getElementById('depositAmountInput').value);
+                const txHash = document.getElementById('depositTxHashInput').value.trim();
+                if (!amount || amount < 0.01 || isNaN(amount)) { showToast('请输入有效金额（最少0.01 USDT）'); return; }
+                if (!txHash) { showToast('请输入交易哈希'); return; }
+                if (!walletAddress) { showToast('请先连接钱包'); return; }
+                fetchJSON(getApiBase() + '/deposit', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({wallet_address: walletAddress, amount: amount, tx_hash: txHash})
+                }).then(function(r) {
+                    if (r && (r.code === 0 || r.success)) {
+                        showToast('充值成功！');
+                        document.getElementById('depositAmountInput').value = '';
+                        document.getElementById('depositTxHashInput').value = '';
+                        syncAllUserData(walletAddress);
+                    } else {
+                        showToast((r && r.msg) || '充值失败');
+                    }
+                });
+            };
+        }
     }
 
     /** Render invite stats */
@@ -1940,7 +2247,8 @@
         card.style.margin = '0 12px 12px';
         card.style.display = 'none';
 
-        let html = '<h4>📋 全部投注 <span style="font-size:11px;color:#999;font-weight:normal">(共' + bets.length + '笔)</span></h4>';
+        let html = '<h4>📋 全部投注 <span style="font-size:11px;color:#999;font-weight:normal">(共' + bets.length + '笔)</span>' +
+            '<span style="float:right;font-size:11px;font-weight:normal"><button id="betConfirmBtn" style="padding:2px 8px;border:1px solid #667eea;background:white;color:#667eea;border-radius:3px;font-size:10px;cursor:pointer">🔗 链上确认</button></span></h4>';
 
         // Collapsible toggle
         html += '<div style="margin-bottom:8px;text-align:right">';
@@ -2014,6 +2322,14 @@
                 });
             };
         });
+
+        // Bet confirm button
+        const confirmBtn = document.getElementById('betConfirmBtn');
+        if (confirmBtn) {
+            confirmBtn.onclick = function() {
+                showBetConfirmDialog();
+            };
+        }
     }
 
     /** Render withdraw form + withdraw history */
