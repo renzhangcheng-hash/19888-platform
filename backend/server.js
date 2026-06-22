@@ -2696,8 +2696,8 @@ app.get('/api/finance/daily-report', adminAuth, asyncHandler((req, res) => {
   });
 }));
 
-// GET /api/finance/pool-status — requires admin auth
-app.get('/api/finance/pool-status', adminAuth, asyncHandler((req, res) => {
+// GET /api/finance/pool-status
+app.get('/api/finance/pool-status', asyncHandler((req, res) => {
   const users = read('users');
   const totalBalance = users.reduce((s, u) => s + (u.balance || 0), 0);
   const totalFrozen = users.reduce((s, u) => s + (u.frozen_bet || 0) + (u.frozen_ai || 0), 0);
