@@ -1122,10 +1122,7 @@ app.get('/api/teams/:id/stats', asyncHandler((req, res) => {
 // ═══════════════════════════════════════════════════
 
 app.get('/api/matches', asyncHandler((req, res) => {
-  const today = new Date().toISOString().split('T')[0]; // e.g. "2026-06-15"
-  const from = req.query.from || today;
   const matches = read('matches')
-    .filter(m => m.match_time >= from)
     .map(m => ({
     ...m,
     home_logo: teamLogoUrl(m.home),
@@ -1793,6 +1790,23 @@ app.post('/api/admin/create-match', adminAuth, asyncHandler((req, res) => {
   matches.push(newMatch);
   write('matches', matches);
   res.json({ code: 0, msg: '比赛已创建', data: newMatch });
+}));
+
+// ── Admin: Reset matches from seed ────────────────
+app.post('/api/admin/matches/reset', adminAuth, asyncHandler((req, res) => {
+  const seedDir = path.join(__dirname, 'seed');
+  const seedMatches = path.join(seedDir, 'matches.json');
+  const seedTeams = path.join(seedDir, 'champion_teams.json');
+
+  if (fs.existsSync(seedMatches)) {
+    fs.copyFileSync(seedMatches, path.join(DATA_DIR, 'matches.json'));
+  }
+  if (fs.existsSync(seedTeams)) {
+    fs.copyFileSync(seedTeams, path.join(DATA_DIR, 'champion_teams.json'));
+  }
+
+  const count = read('matches').length;
+  res.json({ code: 0, msg: '已重置赛事数据', data: { matches: count } });
 }));
 
 // ── Admin: Settle Match ───────────────────────────
