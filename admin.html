@@ -191,6 +191,12 @@ td{padding:9px 10px;font-size:12px;border-top:1px solid var(--border);color:var(
       </div>
       <div id="settleResult" style="margin-top:10px;font-size:12px"></div>
     </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:16px;margin-bottom:12px">
+      <h3 style="font-size:13px;margin-bottom:10px;color:var(--orange)">⚠️ 重置赛事数据</h3>
+      <p style="font-size:11px;color:var(--text2);margin-bottom:10px">从seed文件重新加载所有104场赛事</p>
+      <button class="btn btn-warn" onclick="resetMatches()">🔄 重置全部赛事</button>
+      <div id="resetResult" style="margin-top:8px;font-size:12px"></div>
+    </div>
   </div>
 
   <div id="tab-aipool" style="display:none">
@@ -559,7 +565,19 @@ async function doSettleMatch() {
 }
 
 // ===== AI POOL =====
+async function resetMatches() {
+  if (!confirm("确认重置所有104场赛事数据？此操作不可撤销。")) return;
+  document.getElementById("resetResult").innerHTML = "⏳ 重置中...";
+  try {
+    const r = await apiFetch("/matches/reset", {method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});
+    if (r.code===0) { document.getElementById("resetResult").innerHTML += "✅ " + r.msg + " (" + r.data.matches + "场)"; loadMatches(); }
+    else document.getElementById("resetResult").innerHTML = "❌ 重置失败: " + (r.msg||"未知错误");
+  } catch(e) { document.getElementById("resetResult").innerHTML = "❌ 网络错误: " + e.message; }
+}
+
 async function loadAIPool() {
+  document.getElementById("resetResult").innerHTML = "";
+
   try {
     const r = await apiFetch(API+'/ai-pool');
     const d = r.data||{};
