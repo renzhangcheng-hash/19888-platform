@@ -719,11 +719,11 @@
     function showApiOfflineBanner() {
         if (_apiOfflineBannerShown) return;
         _apiOfflineBannerShown = true;
-        var banner = document.createElement('div');
+        let banner = document.createElement('div');
         banner.id = 'api-offline-banner';
         banner.style.cssText = 'background:#FFF3CD;color:#856404;text-align:center;padding:8px 12px;font-size:12px;font-weight:600;border-bottom:1px solid #FFC107;position:sticky;top:45px;z-index:99;display:flex;align-items:center;justify-content:space-between;gap:8px';
         banner.innerHTML = '<span>⚠️ API离线 — 展示示例数据，不可下注</span><button onclick="window._retry19888API&&window._retry19888API()" style="background:#E53935;color:#fff;border:none;padding:4px 12px;border-radius:4px;font-size:11px;cursor:pointer;font-weight:700">🔄 重试连接</button>';
-        var header = document.querySelector('.header');
+        let header = document.querySelector('.header');
         if (header && header.nextSibling) {
             header.parentNode.insertBefore(banner, header.nextSibling);
         } else if (header) {
@@ -734,14 +734,14 @@
     // Global retry function (callable from banner button)
     window._retry19888API = function() {
         _apiOfflineBannerShown = false;
-        var banner = document.getElementById('api-offline-banner');
+        let banner = document.getElementById('api-offline-banner');
         if (banner) banner.style.display = 'none';
         syncPublicData();
         if (typeof walletAddress !== 'undefined' && walletAddress) syncAllUserData(walletAddress);
     };
 
     // In-memory cache fallback when localStorage unavailable (FP-V19888-4 fix)
-    var _memCache = {};
+    let _memCache = {};
     function cacheSet(key, val) {
         try { localStorage.setItem(key, val); }
         catch(e) { console.warn('[19888] localStorage不可用,使用内存缓存:', e.message); _memCache[key] = val; }
@@ -797,7 +797,7 @@
             _apiAvailable = true;
             // Hide banner on recovery
             if (_apiOfflineBannerShown) {
-                var banner = document.getElementById('api-offline-banner');
+                let banner = document.getElementById('api-offline-banner');
                 if (banner) banner.style.display = 'none';
                 _apiOfflineBannerShown = false;
             }
@@ -1317,7 +1317,7 @@
         const container = document.getElementById('aiPredictionsList');
         if (!container) return;
         try {
-            const matchesRes = await fetchJSON(API_BASE + '/matches');
+            const matchesRes = await fetchJSON(getApiBase() + '/matches');
             const matches = extractData(matchesRes) || [];
             document.getElementById('aiMatchCount').textContent = matches.length;
             if (matches.length === 0) {
@@ -1360,7 +1360,7 @@
         if (!container) return;
         container.innerHTML = '<p style="color:#999;text-align:center;padding:20px">加载中...</p>';
         try {
-            const res = await fetchJSON(API_BASE + '/matches');
+            const res = await fetchJSON(getApiBase() + '/matches');
             let matches = extractData(res) || [];
             // Filter
             const filter = document.getElementById('matchesFilter');
