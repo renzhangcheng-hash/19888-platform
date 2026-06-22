@@ -861,29 +861,32 @@
             banner.appendChild(dotsDiv);
         }
 
-        // Tab carousel
-        const tabContainer = document.querySelector('.slick_tab');
-        const pages = tabContainer ? tabContainer.querySelectorAll('.tab_con') : [];
-        const tabBtns = document.querySelectorAll('.slick_tab_btn li');
-        let currentTab = 0;
+        showTab(0);
+    }
 
-        function showTab(index) {
-            pages.forEach(function(p,i){ p.style.display = i === index ? 'block' : 'none'; });
-            // Only highlight tab buttons for indices 0-2
-            tabBtns.forEach(function(btn,i){ btn.classList.toggle('on', i === index); });
-            // Highlight bottom nav for indices 3-4
-            const bottomNavs = $$('.tab-nav');
-            if (index === 3) { bottomNavs.forEach(function(n){ n.parentElement.classList.toggle('on', n.getAttribute('data-tab') === 'ai'); }); }
-            if (index === 4) { bottomNavs.forEach(function(n){ n.parentElement.classList.toggle('on', n.getAttribute('data-tab') === 'matches'); }); }
-            currentTab = index;
+    // Tab carousel (moved outside initSlick for bottom nav access)
+    const tabContainer = document.querySelector('.slick_tab');
+    const pages = tabContainer ? tabContainer.querySelectorAll('.tab_con') : [];
+    const tabBtns = document.querySelectorAll('.slick_tab_btn li');
+    let currentTab = 0;
 
-            // Load champion data when tab 1 selected
-            if (index === 1 && document.getElementById('teamsGrid').children.length === 0) {
-                loadChampionBetData();
-            }
+    function showTab(index) {
+        pages.forEach(function(p,i){ p.style.display = i === index ? 'block' : 'none'; });
+        // Only highlight tab buttons for indices 0-2
+        tabBtns.forEach(function(btn,i){ btn.classList.toggle('on', i === index); });
+        // Highlight bottom nav for indices 3-4
+        const bottomNavs = $$('.tab-nav');
+        if (index === 3) { bottomNavs.forEach(function(n){ n.parentElement.classList.toggle('on', n.getAttribute('data-tab') === 'ai'); }); }
+        if (index === 4) { bottomNavs.forEach(function(n){ n.parentElement.classList.toggle('on', n.getAttribute('data-tab') === 'matches'); }); }
+        currentTab = index;
+
+        // Load champion data when tab 1 selected
+        if (index === 1 && document.getElementById('teamsGrid').children.length === 0) {
+            loadChampionBetData();
         }
+    }
 
-        tabBtns.forEach(function(btn, i) {
+    tabBtns.forEach(function(btn, i) {
             btn.onclick = function(e) {
                 e.preventDefault();
                 showTab(i);
@@ -894,9 +897,6 @@
                 }
             };
         });
-
-        showTab(0);
-    }
 
     // ======== World Cup Countdown ========
     function updateWorldCupCountdown() {
