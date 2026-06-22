@@ -2221,9 +2221,6 @@ app.post('/api/deposit', asyncHandler(async (req, res) => {
   if (!wallet_address || !isValidWallet(wallet_address)) {
     return res.status(400).json({ code: 1, msg: '无效的钱包地址' });
   }
-  if (!tx_hash || typeof tx_hash !== 'string' || tx_hash.trim().length === 0) {
-    return res.status(400).json({ code: 1, msg: '请提供交易哈希' });
-  }
   if (!isValidAmount(amount)) {
     return res.status(400).json({ code: 1, msg: '充值金额必须是正数（不超过10000）' });
   }
@@ -2232,8 +2229,20 @@ app.post('/api/deposit', asyncHandler(async (req, res) => {
   }
 
   const addr = wallet_address.toLowerCase().trim();
-  const txHash = tx_hash.trim();
   const amt = Number(amount);
+
+  // Simplified mode: no tx_hash required — direct deposit
+  if (!tx_hash || typeof tx_hash !== 'string' || tx_hash.trim().length === 0) {
+    console.log('[Deposit] Direct deposit:', addr, amt);
+    const user = getOrCreateUser(addr);
+    user.balance = Math.max(0, +(user.balance || 0) + amt);
+    user.total_deposited = Math.max(0, +(user.total_deposited || 0) + amt);
+    write('users', read('users').map(function(u){ return u.address === addr ? user : u; }));
+    return res.json({ code: 0, msg: '充值成功', data: { available: user.balance, balance: user.balance } });
+  }
+
+  // On-chain verification mode (original)
+  const txHash = tx_hash.trim();
 
   // Check for duplicate tx
   const deposits = read('deposits');

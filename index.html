@@ -1983,26 +1983,23 @@
         // Bind deposit submit
         const depBtn = document.getElementById('depositSubmitBtn');
         if (depBtn) {
-            depBtn.onclick = function() {
+            depBtn.onclick = async function() {
                 const amount = parseFloat(document.getElementById('depositAmountInput').value);
-                const txHash = document.getElementById('depositTxHashInput').value.trim();
-                if (!amount || amount < 0.01 || isNaN(amount)) { showToast('请输入有效金额（最少0.01 USDT）'); return; }
-                if (!txHash) { showToast('请输入交易哈希'); return; }
-                if (!walletAddress) { showToast('请先连接钱包'); return; }
-                fetchJSON(getApiBase() + '/deposit', {
+                if (!amount || amount <= 0) { showToast('请输入有效金额'); return; }
+
+                const res = await fetchJSON(getApiBase() + '/deposit', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({wallet_address: walletAddress, amount: amount, tx_hash: txHash})
-                }).then(function(r) {
-                    if (r && (r.code === 0 || r.success)) {
-                        showToast('充值成功！');
-                        document.getElementById('depositAmountInput').value = '';
-                        document.getElementById('depositTxHashInput').value = '';
-                        syncAllUserData(walletAddress);
-                    } else {
-                        showToast((r && r.msg) || '充值失败');
-                    }
+                    body: JSON.stringify({wallet_address: walletAddress, amount: amount})
                 });
+                if (res && res.code === 0) {
+                    showToast('✅ 充值成功！余额: ' + (res.data?.available || res.data?.balance || amount) + ' USDT');
+                    document.getElementById('depositAmountInput').value = '';
+                    syncAllUserData(walletAddress);
+                } else {
+                    showToast((res && res.msg) || '充值失败');
+                }
+
             };
         }
     }
