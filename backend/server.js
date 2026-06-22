@@ -1184,12 +1184,16 @@ app.get('/api/teams/:id/stats', asyncHandler((req, res) => {
 // ═══════════════════════════════════════════════════
 
 app.get('/api/matches', asyncHandler((req, res) => {
-  const matches = read('matches')
-    .map(m => ({
+  const filter = req.query.filter || 'upcoming';
+  let matches = read('matches');
+  if (filter === 'upcoming') {
+    matches = matches.filter(function(m) { return m.status !== 'finished'; });
+  }
+  matches = matches.map(function(m) { return {
     ...m,
     home_logo: teamLogoUrl(m.home),
     away_logo: teamLogoUrl(m.away),
-  }));
+  };});
   res.json({ code:0, data: matches });
 }));
 
