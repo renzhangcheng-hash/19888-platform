@@ -541,6 +541,68 @@ function fmt(date, addDays, hour, min) {
 }
 
 // ═══════════════════════════════════════════════════
+//  DAILY MATCH UPDATE ENGINE
+// ═══════════════════════════════════════════════════
+
+function dailyUpdate() {
+  const now = new Date();
+  const matches = read('matches');
+  let updated = 0, settled = 0;
+
+  matches.forEach(function(m) {
+    // Skip already finished or already settled
+    if (m.status === 'finished') return;
+
+    const matchTime = new Date(m.match_time.replace(' ', 'T'));
+    // Match is past its start time + 2h (match duration buffer)
+    if (now - matchTime < 2 * 60 * 60 * 1000) return;
+
+    // Generate score
+    const homeScore = Math.floor(Math.random() * 5);
+    const awayScore = Math.floor(Math.random() * 5);
+    m.home_score = homeScore;
+    m.away_score = awayScore;
+    m.status = 'finished';
+    m.finished_at = now.toISOString();
+    updated++;
+
+    // Settle bets for this match
+    const bets = read('bets');
+    let changed = false;
+    bets.forEach(function(b) {
+      if (b.match_id === m.id && b.status === 'pending') {
+        // Score bet: exact match
+        if (b.game_type === 'score' && b.cell_score === homeScore + '-' + awayScore) {
+          b.status = 'won'; b.payout = b.amount * (b.odds || 2.0); changed = true; settled++;
+        }
+        // Anti-score bet: no exact match
+        else if (b.game_type === 'anti' && b.cell_score !== homeScore + '-' + awayScore) {
+          b.status = 'won'; b.payout = b.amount * (b.odds || 1.8); changed = true; settled++;
+        }
+        // Normal bet (1X2): check result
+        else if (b.game_type === 'normal') {
+          const result = homeScore > awayScore ? 'home' : (homeScore < awayScore ? 'away' : 'draw');
+          if (b.pick === result) {
+            b.status = 'won'; b.payout = b.amount * (b.odds || 2.0); changed = true; settled++;
+          }
+        }
+        if (b.status === 'pending') { b.status = 'lost'; settled++; }
+      }
+    });
+    if (changed) write('bets', bets);
+  });
+
+  if (updated > 0) {
+    write('matches', matches);
+    console.log('[DailyUpdate]', updated, 'matches settled,', settled, 'bets resolved');
+  }
+  return { updated: updated, settled: settled };
+}
+
+// Run daily update on startup
+setTimeout(dailyUpdate, 2000);
+
+// ═══════════════════════════════════════════════════
 //  PUBLIC API — Health & Status
 // ═══════════════════════════════════════════════════
 
