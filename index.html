@@ -907,6 +907,8 @@
         const distance = worldCupDate - now;
         if (distance < 0) {
             el.innerHTML = '世界杯倒计时：已开幕';
+            // Add daily update status
+            addDailyUpdateBadge();
             return;
         }
         const days = Math.floor(distance / (86400000));
@@ -951,6 +953,17 @@
         if (!dot) return;
         dot.style.background = available ? '#4caf50' : '#e53935';
         dot.title = available ? 'API连接正常' : 'API离线';
+    }
+
+    /** Daily update status badge */
+    function addDailyUpdateBadge() {
+        const header = document.querySelector('.header .tit');
+        if (!header || document.getElementById('dailyUpdateBadge')) return;
+        const badge = document.createElement('span');
+        badge.id = 'dailyUpdateBadge';
+        badge.style.cssText = 'display:inline-block;font-size:9px;background:#e53935;color:#fff;padding:1px 6px;border-radius:8px;margin-left:6px;vertical-align:middle;font-weight:400';
+        badge.textContent = '每日更新';
+        header.appendChild(badge);
     }
 
     async function syncPublicData() {
