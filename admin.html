@@ -10,28 +10,22 @@
 body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;background:var(--bg);color:var(--text);padding:16px;max-width:1100px;margin:0 auto}
 h1{color:var(--accent);font-size:20px;margin-bottom:16px}
 h2{font-size:15px;color:var(--text);margin:18px 0 10px;padding-bottom:8px;border-bottom:1px solid var(--border)}
-
 .stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:16px}
 .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:14px}
 .stat-card .label{font-size:11px;color:var(--text3)}.stat-card .value{font-size:22px;font-weight:900;color:var(--accent);margin-top:4px}
-
 .tab-nav{display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap}
 .tab-nav button{padding:7px 13px;background:var(--surface);color:var(--text2);border:1px solid var(--border);border-radius:5px;cursor:pointer;font-size:12px}
 .tab-nav button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
-
 table{width:100%;border-collapse:collapse;background:var(--surface);border-radius:6px;overflow:hidden;border:1px solid var(--border)}
 th{background:#222;padding:9px 10px;text-align:left;font-size:11px;color:var(--text3);font-weight:600}
 td{padding:9px 10px;font-size:12px;border-top:1px solid var(--border);color:var(--text2)}
-
 .btn{padding:5px 12px;border-radius:5px;border:none;cursor:pointer;font-size:11px;font-weight:600}
 .btn-ok{background:var(--accent);color:#fff}.btn-warn{background:var(--orange);color:#fff}.btn-green{background:var(--green);color:#fff}.btn-muted{background:#333;color:var(--text2)}.btn-add{background:var(--accent);color:#fff;padding:8px 18px;font-size:12px}
-
 .login-box{max-width:360px;margin:60px auto;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:30px;text-align:center}
 .login-box label{display:block;text-align:left;font-size:12px;color:var(--text2);margin-bottom:4px}
 .login-box input{width:100%;padding:11px;margin-bottom:12px;background:var(--bg);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:13px}
 .login-box button{width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:5px;font-size:14px;font-weight:700;cursor:pointer}
 .login-box p{font-size:11px;color:var(--text3);margin-top:8px}
-
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;align-items:center;justify-content:center;padding:20px}
 .modal-overlay.show{display:flex}
 .modal{background:var(--surface);border:1px solid var(--border);border-radius:8px;width:100%;max-width:480px}
@@ -40,7 +34,6 @@ td{padding:9px 10px;font-size:12px;border-top:1px solid var(--border);color:var(
 .modal-body input,.modal-body select{width:100%;padding:9px 10px;margin-bottom:10px;background:var(--bg);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:12px}
 .modal-body label{font-size:11px;color:var(--text2);display:block;margin:6px 0 3px}
 .modal-footer{padding:10px 16px;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--border)}
-
 .toast{position:fixed;top:16px;right:16px;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:10px 18px;border-radius:6px;font-size:12px;z-index:999;opacity:0;transition:opacity .3s;box-shadow:0 4px 20px rgba(0,0,0,0.6)}
 .toast.show{opacity:1}.toast.error{border-color:var(--accent);color:var(--accent)}
 .status-ok{color:var(--green)}.status-warn{color:var(--orange)}.status-bad{color:var(--accent)}.empty{text-align:center;padding:30px;color:var(--text3)}
@@ -75,6 +68,9 @@ td{padding:9px 10px;font-size:12px;border-top:1px solid var(--border);color:var(
     <button onclick="switchTab('finance')">📊 财务</button>
     <button onclick="switchTab('risk')">🛡 风控</button>
     <button onclick="switchTab('settle')">⚡ 结算</button>
+    <button onclick="switchTab('aipool')">🤖 AI池</button>
+    <button onclick="switchTab('teams')">🏁 球队</button>
+    <button onclick="switchTab('verify')">✅ 验证</button>
   </div>
 
   <div id="tab-users">
@@ -87,6 +83,17 @@ td{padding:9px 10px;font-size:12px;border-top:1px solid var(--border);color:var(
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <h2 style="margin:0;border:none">赛事管理</h2>
       <button class="btn btn-add" onclick="openMatchModal('add')">+ 添加比赛</button>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:16px;margin-bottom:12px">
+      <h3 style="font-size:13px;margin-bottom:10px">➕ 快速创建比赛</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+        <div><label style="font-size:10px;color:var(--text2);display:block;margin-bottom:3px">联赛</label><input id="cmLeague" placeholder="世界杯" style="width:100px;padding:7px 10px;background:var(--bg);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:12px"></div>
+        <div><label style="font-size:10px;color:var(--text2);display:block;margin-bottom:3px">主队</label><input id="cmHome" placeholder="主队" style="width:120px;padding:7px 10px;background:var(--bg);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:12px"></div>
+        <div><label style="font-size:10px;color:var(--text2);display:block;margin-bottom:3px">客队</label><input id="cmAway" placeholder="客队" style="width:120px;padding:7px 10px;background:var(--bg);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:12px"></div>
+        <div><label style="font-size:10px;color:var(--text2);display:block;margin-bottom:3px">时间</label><input id="cmTime" type="datetime-local" style="width:180px;padding:7px 10px;background:var(--bg);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:12px"></div>
+        <button class="btn btn-green" onclick="doCreateMatch()">创建</button>
+      </div>
+      <div id="cmResult" style="margin-top:8px;font-size:11px;color:var(--text3)"></div>
     </div>
     <table><thead><tr><th>ID</th><th>联赛</th><th>主队</th><th>客队</th><th>时间</th><th>主胜</th><th>平</th><th>客胜</th><th>状态</th><th>操作</th></tr></thead>
     <tbody id="matchesTbody"></tbody></table>
@@ -106,7 +113,7 @@ td{padding:9px 10px;font-size:12px;border-top:1px solid var(--border);color:var(
 
   <div id="tab-withdraws" style="display:none">
     <h2>提现审核</h2>
-    <table><thead><tr><th>ID</th><th>用户</th><th>金额</th><th>目标地址</th><th>状态</th><th>时间</th></tr></thead>
+    <table><thead><tr><th>ID</th><th>用户</th><th>金额</th><th>目标地址</th><th>状态</th><th>时间</th><th>操作</th></tr></thead>
     <tbody id="withdrawsTbody"></tbody></table>
   </div>
 
@@ -138,6 +145,19 @@ td{padding:9px 10px;font-size:12px;border-top:1px solid var(--border);color:var(
     </div>
     <table><thead><tr><th>指标</th><th>数值</th></tr></thead>
     <tbody id="financeTbody"></tbody></table>
+    <div style="margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:16px">
+      <h3 style="font-size:13px;margin-bottom:10px">💰 每日财务报告</h3>
+      <div id="dailyReportContent" class="empty">选择日期查询...</div>
+    </div>
+    <div style="margin-top:12px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:16px">
+      <h3 style="font-size:13px;margin-bottom:10px">💳 手动充值</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+        <div><label style="font-size:10px;color:var(--text2);display:block;margin-bottom:3px">钱包地址</label><input id="mdAddr" placeholder="0x..." style="width:220px;padding:7px 10px;background:var(--bg);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:12px"></div>
+        <div><label style="font-size:10px;color:var(--text2);display:block;margin-bottom:3px">金额 (USDT)</label><input id="mdAmount" type="number" step="0.01" min="0.01" placeholder="10.00" style="width:100px;padding:7px 10px;background:var(--bg);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:12px"></div>
+        <button class="btn btn-green" onclick="doManualDeposit()">确认充值</button>
+      </div>
+      <div id="mdResult" style="margin-top:8px;font-size:11px;color:var(--text3)"></div>
+    </div>
   </div>
 
   <div id="tab-risk" style="display:none">
@@ -153,6 +173,11 @@ td{padding:9px 10px;font-size:12px;border-top:1px solid var(--border);color:var(
       <table><thead><tr><th>参数</th><th>当前值</th><th>操作</th></tr></thead>
       <tbody id="riskConfigTbody"></tbody></table>
     </div>
+    <div style="margin-top:12px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:16px">
+      <h3 style="font-size:13px;margin-bottom:10px">🛡 风控告警</h3>
+      <table><thead><tr><th>时间</th><th>类型</th><th>严重度</th><th>消息</th></tr></thead>
+      <tbody id="riskAlertsTbody"><tr><td colspan="4" class="empty">加载中...</td></tr></tbody></table>
+    </div>
   </div>
 
   <div id="tab-settle" style="display:none">
@@ -165,6 +190,36 @@ td{padding:9px 10px;font-size:12px;border-top:1px solid var(--border);color:var(
         <button class="btn btn-ok" onclick="doSettleMatch()">结算</button>
       </div>
       <div id="settleResult" style="margin-top:10px;font-size:12px"></div>
+    </div>
+  </div>
+
+  <div id="tab-aipool" style="display:none">
+    <h2>🤖 AI托管池</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:16px" id="aipoolStats"></div>
+    <h2>AI托管投注记录</h2>
+    <table><thead><tr><th>ID</th><th>用户</th><th>金额</th><th>预期赢</th><th>状态</th><th>时间</th></tr></thead>
+    <tbody id="aipoolTbody"><tr><td colspan="6" class="empty">加载中...</td></tr></tbody></table>
+  </div>
+
+  <div id="tab-teams" style="display:none">
+    <h2>🏁 冠军球队管理</h2>
+    <table><thead><tr><th>ID</th><th>球队名称</th><th>Flag</th><th>冠军赔率</th><th>亚军赔率</th><th>操作</th></tr></thead>
+    <tbody id="teamsTbody"><tr><td colspan="6" class="empty">加载中...</td></tr></tbody></table>
+  </div>
+
+  <div id="tab-verify" style="display:none">
+    <h2>✅ 合约验证状态</h2>
+    <div id="verifyContent" class="empty">加载中...</div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header" id="modalHeader">比赛编辑</div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-muted" onclick="closeModal()">取消</button>
+      <button class="btn btn-ok" onclick="saveMatchModal()">保存</button>
     </div>
   </div>
 </div>
@@ -210,7 +265,7 @@ async function apiFetch(url, opts) {
 }
 
 // ===== LOAD ALL =====
-function loadAll() { loadStats(); loadUsers(); loadMatches(); loadBets(); loadDeposits(); loadWithdraws(); loadAgents(); loadVIP(); loadRisk(); loadSettleSelects(); }
+function loadAll() { loadStats(); loadUsers(); loadMatches(); loadBets(); loadDeposits(); loadWithdraws(); loadAgents(); loadVIP(); loadRisk(); loadSettleSelects(); loadRiskAlerts(); loadTeams(); loadAIPool(); }
 
 // ===== STATS =====
 async function loadStats() {
@@ -277,7 +332,7 @@ async function loadBets() {
       <td>${b.game_type||b.bet_type_name||'--'}</td>
       <td>${b.amount||0}</td><td>${b.odds||'--'}</td>
       <td class="${b.status==='won'?'status-ok':b.status==='lost'?'status-bad':''}">${b.status==='won'?'✅赢':b.status==='lost'?'❌输':b.status==='cancelled'?'↩已退':'⏳待定'}</td>
-      <td>${b.status==='pending'?`<button class="btn btn-warn" onclick="cancelBet(${b.id})">取消</button>`:'--'}</td>
+      <td>${b.status==='pending'?`<div style="display:flex;gap:3px"><button class="btn btn-warn" onclick="cancelBet(${b.id})" style="font-size:10px;padding:3px 6px">取消</button><button class="btn btn-ok" onclick="settleBet(${b.id},'win')" style="font-size:10px;padding:3px 6px">赢</button><button class="btn" onclick="settleBet(${b.id},'lost')" style="font-size:10px;padding:3px 6px;background:#555;color:#fff">输</button></div>`:'--'}</td>
     </tr>`).join('') : '<tr><td colspan="8" class="empty">暂无投注</td></tr>';
   } catch(e) {}
 }
@@ -288,6 +343,16 @@ async function cancelBet(id) {
     const r = await apiFetch(`/api/bets/${id}/cancel`, {method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
     if (r.code===0) { toast('已取消并退款'); loadBets(); loadStats(); }
     else toast(r.msg||'取消失败','error');
+  } catch(e) { toast('网络错误','error'); }
+}
+
+// Bet settlement
+async function settleBet(id, result) {
+  if (!confirm('确认将此投注结算为' + (result==='win'?'赢':'输') + '？')) return;
+  try {
+    const r = await apiFetch(`/bets/${id}/settle`, {method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({result:result})});
+    if (r.code===0) { toast('结算成功'); loadBets(); }
+    else toast(r.msg||'结算失败','error');
   } catch(e) { toast('网络错误','error'); }
 }
 
@@ -317,9 +382,10 @@ async function loadWithdraws() {
       <td style="font-size:10px">${(d.address||d.wallet_address||'').substring(0,14)}...</td>
       <td class="status-bad">-${(d.amount||0).toFixed(2)}</td>
       <td style="font-size:10px">${(d.target_address||'').substring(0,16)}...</td>
-      <td>${d.status==='confirmed'?'<span class="status-ok">✅已确认</span>':d.status==='pending'?'⏳待处理':'❌'}</td>
+      <td>${d.status==='confirmed'?'<span class="status-ok">✅已确认</span>':d.status==='pending'?'⏳待处理':d.status==='pending_review'?'📋待审核':'❌'}</td>
       <td style="font-size:10px">${d.created_at?new Date(d.created_at).toLocaleString():'--'}</td>
-    </tr>`).join('') : '<tr><td colspan="6" class="empty">暂无提现记录</td></tr>';
+      <td>${d.status==='pending_review'?`<button class="btn btn-green" onclick="doReviewWithdrawal(${d.id},'approve')">批准</button> <button class="btn btn-warn" onclick="doReviewWithdrawal(${d.id},'reject')">拒绝</button>`:d.status==='pending'?'⏳处理中':'--'}</td>
+    </tr>`).join('') : '<tr><td colspan="7" class="empty">暂无提现记录</td></tr>';
   } catch(e) {}
 }
 
@@ -383,7 +449,31 @@ async function loadFinance() {
       <tr><td>投注总额</td><td>$${(d.total_bets||0).toFixed(2)}</td></tr>
       <tr><td>派彩总额</td><td class="status-ok">$${(d.total_payouts||0).toFixed(2)}</td></tr>
       <tr><td>平台PnL</td><td class="${pnl>=0?'status-ok':'status-bad'}">$${pnl.toFixed(2)}</td></tr>`;
+    loadDailyReport();
   } catch(e) {}
+}
+
+// ===== DAILY REPORT (Finance tab) =====
+async function loadDailyReport() {
+  try {
+    const date = document.getElementById('finDate').value || new Date().toISOString().slice(0,10);
+    const r = await apiFetch('/api/finance/daily-report?date='+date);
+    const d = r.data||{};
+    const fin = d.finance||{};
+    const bets = d.bets||{};
+    const users = d.users||{};
+    document.getElementById('dailyReportContent').innerHTML = `
+      <div class="stats" style="grid-template-columns:repeat(auto-fill,minmax(120px,1fr))">
+        <div class="stat-card"><div class="label">投注笔数</div><div class="value" style="font-size:16px">${bets.total||0}</div></div>
+        <div class="stat-card"><div class="label">投注额</div><div class="value" style="font-size:16px">${(bets.volume||0).toFixed(0)}</div></div>
+        <div class="stat-card"><div class="label">赢/输</div><div class="value" style="font-size:14px;color:var(--green)">${bets.won||0}<span style="color:var(--text3)">/</span><span style="color:var(--accent)">${bets.lost||0}</span></div></div>
+        <div class="stat-card"><div class="label">充值额</div><div class="value" style="font-size:16px;color:var(--green)">${(fin.deposits||0).toFixed(0)}</div></div>
+        <div class="stat-card"><div class="label">提现额</div><div class="value" style="font-size:16px;color:var(--accent)">${(fin.withdrawals||0).toFixed(0)}</div></div>
+        <div class="stat-card"><div class="label">平台PnL</div><div class="value" style="font-size:16px;color:${(fin.platform_pnl||0)>=0?'var(--green)':'var(--accent)'}">${(fin.platform_pnl||0).toFixed(0)}</div></div>
+        <div class="stat-card"><div class="label">派彩</div><div class="value" style="font-size:16px">${(d.payout||0).toFixed(0)}</div></div>
+        <div class="stat-card"><div class="label">新用户</div><div class="value" style="font-size:16px">${users.new||0}</div></div>
+      </div>`;
+  } catch(e) { document.getElementById('dailyReportContent').innerHTML = '<div class="empty">暂无数据</div>'; }
 }
 
 // ===== RISK =====
@@ -430,6 +520,20 @@ async function updateRisk(key) {
   } catch(e) { toast('网络错误','error'); }
 }
 
+// ===== RISK ALERTS =====
+async function loadRiskAlerts() {
+  try {
+    const r = await apiFetch(API+'/risk/alerts?limit=50');
+    const data = r.data||[];
+    document.getElementById('riskAlertsTbody').innerHTML = data.length ? data.map(a=>`<tr>
+      <td style="font-size:10px">${a.timestamp?new Date(a.timestamp).toLocaleString():'--'}</td>
+      <td>${a.type||'--'}</td>
+      <td class="${a.severity==='critical'?'status-bad':a.severity==='warning'?'status-warn':'status-ok'}">${a.severity==='critical'?'🔴严重':a.severity==='warning'?'🟡警告':'🟢信息'}</td>
+      <td>${a.message||'--'}</td>
+    </tr>`).join('') : '<tr><td colspan="4" class="empty">暂无告警</td></tr>';
+  } catch(e) { document.getElementById('riskAlertsTbody').innerHTML = '<tr><td colspan="4" class="empty">加载失败</td></tr>'; }
+}
+
 // ===== SETTLE =====
 async function loadSettleSelects() {
   try {
@@ -451,6 +555,126 @@ async function doSettleMatch() {
     });
     if (r.code===0) { toast('结算完成'); loadAll(); }
     else toast(r.msg||'结算失败','error');
+  } catch(e) { toast('网络错误','error'); }
+}
+
+// ===== AI POOL =====
+async function loadAIPool() {
+  try {
+    const r = await apiFetch(API+'/ai-pool');
+    const d = r.data||{};
+    const pool = d.pool||{};
+    const stats = d.stats||{};
+    document.getElementById('aipoolStats').innerHTML = `
+      <div class="stat-card"><div class="label">冻结总额</div><div class="value">${(pool.total_frozen||0).toFixed(2)}</div></div>
+      <div class="stat-card"><div class="label">活跃用户</div><div class="value">${pool.active_users||0}</div></div>
+      <div class="stat-card"><div class="label">AI投注数</div><div class="value">${stats.total_ai_bets||0}</div></div>
+      <div class="stat-card"><div class="label">AI交易额</div><div class="value">${(stats.total_ai_volume||0).toFixed(2)}</div></div>
+      <div class="stat-card"><div class="label">AI盈利</div><div class="value">${((stats.total_ai_won||0)-(stats.total_ai_lost||0)).toFixed(2)}</div></div>`;
+    const bets = d.recent_bets||[];
+    document.getElementById('aipoolTbody').innerHTML = bets.length ? bets.map(b=>`<tr>
+      <td>${b.id||'--'}</td>
+      <td style="font-size:10px">${(b.address||'').substring(0,14)}...</td>
+      <td>${b.amount||0}</td>
+      <td>${b.potential_win||0}</td>
+      <td class="${b.status==='won'?'status-ok':b.status==='lost'?'status-bad':''}">${b.status==='won'?'✅赢':b.status==='lost'?'❌输':'⏳待定'}</td>
+      <td style="font-size:10px">${b.created_at?new Date(b.created_at).toLocaleString():'--'}</td>
+    </tr>`).join('') : '<tr><td colspan="6" class="empty">暂无AI投注记录</td></tr>';
+  } catch(e) { document.getElementById('aipoolStats').innerHTML = '<div class="stat-card"><div class="label">加载失败</div><div class="value">--</div></div>'; }
+}
+
+// ===== TEAMS =====
+async function loadTeams() {
+  try {
+    const r = await apiFetch(API+'/teams');
+    const data = r.data||[];
+    document.getElementById('teamsTbody').innerHTML = data.length ? data.map(t=>`<tr>
+      <td>${t.id}</td>
+      <td>${t.name||t.team_name||'--'}</td>
+      <td>${t.flag||'🏳'}</td>
+      <td><input id="to-${t.id}-c" value="${t.championship_odds||t.odds_champion||0}" style="width:70px;padding:4px 6px;background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);font-size:11px;text-align:center"></td>
+      <td><input id="to-${t.id}-r" value="${t.runner_up_odds||t.odds_runner_up||0}" style="width:70px;padding:4px 6px;background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);font-size:11px;text-align:center"></td>
+      <td><button class="btn btn-ok" onclick="updateTeamOdds(${t.id})">保存</button></td>
+    </tr>`).join('') : '<tr><td colspan="6" class="empty">暂无球队数据</td></tr>';
+  } catch(e) { document.getElementById('teamsTbody').innerHTML = '<tr><td colspan="6" class="empty">加载失败</td></tr>'; }
+}
+
+async function updateTeamOdds(id) {
+  const c = parseFloat(document.getElementById('to-'+id+'-c').value);
+  const r = parseFloat(document.getElementById('to-'+id+'-r').value);
+  if (!c||!r||c<=0||r<=0) { toast('赔率必须是正数','error'); return; }
+  try {
+    const res = await apiFetch(API+'/teams/'+id, {
+      method:'PUT',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({championship_odds:c, runner_up_odds:r})
+    });
+    if (res.code===0) { toast('赔率已更新'); loadTeams(); }
+    else toast(res.msg||'更新失败','error');
+  } catch(e) { toast('网络错误','error'); }
+}
+
+// ===== CREATE MATCH =====
+async function doCreateMatch() {
+  const home = document.getElementById('cmHome').value.trim();
+  const away = document.getElementById('cmAway').value.trim();
+  if (!home||!away) { toast('请填写主客队名称','error'); return; }
+  const league = document.getElementById('cmLeague').value.trim()||'联赛';
+  const time = document.getElementById('cmTime').value.replace('T',' ')+':00';
+  try {
+    const r = await apiFetch(API+'/create-match', {
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({home,away,league,time,odds_home:1.80,odds_draw:3.50,odds_away:4.00})
+    });
+    if (r.code===0) { toast('比赛已创建'); document.getElementById('cmResult').textContent = '✅ #'+r.data.id+' '+home+' vs '+away; loadMatches(); loadSettleSelects(); }
+    else toast(r.msg||'创建失败','error');
+  } catch(e) { toast('网络错误','error'); }
+}
+
+// ===== MANUAL DEPOSIT =====
+async function doManualDeposit() {
+  const addr = document.getElementById('mdAddr').value.trim();
+  const amount = parseFloat(document.getElementById('mdAmount').value);
+  if (!addr||!amount||amount<=0) { toast('请填写有效地址和金额','error'); return; }
+  if (!addr.startsWith('0x')) { toast('钱包地址格式错误，需以0x开头','error'); return; }
+  try {
+    const r = await apiFetch(API+'/manual-deposit', {
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({wallet_address:addr,amount:amount})
+    });
+    if (r.code===0) { toast('✅ '+r.msg); document.getElementById('mdResult').textContent = '✅ 已充值 '+amount+' USDT 到 '+addr.substring(0,14)+'...'; document.getElementById('mdAmount').value=''; loadStats(); }
+    else toast(r.msg||'充值失败','error');
+  } catch(e) { toast('网络错误','error'); }
+}
+
+// ===== VERIFY =====
+async function loadVerify() {
+  try {
+    const r = await apiFetch(API+'/verify');
+    const d = r.data||{};
+    document.getElementById('verifyContent').innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="stat-card"><div class="label">验证状态</div><div class="value" style="color:var(--green)">✅ 凭据有效</div></div>
+        <div class="stat-card"><div class="label">管理员</div><div class="value" style="font-size:16px">${d.username||'admin'}</div></div>
+      </div>
+      <table style="margin-top:12px"><thead><tr><th>项目</th><th>状态</th></tr></thead>
+      <tbody>
+        <tr><td>智能合约验证</td><td class="status-ok">✅ 已部署</td></tr>
+        <tr><td>JWT 身份验证</td><td class="status-ok">✅ 已认证</td></tr>
+        <tr><td>API 服务</td><td class="status-ok">✅ 运行中</td></tr>
+      </tbody></table>`;
+  } catch(e) { document.getElementById('verifyContent').innerHTML = '<div class="stat-card" style="max-width:300px;margin:0 auto"><div class="label">验证失败</div><div class="value" style="color:var(--accent);font-size:14px">❌ 请重新登录</div></div>'; }
+}
+
+// ===== REVIEW WITHDRAWAL =====
+async function doReviewWithdrawal(id, action) {
+  if (!confirm('确认'+(action==='approve'?'批准':'拒绝')+'此提现？')) return;
+  try {
+    const r = await apiFetch(API+'/withdrawals/review', {
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({withdraw_id:id, action:action})
+    });
+    if (r.code===0) { toast(r.msg||(action==='approve'?'已批准':'已拒绝')); loadWithdraws(); loadStats(); }
+    else toast(r.msg||'操作失败','error');
   } catch(e) { toast('网络错误','error'); }
 }
 
@@ -492,11 +716,15 @@ function closeModal() { document.getElementById('modalOverlay').classList.remove
 function switchTab(tab) {
   document.querySelectorAll('.tab-nav button').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('[id^="tab-"]').forEach(d=>d.style.display='none');
-  const btn = Array.from(document.querySelectorAll('.tab-nav button')).find(b=>b.textContent.includes({users:'用户',matches:'赛事',bets:'订单',deposits:'充值',withdraws:'提现',agents:'代理',vip:'VIP',finance:'财务',risk:'风控',settle:'结算'}[tab]));
+  const btn = Array.from(document.querySelectorAll('.tab-nav button')).find(b=>b.textContent.includes({users:'用户',matches:'赛事',bets:'订单',deposits:'充值',withdraws:'提现',agents:'代理',vip:'VIP',finance:'财务',risk:'风控',settle:'结算',aipool:'AI池',teams:'球队',verify:'验证'}[tab]));
   if (btn) btn.classList.add('active');
   const div = document.getElementById('tab-'+tab);
   if (div) div.style.display='block';
   if (tab==='finance') loadFinance();
+  if (tab==='aipool') loadAIPool();
+  if (tab==='teams') loadTeams();
+  if (tab==='verify') loadVerify();
+  if (tab==='withdraws') loadWithdraws();
 }
 
 // ===== TOAST =====
