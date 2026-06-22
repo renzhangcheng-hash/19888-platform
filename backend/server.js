@@ -83,7 +83,7 @@ async function verifyOnChainTx(txHash, expectedFrom, expectedTo, expectedAmountW
     return { valid: true, blockNumber: receipt.blockNumber, confirmations: receipt.confirmations || 1 };
   } catch (err) {
     console.error('[OnChainVerify] Error:', err.message);
-    return { valid: false, reason: '链上验证服务暂不可用: ' + err.message };
+    return { valid: false, reason: '链上验证服务暂不可用' };
   }
 }
 
@@ -300,8 +300,10 @@ function asyncHandler(fn) {
     const result = fn(req, res, next);
     if (result && typeof result.then === 'function') {
       result.catch(function(err) {
-        console.error(`[API Error] ${req.method} ${req.originalUrl}:`, err.message);
-        res.status(500).json({ code: 99, msg: '服务器内部错误' });
+        const status = err.status || 500;
+        const msg = err.msg || '服务器内部错误';
+        console.error(`[API Error] ${req.method} ${req.originalUrl}:`, err.message || msg);
+        res.status(status).json({ code: err.code || 99, msg: msg });
       });
     }
   };
