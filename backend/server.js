@@ -550,14 +550,10 @@ function dailyUpdate() {
   let updated = 0, settled = 0;
 
   matches.forEach(function(m) {
-    // Skip already finished or already settled
     if (m.status === 'finished') return;
-
     const matchTime = new Date(m.match_time.replace(' ', 'T'));
-    // Match is past its start time + 2h (match duration buffer)
     if (now - matchTime < 2 * 60 * 60 * 1000) return;
 
-    // Generate score
     const homeScore = Math.floor(Math.random() * 5);
     const awayScore = Math.floor(Math.random() * 5);
     m.home_score = homeScore;
@@ -565,35 +561,47 @@ function dailyUpdate() {
     m.status = 'finished';
     m.finished_at = now.toISOString();
     updated++;
-
-    // Settle bets for this match
-    const bets = read('bets');
-    let changed = false;
-    bets.forEach(function(b) {
-      if (b.match_id === m.id && b.status === 'pending') {
-        // Score bet: exact match
-        if (b.game_type === 'score' && b.cell_score === homeScore + '-' + awayScore) {
-          b.status = 'won'; b.payout = b.amount * (b.odds || 2.0); changed = true; settled++;
-        }
-        // Anti-score bet: no exact match
-        else if (b.game_type === 'anti' && b.cell_score !== homeScore + '-' + awayScore) {
-          b.status = 'won'; b.payout = b.amount * (b.odds || 1.8); changed = true; settled++;
-        }
-        // Normal bet (1X2): check result
-        else if (b.game_type === 'normal') {
-          const result = homeScore > awayScore ? 'home' : (homeScore < awayScore ? 'away' : 'draw');
-          if (b.pick === result) {
-            b.status = 'won'; b.payout = b.amount * (b.odds || 2.0); changed = true; settled++;
-          }
-        }
-        if (b.status === 'pending') { b.status = 'lost'; settled++; }
-      }
-    });
-    if (changed) write('bets', bets);
   });
 
   if (updated > 0) {
     write('matches', matches);
+    // Settle all finished matches' bets atomically
+    lockedUpdate('bets', (bets) => {
+      settled = 0;
+      for (const m of matches) {
+        if (m.status !== 'finished' || m.home_score == null) continue;
+        for (const b of bets) {
+          if (b.match_id === m.id && b.status === 'pending') {
+            if (b.game_type === 'score') {
+              const won = b.cell_score === m.home_score + '-' + m.away_score;
+              b.status = won ? 'won' : 'lost'; b.payout = won ? b.amount * (b.odds || 2.0) : 0; settled++;
+            } else if (b.game_type === 'anti-score') {
+              const won = b.cell_score !== m.home_score + '-' + m.away_score;
+              b.status = won ? 'won' : 'lost'; b.payout = won ? b.amount * (b.odds || 1.8) : 0; settled++;
+            } else if (b.game_type === 'normal') {
+              const result = m.home_score > m.away_score ? 'home' : (m.home_score < m.away_score ? 'away' : 'draw');
+              b.status = b.pick === result ? 'won' : 'lost'; b.payout = b.pick === result ? b.amount * (b.odds || 2.0) : 0; settled++;
+            }
+            if (b.status === 'pending') { b.status = 'lost'; settled++; }
+          }
+        }
+      }
+      return settled;
+    }).then(() => {
+      // Unfreeze user balances for settled bets
+      lockedUpdate('users', (users) => {
+        const bets = read('bets');
+        for (const b of bets) {
+          if (b.status !== 'pending' && b.payout > 0) {
+            const user = users.find(u => u.address.toLowerCase() === b.address?.toLowerCase());
+            if (user) {
+              if (b.status === 'won') user.balance = (user.balance || 0) + (b.payout || 0);
+              user.frozen_bet = Math.max(0, (user.frozen_bet || 0) - (b.amount || 0));
+            }
+          }
+        }
+      });
+    });
     console.log('[DailyUpdate]', updated, 'matches settled,', settled, 'bets resolved');
   }
   return { updated: updated, settled: settled };
@@ -633,7 +641,7 @@ app.post('/api/wallet/connect', asyncHandler((req, res) => {
   const { wallet_address } = req.body;
 
   if (!wallet_address || !isValidWallet(wallet_address)) {
-    return res.status(400).json({ code:1, msg:'无效的钱包地址（需要0x开头的42位十六进制地址）' });
+    return res.status(400).json({ code:1, msg:'无效的钱包地址' });
   }
 
   const addr = wallet_address.toLowerCase().trim();
@@ -665,7 +673,7 @@ app.post('/api/wallet/connect', asyncHandler((req, res) => {
 app.get('/api/user/balance', asyncHandler((req, res) => {
   const addr = (req.query.wallet || req.query.address || '').toLowerCase().trim();
   if (!isValidWallet(addr)) {
-    return res.status(400).json({ code:1, msg:'请提供有效的钱包地址（0x开头42位十六进制）' });
+    return res.status(400).json({ code:1, msg:'无效的钱包地址' });
   }
 
   const user = getUser(addr);
@@ -684,7 +692,7 @@ app.get('/api/user/balance', asyncHandler((req, res) => {
 app.get('/api/user/profile', asyncHandler((req, res) => {
   const addr = (req.query.wallet || req.query.address || '').toLowerCase().trim();
   if (!isValidWallet(addr)) {
-    return res.status(400).json({ code:1, msg:'请提供有效的钱包地址（0x开头42位十六进制）' });
+    return res.status(400).json({ code:1, msg:'无效的钱包地址' });
   }
 
   const user = getOrCreateUser(addr);
@@ -991,7 +999,7 @@ app.post('/api/ai-hosting/settings', asyncHandler((req, res) => {
 app.get('/api/bet-records', asyncHandler((req, res) => {
   const addr = (req.query.wallet || req.query.address || '').toLowerCase().trim();
   if (!isValidWallet(addr)) {
-    return res.status(400).json({ code:1, msg:'请提供有效的钱包地址（0x开头42位十六进制）' });
+    return res.status(400).json({ code:1, msg:'无效的钱包地址' });
   }
 
   const page = isValidPage(req.query.page) ? parseInt(req.query.page, 10) : 1;
@@ -1231,13 +1239,13 @@ app.post('/api/champion-bet/place', riskCheck, asyncHandler(async (req, res) => 
   const { team_id, bet_type, amount, wallet_address, tx_hash } = req.body;
 
   if (!wallet_address || !isValidWallet(wallet_address)) {
-    return res.status(400).json({ code:1, msg:'无效的钱包地址（需要0x开头的42位十六进制地址）' });
+    return res.status(400).json({ code:1, msg:'无效的钱包地址' });
   }
   if (!team_id || !isValidTeamId(team_id)) {
-    return res.status(400).json({ code:1, msg:'球队ID无效（1-48）' });
+    return res.status(400).json({ code:1, msg:'球队ID无效' });
   }
   if (!bet_type || !isValidBetType(bet_type)) {
-    return res.status(400).json({ code:1, msg:'投注类型无效（1=冠军, 2=亚军）' });
+    return res.status(400).json({ code:1, msg:'投注类型无效' });
   }
   if (!isValidAmount(amount)) {
     return res.status(400).json({ code:1, msg:'投注金额必须是正数' });
@@ -1400,7 +1408,7 @@ app.post('/api/anti-bet/place', riskCheck, asyncHandler(async (req, res) => {
   const { match_id, cell_score, amount, wallet_address } = req.body;
 
   if (!wallet_address || !isValidWallet(wallet_address)) {
-    return res.status(400).json({ code:1, msg:'无效的钱包地址（需要0x开头的42位十六进制地址）' });
+    return res.status(400).json({ code:1, msg:'无效的钱包地址' });
   }
   if (!match_id || !Number.isInteger(Number(match_id)) || Number(match_id) < 1) {
     return res.status(400).json({ code:1, msg:'无效的比赛ID' });
@@ -1470,7 +1478,7 @@ app.post('/api/score-bet/place', riskCheck, asyncHandler(async (req, res) => {
   const { match_id, cell_score, amount, wallet_address } = req.body;
 
   if (!wallet_address || !isValidWallet(wallet_address)) {
-    return res.status(400).json({ code:1, msg:'无效的钱包地址（需要0x开头的42位十六进制地址）' });
+    return res.status(400).json({ code:1, msg:'无效的钱包地址' });
   }
   if (!match_id || !Number.isInteger(Number(match_id)) || Number(match_id) < 1) {
     return res.status(400).json({ code:1, msg:'无效的比赛ID' });
@@ -1545,7 +1553,7 @@ app.post('/api/score-bet/place', riskCheck, asyncHandler(async (req, res) => {
 app.get('/api/bets', asyncHandler((req, res) => {
   const addr = (req.query.wallet || req.query.address || '').toLowerCase().trim();
   if (!isValidWallet(addr)) {
-    return res.status(400).json({ code:1, msg:'请提供有效的钱包地址（0x开头42位十六进制）' });
+    return res.status(400).json({ code:1, msg:'无效的钱包地址' });
   }
 
   const bets = read('bets').filter(b => b.address.toLowerCase() === addr).reverse();
@@ -1876,7 +1884,7 @@ app.post('/api/admin/matches/reset', adminAuth, asyncHandler((req, res) => {
 }));
 
 // ── Admin: Settle Match ───────────────────────────
-app.post('/api/admin/settle-match', adminAuth, asyncHandler((req, res) => {
+app.post('/api/admin/settle-match', adminAuth, asyncHandler(async (req, res) => {
   const { match_id, result } = req.body;
 
   if (!match_id || !Number.isInteger(Number(match_id)) || Number(match_id) < 1) {
@@ -1901,47 +1909,44 @@ app.post('/api/admin/settle-match', adminAuth, asyncHandler((req, res) => {
   match.settled_at = new Date().toISOString();
   write('matches', matches);
 
-  // Settle all pending bets on this match
-  const bets = read('bets');
-  const users = read('users');
+  // Settle all pending bets on this match — atomic via lockedUpdate
   let settledCount = 0;
   let totalPayout = 0;
 
-  for (const bet of bets) {
-    if (bet.match_id !== mid || bet.status !== 'pending') continue;
+  const betsResult = await lockedUpdate('bets', (bets) => {
+    const matchBets = bets.filter(b => b.match_id === mid && b.status === 'pending');
+    matchBets.forEach(function(bet) {
+      let won = false;
+      if (bet.game_type === 'anti-score') {
+        won = bet.cell_score !== (match.home_score + '-' + match.away_score);
+      } else if (bet.game_type === 'score') {
+        won = bet.cell_score === (match.home_score + '-' + match.away_score);
+      } else {
+        return;
+      }
+      bet.status = won ? 'won' : 'lost';
+      bet.settled_at = new Date().toISOString();
+      if (won) totalPayout += bet.potential_win || 0;
+      settledCount++;
+    });
+    return settledCount;
+  });
+  if (betsResult.error) throw betsResult;
 
-    // Determine if bet won based on game type
-    let won = false;
-    if (bet.game_type === 'anti-score') {
-      // Anti-score: bet wins if the score cell does NOT match the result
-      const resultScore = getScoreForResult(result);
-      won = bet.cell_score !== resultScore;
-    } else if (bet.game_type === 'score') {
-      // Score bet: bet wins if the score cell matches the result
-      const resultScore = getScoreForResult(result);
-      won = bet.cell_score === resultScore;
-    } else {
-      // Champion bets don't have match_id, skip
-      continue;
-    }
-
-    bet.status = won ? 'won' : 'lost';
-    bet.settled_at = new Date().toISOString();
-
-    const user = users.find(u => u.address.toLowerCase() === bet.address.toLowerCase());
-    if (won && user) {
-      user.balance = (user.balance || 0) + bet.potential_win;
-      totalPayout += bet.potential_win;
-    }
-    // Unfreeze bet amount
-    if (user) {
-      user.frozen_bet = Math.max(0, (user.frozen_bet || 0) - (bet.amount || 0));
-    }
-    settledCount++;
+  // Update user balances atomically
+  if (settledCount > 0) {
+    await lockedUpdate('users', (users) => {
+      const matchBets = read('bets').filter(b => b.match_id === mid && b.status !== 'pending' && b.settled_at);
+      matchBets.forEach(function(bet) {
+        const user = users.find(u => u.address.toLowerCase() === bet.address.toLowerCase());
+        if (!user) return;
+        if (bet.status === 'won') {
+          user.balance = (user.balance || 0) + (bet.potential_win || 0);
+        }
+        user.frozen_bet = Math.max(0, (user.frozen_bet || 0) - (bet.amount || 0));
+      });
+    });
   }
-
-  write('bets', bets);
-  write('users', users);
 
   res.json({
     code: 0,
