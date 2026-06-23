@@ -561,7 +561,7 @@
         <div class="worldcup-countdown" id="worldCupCountdown">世界杯倒计时：加载中...</div>
 
         <!-- 标签页 -->
-        <div class="tab-header-wrapper">
+        <div class="tab-header-wrapper" style="display:none">
             <ul class="ul-tabs_b1 slick_tab_btn">
                 <li class="on"><a href="javascript:;">推荐赛事</a></li>
                 <li><a href="javascript:;">冠亚预测</a></li>
@@ -670,15 +670,15 @@
             </a>
         </li>
         <li>
-            <a href="javascript:;" class="tab-nav" data-tab="ai">
+            <a href="javascript:;" class="tab-nav" data-tab="champion">
                 <i class="i2"></i>
-                <p class="txt">AI预测</p>
+                <p class="txt">冠亚预测</p>
             </a>
         </li>
         <li>
-            <a href="javascript:;" class="tab-nav" data-tab="matches">
+            <a href="javascript:;" class="tab-nav" data-tab="ai">
                 <i class="i3"></i>
-                <p class="txt">赛事</p>
+                <p class="txt">AI预测</p>
             </a>
         </li>
         <li>
@@ -695,9 +695,6 @@
         </li>
     </ul>
 </div>
-
-<!-- 自定义Toast -->
-<div class="custom-toast" id="customToast"></div>
 
 <script>
 (function(){
@@ -872,12 +869,12 @@
 
     function showTab(index) {
         pages.forEach(function(p,i){ p.style.display = i === index ? 'block' : 'none'; });
-        // Only highlight tab buttons for indices 0-2
-        tabBtns.forEach(function(btn,i){ btn.classList.toggle('on', i === index); });
-        // Highlight bottom nav for indices 3-4
+        // Highlight bottom nav
         const bottomNavs = $$('.tab-nav');
-        if (index === 3) { bottomNavs.forEach(function(n){ n.parentElement.classList.toggle('on', n.getAttribute('data-tab') === 'ai'); }); }
-        if (index === 4) { bottomNavs.forEach(function(n){ n.parentElement.classList.toggle('on', n.getAttribute('data-tab') === 'matches'); }); }
+        const tabMap = {0:'home',1:'champion',3:'ai',4:'matches'};
+        bottomNavs.forEach(function(n){
+            n.parentElement.classList.toggle('on', n.getAttribute('data-tab') === (tabMap[index] || ''));
+        });
         currentTab = index;
 
         // Load champion data when tab 1 selected
@@ -2825,13 +2822,13 @@
                 nav.parentElement.classList.add('on');
                 const tab = nav.getAttribute('data-tab');
                 if (tab === 'home') {
-                    $$('.slick_tab_btn li')[0].click();
+                    showTab(0);
+                } else if (tab === 'champion') {
+                    showTab(1);
+                    loadChampionBetData();
                 } else if (tab === 'ai') {
                     showTab(3);
                     loadAIPredictions();
-                } else if (tab === 'matches') {
-                    showTab(4);
-                    loadAllMatches();
                 } else if (tab === 'records') {
                     // Show bet records section if wallet connected
                     if (walletAddress) {
