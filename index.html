@@ -1797,11 +1797,12 @@
         // 3. Profile (try to generate invite code if none exists)
         renderProfileData(profileRes, wallet);
 
-        // 4. Bet records
-        renderBetRecords(betRecordsRes);
-
-        // 5. Deposit history
+        // 4. DEPOSIT + WITHDRAW — 首屏优先
         renderDepositHistory(depositRes);
+        renderWithdrawSection(withdrawHistoryRes, wallet);
+
+        // 5. Bet records
+        renderBetRecords(betRecordsRes);
 
         // 6. Invite stats + earnings + levels + referral
         renderInviteData(inviteStatsRes, inviteEarningsRes, wallet);
@@ -1818,13 +1819,10 @@
         // 9. All bets + cancel
         renderAllBets(allBetsRes, wallet);
 
-        // 10. Withdraw form + history
-        renderWithdrawSection(withdrawHistoryRes, wallet);
-
-        // 11. Market data (kline + orderbook)
+        // 10. Market data (kline + orderbook)
         renderMarketData(klineRes, orderbookRes);
 
-        // 12. Pool status
+        // 11. Pool status
         renderPoolStatus(poolStatusRes);
 
         // 13. Generate invite code if needed
