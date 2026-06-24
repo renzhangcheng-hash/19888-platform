@@ -1975,10 +1975,8 @@
         // Deposit form
         html += '<div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #eee">';
         html += '<label style="font-size:12px;color:#666;display:block;margin-bottom:4px">金额 (USDT)</label>';
-        html += '<input type="number" id="depositAmountInput" placeholder="输入充值金额" min="0.01" step="0.01" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;margin-bottom:8px">';
-        html += '<label style="font-size:12px;color:#666;display:block;margin-bottom:4px">交易哈希 (Tx Hash)</label>';
-        html += '<input type="text" id="depositTxHashInput" placeholder="输入链上交易哈希" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;margin-bottom:8px">';
-        html += '<button id="depositSubmitBtn" style="width:100%;padding:8px;background:linear-gradient(135deg,#2e7d32,#4caf50);color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer">提交充值</button>';
+        html += '<input type="number" id="depositAmountInput" placeholder="输入充值金额" min="0.01" step="0.01" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:14px;margin-bottom:10px;box-sizing:border-box">';
+        html += '<button id="depositSubmitBtn" style="width:100%;padding:12px;background:linear-gradient(135deg,#2e7d32,#4caf50);color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;font-weight:bold">充值</button>';
         html += '</div>';
 
         // Deposit history
@@ -2366,13 +2364,12 @@
 
         let html = '<h4>💸 提现</h4>';
 
-        // Withdraw form
+        // Withdraw form — auto-fills current wallet address
+        const defaultAddr = walletAddress || '';
         html += '<div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #eee">';
-        html += '<label style="font-size:12px;color:#666;display:block;margin-bottom:4px">提现金额 (USDT)</label>';
-        html += '<input type="number" id="withdrawAmountInput" placeholder="输入金额" min="1" step="0.01" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;margin-bottom:8px">';
-        html += '<label style="font-size:12px;color:#666;display:block;margin-bottom:4px">接收地址</label>';
-        html += '<input type="text" id="withdrawAddressInput" placeholder="输入钱包地址 (0x...)" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;margin-bottom:8px">';
-        html += '<button id="withdrawSubmitBtn" style="width:100%;padding:8px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer">提交提现</button>';
+        html += '<label style="font-size:12px;color:#666;display:block;margin-bottom:4px">金额 (USDT)</label>';
+        html += '<input type="number" id="withdrawAmountInput" placeholder="输入提现金额" min="1" step="0.01" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:14px;margin-bottom:10px;box-sizing:border-box">';
+        html += '<button id="withdrawSubmitBtn" style="width:100%;padding:12px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;font-weight:bold">提现</button>';
         html += '</div>';
 
         // Withdraw history
@@ -2403,18 +2400,16 @@
         if (wdBtn) {
             wdBtn.onclick = function() {
                 const amount = parseFloat(document.getElementById('withdrawAmountInput').value);
-                const addr = document.getElementById('withdrawAddressInput').value.trim();
                 if (!amount || amount < 1 || isNaN(amount)) { showToast('请输入有效金额'); return; }
-                if (!addr) { showToast('请输入接收地址'); return; }
+                if (!walletAddress) { showToast('请先连接钱包'); return; }
                 fetchJSON(getApiBase() + '/withdraw', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({wallet_address: wallet, amount: amount, withdraw_address: addr})
+                    body: JSON.stringify({wallet_address: walletAddress, amount: amount, withdraw_address: walletAddress})
                 }).then(function(r) {
                     if (r && (r.code === 0 || r.success)) {
                         showToast('提现请求已提交');
                         document.getElementById('withdrawAmountInput').value = '';
-                        document.getElementById('withdrawAddressInput').value = '';
                     } else {
                         showToast((r && r.msg) || '提现失败');
                     }
