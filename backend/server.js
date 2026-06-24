@@ -1196,6 +1196,11 @@ app.get('/api/matches', asyncHandler((req, res) => {
   if (filter === 'upcoming') {
     matches = matches.filter(function(m) { return m.status !== 'finished'; });
   }
+  // Sort by match_time (closest first) for homepage display
+  matches.sort(function(a, b) {
+    const ta = a.match_time || '', tb = b.match_time || '';
+    return ta.localeCompare(tb);
+  });
   matches = matches.map(function(m) { return {
     ...m,
     home_logo: teamLogoUrl(m.home),
