@@ -594,22 +594,18 @@
                 </div>
             </div>
 
-            <!-- Tab 2: 关于我们 -->
+            <!-- Tab 2: 我的/个人中心 -->
             <div class="tab_con page">
-                <div class="platform-intro">
-                    <div class="intro-content">
-                        <p>19888 是一家专业的反波胆竞猜平台，致力于为用户提供安全、公平、透明的体育竞猜体验。平台由 Winsupreme Technology Limitada 拥有并营运，依据哥斯大黎加法律设立，为有限责任公司。</p>
-                        <p>平台基于 5000 万场历史数据进行 AI 深度学习训练，反波胆玩法理论胜率高达 88.89%。平台持有 Anjouan 合法牌照运营，用户资金链上合约托管，定期第三方审计。</p>
+                <div class="platform-intro" style="padding:15px">
+                    <div style="text-align:center;padding:30px 0" id="profileLoginPrompt">
+                        <div style="font-size:48px;margin-bottom:15px">👤</div>
+                        <h3 style="font-size:18px;margin-bottom:10px">连接钱包</h3>
+                        <p style="color:#999;font-size:13px;margin-bottom:20px">连接钱包后查看余额、投注记录、充值和提现</p>
+                        <button onclick="connectWallet()" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;padding:12px 30px;border-radius:25px;font-size:15px;cursor:pointer">连接钱包</button>
                     </div>
-                </div>
-                <!-- 合作伙伴 -->
-                <div class="partners-grid-dark">
-                    <div class="partner-item"><img src="img/partners/dga.png" alt="DGA"></div>
-                    <div class="partner-item"><img src="img/partners/fga.png" alt="FGA"></div>
-                    <div class="partner-item"><img src="img/partners/iga.png" alt="IGA"></div>
-                    <div class="partner-item"><img src="img/partners/wc26.png" alt="WC26"></div>
-                    <div class="partner-item"><img src="img/partners/xga.png" alt="XGA"></div>
-                    <div class="partner-item"><img src="img/partners/yga.png" alt="YGA"></div>
+                    <div id="userSections" style="display:none">
+                        <!-- JS-populated profile cards -->
+                    </div>
                 </div>
             </div>
 
@@ -871,7 +867,7 @@
         pages.forEach(function(p,i){ p.style.display = i === index ? 'block' : 'none'; });
         // Highlight bottom nav
         const bottomNavs = $$('.tab-nav');
-        const tabMap = {0:'home',1:'champion',3:'ai',4:'matches'};
+        const tabMap = {0:'home',1:'champion',2:'profile',3:'ai',4:'matches'};
         bottomNavs.forEach(function(n){
             n.parentElement.classList.toggle('on', n.getAttribute('data-tab') === (tabMap[index] || ''));
         });
@@ -1643,6 +1639,11 @@
             document.getElementById('walletLabel').textContent = '连接钱包';
             removeBalanceDisplay();
             showToast('钱包已断开连接');
+            // Reset profile tab to connect prompt
+            const prompt = document.getElementById('profileLoginPrompt');
+            const sections = document.getElementById('userSections');
+            if (prompt) prompt.style.display = 'block';
+            if (sections) sections.style.display = 'none';
         } else {
             const newAddr = accounts[0];
             if (!walletAddress || newAddr.toLowerCase() !== walletAddress.toLowerCase()) {
@@ -1677,6 +1678,11 @@
         if (el) el.textContent = shortenAddress(addr);
         if (label) label.textContent = '';
         if (btn) btn.classList.add('connected');
+        // Show profile tab content, hide connect prompt
+        const prompt = document.getElementById('profileLoginPrompt');
+        const sections = document.getElementById('userSections');
+        if (prompt) prompt.style.display = 'none';
+        if (sections) sections.style.display = 'block';
     }
 
     function removeBalanceDisplay() {
@@ -1827,7 +1833,7 @@
 
     /** Inject PnL card after worldcup countdown */
     function renderPnL(res) {
-        const target = document.getElementById('worldCupCountdown');
+        const target = document.getElementById('userSections') || document.getElementById('worldCupCountdown');
         if (!target) return;
         let existing = document.getElementById('pnlCard');
         if (existing) existing.remove();
@@ -1854,7 +1860,7 @@
 
     /** Inject profile data (nickname, avatar, invite code) after countdown */
     function renderProfileData(res, wallet) {
-        const target = document.getElementById('worldCupCountdown');
+        const target = document.getElementById('userSections') || document.getElementById('worldCupCountdown');
         if (!target) return;
         let existing = document.getElementById('profileCard');
         if (existing) existing.remove();
@@ -1918,7 +1924,7 @@
         const records = extractData(res, []);
         if (!records || records.length === 0) return;
 
-        const target = document.getElementById('worldCupCountdown');
+        const target = document.getElementById('userSections') || document.getElementById('worldCupCountdown');
         if (!target) return;
 
         const card = document.createElement('div');
@@ -1956,7 +1962,7 @@
         const records = extractData(res, []);
         if (!records) return;
 
-        const target = document.getElementById('worldCupCountdown');
+        const target = document.getElementById('userSections') || document.getElementById('worldCupCountdown');
         if (!target) return;
 
         const card = document.createElement('div');
@@ -2029,7 +2035,7 @@
         const earnings = earningsRes && (earningsRes.data || earningsRes);
         if (!stats && !earnings) return;
 
-        const target = document.getElementById('worldCupCountdown');
+        const target = document.getElementById('userSections') || document.getElementById('worldCupCountdown');
         if (!target) return;
 
         const totalInvites = extractValue(statsRes, ['total_invites', 'totalInvites', 'total', 'count'], 0);
@@ -2058,7 +2064,7 @@
         const data = res && (res.data || res);
         if (!data) return;
 
-        const target = document.getElementById('worldCupCountdown');
+        const target = document.getElementById('userSections') || document.getElementById('worldCupCountdown');
         if (!target) return;
 
         const tier = extractValue(res, ['tier', 'level', 'vip_level', 'vipLevel'], 0);
@@ -2090,7 +2096,7 @@
         const data = res && (res.data || res);
         if (!data) return;
 
-        const target = document.getElementById('worldCupCountdown');
+        const target = document.getElementById('userSections') || document.getElementById('worldCupCountdown');
         if (!target) return;
 
         const active = extractValue(res, ['active', 'is_active', 'isActive', 'status'], false);
@@ -2118,7 +2124,7 @@
         if (existing) existing.remove();
         const levels = extractData(res, []);
         if (!levels || levels.length === 0) return;
-        const target = document.getElementById('worldCupCountdown');
+        const target = document.getElementById('userSections') || document.getElementById('worldCupCountdown');
         if (!target) return;
 
         const card = document.createElement('div');
@@ -2196,7 +2202,7 @@
         if (existing) existing.remove();
         const levels = extractData(res, []);
         if (!levels || levels.length === 0) return;
-        const target = document.getElementById('worldCupCountdown');
+        const target = document.getElementById('userSections') || document.getElementById('worldCupCountdown');
         if (!target) return;
 
         const card = document.createElement('div');
@@ -2251,7 +2257,7 @@
         if (existing) existing.remove();
         const bets = extractData(res, []);
         if (!bets || bets.length === 0) return;
-        const target = document.getElementById('worldCupCountdown');
+        const target = document.getElementById('userSections') || document.getElementById('worldCupCountdown');
         if (!target) return;
 
         const card = document.createElement('div');
@@ -2349,7 +2355,7 @@
     function renderWithdrawSection(historyRes, wallet) {
         let existing = document.getElementById('withdrawCard');
         if (existing) existing.remove();
-        const target = document.getElementById('worldCupCountdown');
+        const target = document.getElementById('userSections') || document.getElementById('worldCupCountdown');
         if (!target) return;
 
         const card = document.createElement('div');
@@ -2421,7 +2427,7 @@
     function renderMarketData(klineRes, orderbookRes) {
         let existing = document.getElementById('marketDataCard');
         if (existing) existing.remove();
-        const target = document.getElementById('worldCupCountdown');
+        const target = document.getElementById('userSections') || document.getElementById('worldCupCountdown');
         if (!target) return;
         const klineData = klineRes && klineRes.data && klineRes.data.klines;
         const obData = orderbookRes && orderbookRes.data;
@@ -2561,7 +2567,7 @@
     function renderPoolStatus(res) {
         let existing = document.getElementById('poolStatusCard');
         if (existing) existing.remove();
-        const target = document.getElementById('worldCupCountdown');
+        const target = document.getElementById('userSections') || document.getElementById('worldCupCountdown');
         if (!target) return;
         const data = res && (res.data || res);
         if (!data) return;
@@ -2596,7 +2602,7 @@
     function renderAIHostingControls(statusRes, historyRes, wallet) {
         let existing = document.getElementById('aiHostingControlsCard');
         if (existing) existing.remove();
-        const target = document.getElementById('worldCupCountdown');
+        const target = document.getElementById('userSections') || document.getElementById('worldCupCountdown');
         if (!target) return;
 
         const statusData = statusRes && (statusRes.data || statusRes);
@@ -2842,16 +2848,12 @@
                         showToast('请先连接钱包查看投注记录');
                     }
                 } else if (tab === 'profile') {
-                    // Show profile section if wallet connected
+                    showTab(2);
                     if (walletAddress) {
                         const profileCard = document.getElementById('profileCard');
                         if (profileCard) {
                             profileCard.scrollIntoView({behavior:'smooth'});
-                        } else {
-                            showToast('个人数据加载中...');
                         }
-                    } else {
-                        showToast('请先连接钱包查看个人中心');
                     }
                 }
             };
