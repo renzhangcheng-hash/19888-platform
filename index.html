@@ -854,32 +854,10 @@
             banner.appendChild(dotsDiv);
         }
 
-        showTab(0);
-    }
+        // showTab(0) was here — moved to init()
 
-    // Tab carousel (moved outside initSlick for bottom nav access)
-    const tabContainer = document.querySelector('.slick_tab');
-    const pages = tabContainer ? tabContainer.querySelectorAll('.tab_con') : [];
-    const tabBtns = document.querySelectorAll('.slick_tab_btn li');
-    let currentTab = 0;
-
-    function showTab(index) {
-        pages.forEach(function(p,i){ p.style.display = i === index ? 'block' : 'none'; });
-        // Highlight bottom nav
-        const bottomNavs = $$('.tab-nav');
-        const tabMap = {0:'home',1:'champion',2:'profile',3:'ai',4:'matches'};
-        bottomNavs.forEach(function(n){
-            n.parentElement.classList.toggle('on', n.getAttribute('data-tab') === (tabMap[index] || ''));
-        });
-        currentTab = index;
-
-        // Load champion data when tab 1 selected
-        if (index === 1 && document.getElementById('teamsGrid').children.length === 0) {
-            loadChampionBetData();
-        }
-    }
-
-    tabBtns.forEach(function(btn, i) {
+        // Tab btns setup (inside initSlick so DOM elements are available)
+        tabBtns.forEach(function(btn, i) {
             btn.onclick = function(e) {
                 e.preventDefault();
                 showTab(i);
@@ -889,7 +867,8 @@
                     moreLink.style.display = i === 0 ? 'flex' : 'none';
                 }
             };
-        });
+        }); // end tabBtns forEach
+    } // end initSlick
 
     // ======== World Cup Countdown ========
     function updateWorldCupCountdown() {
@@ -2727,9 +2706,32 @@
         }
     }
 
+    // ======== Tab carousel (outside initSlick for bottom nav access) ========
+    const tabContainer = document.querySelector('.slick_tab');
+    const pages = tabContainer ? tabContainer.querySelectorAll('.tab_con') : [];
+    const tabBtns = document.querySelectorAll('.slick_tab_btn li');
+    let currentTab = 0;
+
+    function showTab(index) {
+        pages.forEach(function(p,i){ p.style.display = i === index ? 'block' : 'none'; });
+        // Highlight bottom nav
+        const bottomNavs = $$('.tab-nav');
+        const tabMap = {0:'home',1:'champion',2:'profile',3:'ai',4:'matches'};
+        bottomNavs.forEach(function(n){
+            n.parentElement.classList.toggle('on', n.getAttribute('data-tab') === (tabMap[index] || ''));
+        });
+        currentTab = index;
+
+        // Load champion data when tab 1 selected
+        if (index === 1 && document.getElementById('teamsGrid').children.length === 0) {
+            loadChampionBetData();
+        }
+    }
+
     // ======== Init ========
     function init() {
         initSlick();
+        showTab(0);
         updateWorldCupCountdown();
         setInterval(updateWorldCupCountdown, 1000);
 
