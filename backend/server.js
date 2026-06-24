@@ -484,13 +484,15 @@ function generateMockPool() {
 // ── Seed Data ─────────────────────────────────────
 function seed() {
   const hasMatches = read('matches').length > 0;
+  // Force reseed if data contains "待定" placeholder teams
+  const needsReseed = hasMatches && read('matches').some(m => m.home === '待定' || m.away === '待定');
   const hasTeams = read('champion_teams').length > 0;
   const seedDir = path.join(__dirname, 'seed');
   const seedMatches = path.join(seedDir, 'matches.json');
   const seedTeams = path.join(seedDir, 'champion_teams.json');
   let seeded = false;
 
-  if (!hasMatches && fs.existsSync(seedMatches)) {
+  if ((!hasMatches || needsReseed) && fs.existsSync(seedMatches)) {
     fs.copyFileSync(seedMatches, path.join(DATA_DIR, 'matches.json'));
     seeded = true;
   } else if (!hasMatches) {
