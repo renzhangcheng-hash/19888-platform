@@ -133,7 +133,7 @@ const ALLOWED_ORIGINS = [
 ];
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
+    if (!origin) return callback(null, false);
     callback(null, ALLOWED_ORIGINS.includes(origin));
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -164,7 +164,6 @@ app.use('/api/admin', adminLimiter);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true, parameterLimit: 1000 }));
 
-app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
 // Static files — serve frontend only (NOT backend/data/)
 const staticPath = path.join(__dirname, '..');
 if (fs.existsSync(staticPath)) {
@@ -2950,7 +2949,7 @@ app.use((err, req, res, _next) => {
   const statusCode = err.statusCode || 500;
   res.status(statusCode).json({
     code: 99,
-    msg: err.message || '服务器内部错误',
+    msg: '服务器内部错误',
   });
 });
 
@@ -2964,7 +2963,7 @@ const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
     origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
+      if (!origin) return callback(null, false);
       if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
       callback(null, false);
     },
