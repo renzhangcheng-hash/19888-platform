@@ -1681,7 +1681,7 @@
         btn.parentElement.appendChild(div);
     }
 
-    function connectWallet() {
+    window.connectWallet = function connectWallet() {
         const connectFn = function() {
             return new Promise(function(resolve, reject) {
                 if (typeof window.ethereum !== 'undefined') {
