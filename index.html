@@ -1719,6 +1719,11 @@
         connectFn().then(function(accounts) {
             if (accounts && accounts.length > 0) {
                 walletAddress = accounts[0];
+                // Show profile content immediately regardless of API response
+                const prompt = document.getElementById('profileLoginPrompt');
+                const sections = document.getElementById('userSections');
+                if (prompt) prompt.style.display = 'none';
+                if (sections) sections.style.display = 'block';
                 connectToAPI(walletAddress);
                 // Init listeners
                 if (currentWalletProvider) {
@@ -1771,39 +1776,39 @@
         const balance = extractValue(balanceRes, ['balance', 'amount', 'usdt_balance'], 0);
         updateBalanceDisplay(balance);
 
-        // 2. PnL — inject into page body (below worldcup countdown)
+        // 2. PnL — inject into page body
         renderPnL(pnlRes);
 
         // 3. Profile (try to generate invite code if none exists)
         renderProfileData(profileRes, wallet);
 
-        // 4. DEPOSIT + WITHDRAW — 首屏优先
-        renderDepositHistory(depositRes);
-        renderWithdrawSection(withdrawHistoryRes, wallet);
-
-        // 5. Bet records
+        // 4. Bet records
         renderBetRecords(betRecordsRes);
 
-        // 6. Invite stats + earnings + levels + referral
+        // 5. Invite stats + earnings + levels + referral
         renderInviteData(inviteStatsRes, inviteEarningsRes, wallet);
         renderInviteLevels(inviteLevelsRes, wallet);
 
-        // 7. VIP status + levels + upgrade
+        // 6. VIP status + levels + upgrade
         renderVIPStatus(vipRes);
         renderVIPLevels(vipLevelsRes, wallet);
 
-        // 8. AI hosting status + controls + history
+        // 7. AI hosting status + controls + history
         renderAIStatus(aiRes, wallet);
         renderAIHostingControls(aiRes, aiHistoryRes, wallet);
 
-        // 9. All bets + cancel
+        // 8. All bets + cancel
         renderAllBets(allBetsRes, wallet);
 
-        // 10. Market data (kline + orderbook)
+        // 9. Market data (kline + orderbook)
         renderMarketData(klineRes, orderbookRes);
 
-        // 11. Pool status
+        // 10. Pool status
         renderPoolStatus(poolStatusRes);
+
+        // 11. DEPOSIT + WITHDRAW — 最后渲染=最前显示(insertBefore反向插入)
+        renderDepositHistory(depositRes);
+        renderWithdrawSection(withdrawHistoryRes, wallet);
 
         // 13. Generate invite code if needed
         tryGenerateInviteCode(wallet);
