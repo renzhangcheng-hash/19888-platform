@@ -1939,7 +1939,7 @@
         const records = extractData(res, []);
         if (!records) return;
 
-        const target = document.getElementById('userSections') || document.getElementById('worldCupCountdown');
+        const target = document.getElementById('worldCupCountdown');
         if (!target) return;
 
         const card = document.createElement('div');
@@ -2330,7 +2330,7 @@
     function renderWithdrawSection(historyRes, wallet) {
         let existing = document.getElementById('withdrawCard');
         if (existing) existing.remove();
-        const target = document.getElementById('userSections') || document.getElementById('worldCupCountdown');
+        const target = document.getElementById('worldCupCountdown');
         if (!target) return;
 
         const card = document.createElement('div');
