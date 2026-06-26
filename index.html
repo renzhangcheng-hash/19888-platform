@@ -604,6 +604,7 @@
                         <button onclick="connectWallet()" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;padding:12px 30px;border-radius:25px;font-size:15px;cursor:pointer">连接钱包</button>
                     </div>
                     <div id="userSections" style="display:none">
+                        <div style="padding:12px;margin:0 0 12px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border-radius:8px;text-align:center;font-size:14px;font-weight:bold">🏆 世界杯已开幕 — 立即充值投注</div>
                         <!-- JS-populated profile cards -->
                     </div>
                 </div>
@@ -1939,7 +1940,7 @@
         const records = extractData(res, []);
         if (!records) return;
 
-        const target = document.getElementById('worldCupCountdown');
+        const target = document.getElementById('userSections') || document.getElementById('worldCupCountdown');
         if (!target) return;
 
         const card = document.createElement('div');
@@ -2330,7 +2331,7 @@
     function renderWithdrawSection(historyRes, wallet) {
         let existing = document.getElementById('withdrawCard');
         if (existing) existing.remove();
-        const target = document.getElementById('worldCupCountdown');
+        const target = document.getElementById('userSections') || document.getElementById('worldCupCountdown');
         if (!target) return;
 
         const card = document.createElement('div');
