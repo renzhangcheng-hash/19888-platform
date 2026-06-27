@@ -1470,6 +1470,9 @@ app.post('/api/anti-bet/place', riskCheck, asyncHandler(async (req, res) => {
     status: 'pending',
     created_at: new Date().toISOString(),
   };
+  // Duplicate anti-score bet check
+  const dupAnti = bets.find(b => (b.address || '').toLowerCase() === addr && b.match_id === mid && b.cell_score === cell && b.game_type === 'anti-score' && b.status === 'pending');
+  if (dupAnti) return res.status(400).json({ code:1, msg: '您已对该比分下过反波胆，请等待结算' });
   bets.push(bet);
   write('bets', bets);  // balance already deducted in lockedUpdate above
 
@@ -1541,13 +1544,13 @@ app.post('/api/score-bet/place', riskCheck, asyncHandler(async (req, res) => {
     status: 'pending',
     created_at: new Date().toISOString(),
   };
+  // Duplicate score bet check
+  const dupScore = bets.find(b => (b.address || '').toLowerCase() === addr && b.match_id === mid && b.cell_score === cell && b.game_type === 'score' && b.status === 'pending');
+  if (dupScore) return res.status(400).json({ code:1, msg: '您已对该比分下过猜比分，请等待结算' });
   bets.push(bet);
   write('bets', bets);
 
-  // Deduct from available balance
-  user.balance = Math.max(0, +(user.balance - amt).toFixed(4));
-  user.frozen_bet = (user.frozen_bet || 0) + amt;
-  write('users', users);
+  // Balance already deducted inside lockedUpdate above
 
   res.json({ code:0, msg:'正波膽投注成功！', data: { bet_id: bet.id, potential_win: bet.potential_win } });
 }));
@@ -1565,6 +1568,23 @@ app.get('/api/bets', asyncHandler((req, res) => {
   const bets = read('bets').filter(b => b.address?.toLowerCase() === addr).reverse();
   res.json({ code:0, data: bets });
 }));
+
+// ── Admin Audit Log & Persistence ──────────────
+function adminLog(action, detail) {
+  try {
+    const logs = JSON.parse(require('fs').readFileSync(path.join(__dirname, 'data', 'audit_log.json'), 'utf8'));
+    logs.push({ id: logs.length + 1, action, detail, created_at: new Date().toISOString() });
+    require('fs').writeFileSync(path.join(__dirname, 'data', 'audit_log.json'), JSON.stringify(logs, null, 2));
+    console.log('[Audit]', action, '—', detail);
+  } catch(e) { /* first write */ try { require('fs').writeFileSync(path.join(__dirname, 'data', 'audit_log.json'), JSON.stringify([{ id:1, action, detail, created_at: new Date().toISOString() }], null, 2)); } catch(ex){} }
+}
+function saveRiskAlert(type, level, msg) {
+  try {
+    const alerts = JSON.parse(require('fs').readFileSync(path.join(__dirname, 'data', 'risk_alerts.json'), 'utf8'));
+    alerts.push({ id: alerts.length + 1, type, level, msg, created_at: new Date().toISOString() });
+    require('fs').writeFileSync(path.join(__dirname, 'data', 'risk_alerts.json'), JSON.stringify(alerts, null, 2));
+  } catch(e) { try { require('fs').writeFileSync(path.join(__dirname, 'data', 'risk_alerts.json'), JSON.stringify([{ id:1, type, level, msg, created_at: new Date().toISOString() }], null, 2)); } catch(ex){} }
+}
 
 // ═══════════════════════════════════════════════════
 //  ADMIN API (protected by JWT)
@@ -2279,6 +2299,7 @@ app.post('/api/admin/withdrawals/review', adminAuth, asyncHandler(async (req, re
 
   // Update user balance outside withdrawals lock (avoids nested lock)
   if (result === 'approve') {
+    adminLog('withdraw_approve', `提现 #${withdraw_id} 已批准: ${wInfo.amount} USDT → ${wInfo.address.slice(0,10)}...`);
     await lockedUpdate('users', (users) => {
       const user = users.find(u => u.address?.toLowerCase() === wInfo.address?.toLowerCase());
       if (user) {
@@ -2332,9 +2353,20 @@ app.post('/api/deposit', asyncHandler(async (req, res) => {
   const addr = wallet_address.toLowerCase().trim();
   const amt = Number(amount);
 
-  // Simplified mode: no tx_hash required — direct deposit
+  // Direct deposit requires admin auth (no anonymous balance inflation)
   if (!tx_hash || typeof tx_hash !== 'string' || tx_hash.trim().length === 0) {
-    console.log('[Deposit] Direct deposit:', addr, amt);
+    // Verify admin token
+    const auth = req.headers.authorization || '';
+    const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+    let adminValid = false;
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET);
+      adminValid = decoded && decoded.role === 'admin';
+    } catch(e) {}
+    if (!adminValid) {
+      return res.status(401).json({ code: 1, msg: '直充需要管理员权限或提供交易哈希' });
+    }
+    console.log('[Deposit] Admin direct deposit:', addr, amt);
     const user = getOrCreateUser(addr);
     user.balance = Math.max(0, +(user.balance || 0) + amt);
     user.total_deposited = Math.max(0, +(user.total_deposited || 0) + amt);
@@ -2607,6 +2639,12 @@ function addRiskAlert(type, severity, message, data) {
   riskAlerts.unshift(alert);
   if (riskAlerts.length > 200) riskAlerts.length = 200;
   console.warn(`[RISK_ALERT] [${severity}] ${type}: ${message}`);
+  // Persist to disk for recovery after restart
+  try {
+    const alerts = JSON.parse(require('fs').readFileSync(path.join(__dirname, 'data', 'risk_alerts.json'), 'utf8'));
+    alerts.push({ id: alerts.length + 1, type, severity, message, created_at: new Date().toISOString() });
+    require('fs').writeFileSync(path.join(__dirname, 'data', 'risk_alerts.json'), JSON.stringify(alerts, null, 2));
+  } catch(e) { /* ignore file errors */ }
   return alert;
 }
 
@@ -3087,11 +3125,11 @@ function startChainEventListener() {
       if (lastBlock === 0) { lastBlock = block - 10; return; }
       if (block <= lastBlock) return;
       
-      var usdt = new ethers.Contract(NETWORK.USDT, [
+      var usdt = new ethers.Contract(CONTRACT_ADDRESSES.USDT, [
         'event Transfer(address indexed from, address indexed to, uint256 value)'
       ], getProvider());
       var events = await usdt.queryFilter(
-        usdt.filters.Transfer(null, NETWORK.LUCKY_POOL),
+        usdt.filters.Transfer(null, CONTRACT_ADDRESSES.LUCKY_POOL),
         lastBlock + 1, block
       );
       for (var ev of events) {
@@ -3099,8 +3137,11 @@ function startChainEventListener() {
         console.log(`[ChainListener] 💰 Deposit: ${ev.args.from.slice(0,8)} → ${amount} USDT (block ${ev.blockNumber})`);
         try {
           var users = read('users');
-          var user = users.find(function(u) { return u.wallet_address.toLowerCase() === ev.args.from.toLowerCase(); });
-          if (user) user.balance = (Number(user.balance||0) + amount).toFixed(2);
+          var user = users.find(function(u) { return (u.address || '').toLowerCase() === ev.args.from.toLowerCase(); });
+          if (user) {
+            user.balance = Math.max(0, Number(user.balance || 0) + Number(amount));
+            user.total_deposited = Math.max(0, Number(user.total_deposited || 0) + Number(amount));
+          }
           write('users', users);
         } catch(e){}
       }
