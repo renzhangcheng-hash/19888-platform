@@ -157,8 +157,23 @@ const adminLimiter = rateLimit({
   message: { code: 2, msg: '管理接口请求过于频繁，请15分钟后再试' },
 });
 
+// Tighter limits for sensitive financial endpoints
+const sensitiveLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { code: 2, msg: '操作过于频繁，请1分钟后再试' },
+});
+
 app.use(generalLimiter);
 app.use('/api/admin', adminLimiter);
+app.use('/api/deposit', sensitiveLimiter);
+app.use('/api/withdraw', sensitiveLimiter);
+app.use('/api/bet/confirm', sensitiveLimiter);
+app.use('/api/anti-bet/place', sensitiveLimiter);
+app.use('/api/score-bet/place', sensitiveLimiter);
+app.use('/api/champion-bet/place', sensitiveLimiter);
 
 // ── Body Parsing ──────────────────────────────────
 app.use(express.json());
@@ -523,7 +538,7 @@ function seed() {
       console.error('❌ CRITICAL: Set ADMIN_PASSWORD env var before first boot. Generating random fallback...');
     }
     const pass = ADMIN_DEFAULT_PASS || require('crypto').randomBytes(6).toString('hex');
-    write('admins', [{ username: 'admin', password: hashPassword(pass) }]);
+    write('admins', [{ username: 'admin', password: hashPassword(pass), role: 'admin', id: 1 }]);
     console.log('✅ Admin account created');
     console.log('⚠️  Change this password immediately after first login');
   }
@@ -1608,6 +1623,16 @@ function adminAuth(req, res, next) {
   }
 }
 
+// Require operator role or above (role: operator, admin)
+function adminWriteAuth(req, res, next) {
+  adminAuth(req, res, function() {
+    if (!req.admin || req.admin.role === 'viewer') {
+      return res.status(403).json({ code:1, msg:'无操作权限，当前角色: ' + (req.admin?.role || '未知') });
+    }
+    next();
+  });
+}
+
 // Admin login → returns JWT
 app.post('/api/admin/login', asyncHandler((req, res) => {
   const { username, password } = req.body;
@@ -1623,7 +1648,7 @@ app.post('/api/admin/login', asyncHandler((req, res) => {
   }
 
   const token = jwt.sign(
-    { username: admin.username, role: 'admin' },
+    { username: admin.username, role: admin.role || 'admin', id: admin.id },
     JWT_SECRET,
     { expiresIn: JWT_EXPIRY }
   );
@@ -1641,7 +1666,7 @@ app.get('/api/admin/matches', adminAuth, asyncHandler((req, res) => {
   res.json({ code:0, data: read('matches') });
 }));
 
-app.post('/api/admin/matches', adminAuth, asyncHandler((req, res) => {
+app.post('/api/admin/matches', adminWriteAuth, asyncHandler((req, res) => {
   const { league, home, away, time, odds_home, odds_draw, odds_away, status } = req.body;
 
   if (!home || typeof home !== 'string' || home.trim().length === 0) {
@@ -1681,7 +1706,7 @@ app.post('/api/admin/matches', adminAuth, asyncHandler((req, res) => {
   res.json({ code:0, msg:'比赛已添加', data: newMatch });
 }));
 
-app.put('/api/admin/matches/:id', adminAuth, asyncHandler((req, res) => {
+app.put('/api/admin/matches/:id', adminWriteAuth, asyncHandler((req, res) => {
   const matchId = parseInt(req.params.id, 10);
   if (isNaN(matchId)) {
     return res.status(400).json({ code:1, msg:'无效的比赛ID' });
@@ -1710,7 +1735,7 @@ app.put('/api/admin/matches/:id', adminAuth, asyncHandler((req, res) => {
   res.json({ code:0, msg:'已更新', data: m });
 }));
 
-app.delete('/api/admin/matches/:id', adminAuth, asyncHandler((req, res) => {
+app.delete('/api/admin/matches/:id', adminWriteAuth, asyncHandler((req, res) => {
   const matchId = parseInt(req.params.id, 10);
   if (isNaN(matchId)) {
     return res.status(400).json({ code:1, msg:'无效的比赛ID' });
@@ -1729,7 +1754,7 @@ app.get('/api/admin/teams', adminAuth, asyncHandler((req, res) => {
   res.json({ code:0, data: read('champion_teams') });
 }));
 
-app.put('/api/admin/teams/:id', adminAuth, asyncHandler((req, res) => {
+app.put('/api/admin/teams/:id', adminWriteAuth, asyncHandler((req, res) => {
   const teamId = parseInt(req.params.id, 10);
   if (isNaN(teamId)) {
     return res.status(400).json({ code:1, msg:'无效的球队ID' });
@@ -1760,7 +1785,7 @@ app.get('/api/admin/bets', adminAuth, asyncHandler((req, res) => {
   res.json({ code:0, data: bets });
 }));
 
-app.put('/api/admin/bets/:id/settle', adminAuth, asyncHandler(async (req, res) => {
+app.put('/api/admin/bets/:id/settle', adminWriteAuth, asyncHandler(async (req, res) => {
   const betId = parseInt(req.params.id, 10);
   if (isNaN(betId)) {
     return res.status(400).json({ code:1, msg:'无效的投注ID' });
@@ -1859,7 +1884,7 @@ app.get('/api/admin/stats', adminAuth, asyncHandler((req, res) => {
 }));
 
 // ── Admin: Create Match (alias) ───────────────────
-app.post('/api/admin/create-match', adminAuth, asyncHandler((req, res) => {
+app.post('/api/admin/create-match', adminWriteAuth, asyncHandler((req, res) => {
   const { home, away, league, time, odds_home, odds_draw, odds_away } = req.body;
 
   if (!home || typeof home !== 'string' || home.trim().length === 0) {
@@ -1900,7 +1925,7 @@ app.post('/api/admin/create-match', adminAuth, asyncHandler((req, res) => {
 }));
 
 // ── Admin: Reset matches from seed ────────────────
-app.post('/api/admin/matches/reset', adminAuth, asyncHandler((req, res) => {
+app.post('/api/admin/matches/reset', adminWriteAuth, asyncHandler((req, res) => {
   const seedDir = path.join(__dirname, 'seed');
   const seedMatches = path.join(seedDir, 'matches.json');
   const seedTeams = path.join(seedDir, 'champion_teams.json');
@@ -1917,7 +1942,7 @@ app.post('/api/admin/matches/reset', adminAuth, asyncHandler((req, res) => {
 }));
 
 // ── Admin: Settle Match ───────────────────────────
-app.post('/api/admin/settle-match', adminAuth, asyncHandler(async (req, res) => {
+app.post('/api/admin/settle-match', adminWriteAuth, asyncHandler(async (req, res) => {
   const { match_id, result } = req.body;
 
   if (!match_id || !Number.isInteger(Number(match_id)) || Number(match_id) < 1) {
@@ -2269,7 +2294,7 @@ app.post('/api/withdraw', asyncHandler(async (req, res) => {
 }));
 
 // POST /api/admin/withdrawals/review — approve/reject pending review withdrawals
-app.post('/api/admin/withdrawals/review', adminAuth, asyncHandler(async (req, res) => {
+app.post('/api/admin/withdrawals/review', adminWriteAuth, asyncHandler(async (req, res) => {
   const { withdraw_id, action } = req.body;
 
   if (!withdraw_id || !['approve', 'reject'].includes(action)) {
@@ -2682,7 +2707,7 @@ app.get('/api/admin/risk/alerts', adminAuth, asyncHandler((req, res) => {
 }));
 
 // POST /api/admin/risk/circuit-break
-app.post('/api/admin/risk/circuit-break', adminAuth, asyncHandler((req, res) => {
+app.post('/api/admin/risk/circuit-break', adminWriteAuth, asyncHandler((req, res) => {
   const { action, reason } = req.body;
   if (action === 'engage') {
     riskConfig.circuit_breaker = true;
@@ -2706,7 +2731,7 @@ app.get('/api/admin/risk/config', adminAuth, asyncHandler((req, res) => {
 }));
 
 // POST /api/admin/risk/config — update limits
-app.post('/api/admin/risk/config', adminAuth, asyncHandler((req, res) => {
+app.post('/api/admin/risk/config', adminWriteAuth, asyncHandler((req, res) => {
   const { max_single_bet, max_daily_bet, max_daily_loss, large_withdraw_threshold, abnormal_freq_per_hour } = req.body;
   if (max_single_bet !== undefined) riskConfig.max_single_bet = Number(max_single_bet);
   if (max_daily_bet !== undefined) riskConfig.max_daily_bet = Number(max_daily_bet);
@@ -2718,7 +2743,7 @@ app.post('/api/admin/risk/config', adminAuth, asyncHandler((req, res) => {
 }));
 
 // POST /api/admin/manual-deposit — 管理员手动充值（绕过链上验证）
-app.post('/api/admin/manual-deposit', adminAuth, asyncHandler(async (req, res) => {
+app.post('/api/admin/manual-deposit', adminWriteAuth, asyncHandler(async (req, res) => {
   const { wallet_address, amount } = req.body;
   if (!wallet_address || !amount || Number(amount) <= 0) {
     return res.status(400).json({ code: 1, msg: '参数无效' });
