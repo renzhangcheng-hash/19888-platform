@@ -348,13 +348,13 @@ function createUserObject(addr) {
 // ── Get user by address ──────────────────────────
 function getUser(addr) {
   const users = read('users');
-  return users.find(u => u.address.toLowerCase() === addr.toLowerCase());
+  return users.find(u => u.address?.toLowerCase() === addr.toLowerCase());
 }
 
 // ── Get or create user ───────────────────────────
 function getOrCreateUser(addr) {
   const users = read('users');
-  let user = users.find(u => u.address.toLowerCase() === addr.toLowerCase());
+  let user = users.find(u => u.address?.toLowerCase() === addr.toLowerCase());
   if (!user) {
     user = createUserObject(addr);
     users.push(user);
@@ -594,7 +594,7 @@ function dailyUpdate() {
         const bets = read('bets');
         for (const b of bets) {
           if (b.status !== 'pending' && b.payout > 0) {
-            const user = users.find(u => u.address.toLowerCase() === b.address?.toLowerCase());
+            const user = users.find(u => u.address?.toLowerCase() === b.address?.toLowerCase());
             if (user) {
               if (b.status === 'won') user.balance = (user.balance || 0) + (b.payout || 0);
               user.frozen_bet = Math.max(0, (user.frozen_bet || 0) - (b.amount || 0));
@@ -647,7 +647,7 @@ app.post('/api/wallet/connect', asyncHandler((req, res) => {
 
   const addr = wallet_address.toLowerCase().trim();
   const users = read('users');
-  let user = users.find(u => u.address.toLowerCase() === addr);
+  let user = users.find(u => u.address?.toLowerCase() === addr);
   let type = 'login';
 
   if (!user) {
@@ -724,7 +724,7 @@ app.post('/api/user/profile', asyncHandler((req, res) => {
 
   const addr = wallet_address.toLowerCase().trim();
   const users = read('users');
-  const user = users.find(u => u.address.toLowerCase() === addr);
+  const user = users.find(u => u.address?.toLowerCase() === addr);
   if (!user) {
     return res.status(404).json({ code:1, msg:'用户不存在，请先连接钱包' });
   }
@@ -781,7 +781,7 @@ app.get('/api/ai-hosting/status', asyncHandler((req, res) => {
   }
 
   // Get AI hosting history (bet records made by AI托管)
-  const aiHistory = read('ai_bets').filter(b => b.address.toLowerCase() === addr).reverse();
+  const aiHistory = read('ai_bets').filter(b => b.address?.toLowerCase() === addr).reverse();
 
   res.json({
     code: 0,
@@ -819,7 +819,7 @@ app.post('/api/ai-hosting/activate', asyncHandler((req, res) => {
 
   const addr = wallet_address.toLowerCase().trim();
   const users = read('users');
-  const user = users.find(u => u.address.toLowerCase() === addr);
+  const user = users.find(u => u.address?.toLowerCase() === addr);
   if (!user) {
     return res.status(404).json({ code:1, msg:'用户不存在，请先连接钱包' });
   }
@@ -883,7 +883,7 @@ app.post('/api/ai-hosting/deactivate', asyncHandler((req, res) => {
 
   const addr = wallet_address.toLowerCase().trim();
   const users = read('users');
-  const user = users.find(u => u.address.toLowerCase() === addr);
+  const user = users.find(u => u.address?.toLowerCase() === addr);
   if (!user) {
     return res.status(404).json({ code:1, msg:'用户不存在' });
   }
@@ -939,7 +939,7 @@ app.get('/api/ai-hosting/history', asyncHandler((req, res) => {
   const pageSize = isValidPageSize(req.query.page_size) ? parseInt(req.query.page_size, 10) : 20;
   const statusFilter = req.query.status || ''; // pending | won | lost
 
-  let records = read('ai_bets').filter(b => b.address.toLowerCase() === addr).reverse();
+  let records = read('ai_bets').filter(b => b.address?.toLowerCase() === addr).reverse();
 
   if (statusFilter && ['pending','won','lost'].includes(statusFilter)) {
     records = records.filter(b => b.status === statusFilter);
@@ -977,7 +977,7 @@ app.post('/api/ai-hosting/settings', asyncHandler((req, res) => {
 
   const addr = wallet_address.toLowerCase().trim();
   const users = read('users');
-  const user = users.find(u => u.address.toLowerCase() === addr);
+  const user = users.find(u => u.address?.toLowerCase() === addr);
   if (!user) return res.status(404).json({ code:1, msg:'用户不存在' });
 
   user.ai_hosting_settings = {
@@ -1010,7 +1010,7 @@ app.get('/api/bet-records', asyncHandler((req, res) => {
   const fromDate = req.query.from || '';
   const toDate = req.query.to || '';
 
-  let records = read('bets').filter(b => b.address.toLowerCase() === addr).reverse();
+  let records = read('bets').filter(b => b.address?.toLowerCase() === addr).reverse();
 
   // Apply filters
   if (statusFilter && ['pending','won','lost'].includes(statusFilter)) {
@@ -1285,7 +1285,7 @@ app.post('/api/champion-bet/place', riskCheck, asyncHandler(async (req, res) => 
 
   // Atomic balance check via lockedUpdate
   const result = await lockedUpdate('users', (users) => {
-    const user = users.find(u => u.address.toLowerCase() === addr);
+    const user = users.find(u => u.address?.toLowerCase() === addr);
     if (!user) throw { code: 404, msg: '用户不存在，请先连接钱包' };
     const balance = computeBalance(user);
     if (amt > balance.available) {
@@ -1300,7 +1300,7 @@ app.post('/api/champion-bet/place', riskCheck, asyncHandler(async (req, res) => 
   // Check for duplicate bet (same user, same team, same type, pending)
   const bets = read('bets');
   const dupBet = bets.find(b =>
-    b.address.toLowerCase() === addr &&
+    b.address?.toLowerCase() === addr &&
     b.team_id === tid &&
     b.bet_type === btype &&
     b.status === 'pending'
@@ -1372,7 +1372,7 @@ app.post('/api/bet/confirm', riskCheck, asyncHandler(async (req, res) => {
 
   // Check user balance
   const users = read('users');
-  const user = users.find(u => u.address.toLowerCase() === addr);
+  const user = users.find(u => u.address?.toLowerCase() === addr);
   if (!user) return res.status(404).json({ code:1, msg:'用户不存在' });
   const balance = computeBalance(user);
   const amt = Number(amount || 0);
@@ -1440,7 +1440,7 @@ app.post('/api/anti-bet/place', riskCheck, asyncHandler(async (req, res) => {
 
   // Atomic balance check via lockedUpdate
   const result = await lockedUpdate('users', (users) => {
-    const user = users.find(u => u.address.toLowerCase() === addr);
+    const user = users.find(u => u.address?.toLowerCase() === addr);
     if (!user) throw { code: 404, msg: '用户不存在，请先连接钱包' };
     const balance = computeBalance(user);
     if (amt > balance.available) {
@@ -1510,7 +1510,7 @@ app.post('/api/score-bet/place', riskCheck, asyncHandler(async (req, res) => {
 
   // Atomic balance check via lockedUpdate
   const result = await lockedUpdate('users', (users) => {
-    const user = users.find(u => u.address.toLowerCase() === addr);
+    const user = users.find(u => u.address?.toLowerCase() === addr);
     if (!user) throw { code: 404, msg: '用户不存在，请先连接钱包' };
     const balance = computeBalance(user);
     if (amt > balance.available) {
@@ -1562,7 +1562,7 @@ app.get('/api/bets', asyncHandler((req, res) => {
     return res.status(400).json({ code:1, msg:'无效的钱包地址' });
   }
 
-  const bets = read('bets').filter(b => b.address.toLowerCase() === addr).reverse();
+  const bets = read('bets').filter(b => b.address?.toLowerCase() === addr).reverse();
   res.json({ code:0, data: bets });
 }));
 
@@ -1760,7 +1760,7 @@ app.put('/api/admin/bets/:id/settle', adminAuth, asyncHandler((req, res) => {
   }
 
   const users = read('users');
-  const user = users.find(u => u.address.toLowerCase() === bet.address.toLowerCase());
+  const user = users.find(u => u.address?.toLowerCase() === bet.address?.toLowerCase());
 
   bet.status = result === 'win' ? 'won' : 'lost';
   if (bet.status === 'won') {
@@ -1944,7 +1944,7 @@ app.post('/api/admin/settle-match', adminAuth, asyncHandler(async (req, res) => 
     await lockedUpdate('users', (users) => {
       const matchBets = read('bets').filter(b => b.match_id === mid && b.status !== 'pending' && b.settled_at);
       matchBets.forEach(function(bet) {
-        const user = users.find(u => u.address.toLowerCase() === bet.address.toLowerCase());
+        const user = users.find(u => u.address?.toLowerCase() === bet.address?.toLowerCase());
         if (!user) return;
         if (bet.status === 'won') {
           user.balance = (user.balance || 0) + (bet.potential_win || 0);
@@ -1991,7 +1991,7 @@ app.post('/api/invite/generate-code', asyncHandler((req, res) => {
 
   const addr = wallet_address.toLowerCase().trim();
   const users = read('users');
-  const user = users.find(u => u.address.toLowerCase() === addr);
+  const user = users.find(u => u.address?.toLowerCase() === addr);
   if (!user) {
     return res.status(404).json({ code: 1, msg: '用户不存在，请先连接钱包' });
   }
@@ -2027,8 +2027,8 @@ app.get('/api/invite/stats', asyncHandler((req, res) => {
   const users = read('users');
   const bets = read('bets');
   const invitedUsers = users.filter(u => u.invited_by === user.invite_code);
-  const invitedAddresses = invitedUsers.map(u => u.address.toLowerCase());
-  const invitedBets = bets.filter(b => invitedAddresses.includes(b.address.toLowerCase()));
+  const invitedAddresses = invitedUsers.map(u => u.address?.toLowerCase());
+  const invitedBets = bets.filter(b => invitedAddresses.includes(b.address?.toLowerCase()));
   const totalVolume = invitedBets.reduce((s, b) => s + (b.amount || 0), 0);
   const rewards = +(totalVolume * 0.05).toFixed(4);
 
@@ -2058,7 +2058,7 @@ app.post('/api/invite/referral-tracking', asyncHandler((req, res) => {
   const referrerCode = invited_by.trim();
 
   const users = read('users');
-  const user = users.find(u => u.address.toLowerCase() === addr);
+  const user = users.find(u => u.address?.toLowerCase() === addr);
   if (!user) {
     return res.status(404).json({ code: 1, msg: '用户不存在，请先连接钱包' });
   }
@@ -2098,7 +2098,7 @@ app.post('/api/invite/claim-reward', asyncHandler((req, res) => {
 
   const addr = wallet_address.toLowerCase().trim();
   const users = read('users');
-  const user = users.find(u => u.address.toLowerCase() === addr);
+  const user = users.find(u => u.address?.toLowerCase() === addr);
   if (!user) {
     return res.status(404).json({ code: 1, msg: '用户不存在' });
   }
@@ -2106,8 +2106,8 @@ app.post('/api/invite/claim-reward', asyncHandler((req, res) => {
   // Calculate rewards
   const bets = read('bets');
   const invitedUsers = users.filter(u => u.invited_by === user.invite_code);
-  const invitedAddresses = invitedUsers.map(u => u.address.toLowerCase());
-  const invitedBets = bets.filter(b => invitedAddresses.includes(b.address.toLowerCase()));
+  const invitedAddresses = invitedUsers.map(u => u.address?.toLowerCase());
+  const invitedBets = bets.filter(b => invitedAddresses.includes(b.address?.toLowerCase()));
   const totalVolume = invitedBets.reduce((s, b) => s + (b.amount || 0), 0);
   const rewards = +(totalVolume * 0.05).toFixed(4);
 
@@ -2172,7 +2172,7 @@ app.post('/api/withdraw', asyncHandler(async (req, res) => {
   // Atomic update with lock
   try {
     const result = await lockedUpdate('users', (users) => {
-      const user = users.find(u => u.address.toLowerCase() === addr);
+      const user = users.find(u => u.address?.toLowerCase() === addr);
       if (!user) throw { code: 404, msg: '用户不存在' };
 
       const available = (user.balance || 0) - (user.frozen_bet || 0) - (user.frozen_ai || 0);
@@ -2270,7 +2270,7 @@ app.post('/api/admin/withdrawals/review', adminAuth, asyncHandler(async (req, re
   // Update user balance outside withdrawals lock (avoids nested lock)
   if (result === 'approve') {
     await lockedUpdate('users', (users) => {
-      const user = users.find(u => u.address.toLowerCase() === wInfo.address.toLowerCase());
+      const user = users.find(u => u.address?.toLowerCase() === wInfo.address?.toLowerCase());
       if (user) {
         user.frozen_withdraw = Math.max(0, (user.frozen_withdraw || 0) - wInfo.amount);
         user.balance = Math.max(0, +(user.balance - wInfo.amount).toFixed(4));
@@ -2280,7 +2280,7 @@ app.post('/api/admin/withdrawals/review', adminAuth, asyncHandler(async (req, re
   } else {
     // Reject — unfreeze balance
     await lockedUpdate('users', (users) => {
-      const user = users.find(u => u.address.toLowerCase() === wInfo.address.toLowerCase());
+      const user = users.find(u => u.address?.toLowerCase() === wInfo.address?.toLowerCase());
       if (user) {
         user.frozen_withdraw = Math.max(0, (user.frozen_withdraw || 0) - wInfo.amount);
       }
@@ -2299,7 +2299,7 @@ app.get('/api/withdraw/history', asyncHandler((req, res) => {
     return res.status(400).json({ code: 1, msg: '无效的钱包地址' });
   }
   const withdrawals = read('withdrawals')
-    .filter(w => w.address.toLowerCase() === addr)
+    .filter(w => w.address?.toLowerCase() === addr)
     .reverse();
   res.json({ code: 0, data: withdrawals });
 }));
@@ -2382,7 +2382,7 @@ app.post('/api/deposit', asyncHandler(async (req, res) => {
 
   // Credit user balance
   const users = read('users');
-  const u = users.find(x => x.address.toLowerCase() === addr);
+  const u = users.find(x => x.address?.toLowerCase() === addr);
   if (u) {
     u.balance = (u.balance || 0) + amt;
     write('users', users);
@@ -2409,7 +2409,7 @@ app.get('/api/deposit/history', asyncHandler((req, res) => {
   }
 
   const deposits = read('deposits')
-    .filter(d => d.address.toLowerCase() === addr)
+    .filter(d => d.address?.toLowerCase() === addr)
     .reverse();
 
   const totalDeposited = deposits.reduce((s, d) => s + (d.amount || 0), 0);
@@ -2435,7 +2435,7 @@ app.get('/api/user/pnl', asyncHandler((req, res) => {
     return res.status(400).json({ code: 1, msg: '无效的钱包地址' });
   }
 
-  const bets = read('bets').filter(b => b.address.toLowerCase() === addr);
+  const bets = read('bets').filter(b => b.address?.toLowerCase() === addr);
 
   const total_bets = bets.length;
   const total_wagered = bets.reduce((s, b) => s + (b.amount || 0), 0);
@@ -2516,7 +2516,7 @@ app.get('/api/vip/status', asyncHandler((req, res) => {
   const user = getUser(addr);
   if (!user) return res.json({ code:0, data: { level:0, name:'普通', total_wagered:0 } });
 
-  const bets = read('bets').filter(b => b.address.toLowerCase() === addr);
+  const bets = read('bets').filter(b => b.address?.toLowerCase() === addr);
   const totalWagered = bets.reduce((s, b) => s + (b.amount || 0), 0);
   const currentLevel = computeVIPLevel(totalWagered);
   const vip = VIP_LEVELS[currentLevel];
@@ -2549,7 +2549,7 @@ app.post('/api/vip/check-upgrade', asyncHandler((req, res) => {
   const user = getUser(addr);
   if (!user) return res.json({ code:0, data: { can_upgrade: false, current_level: 0, next_level: null } });
 
-  const bets = read('bets').filter(b => b.address.toLowerCase() === addr);
+  const bets = read('bets').filter(b => b.address?.toLowerCase() === addr);
   const totalWagered = bets.reduce((s, b) => s + (b.amount || 0), 0);
   const currentLevel = computeVIPLevel(totalWagered);
 
@@ -2558,7 +2558,7 @@ app.post('/api/vip/check-upgrade', asyncHandler((req, res) => {
   if (nextLevel && totalWagered >= nextLevel.min_wagered) {
     // Upgrade user's VIP level in data
     const users = read('users');
-    const idx = users.findIndex(u => u.address.toLowerCase() === addr);
+    const idx = users.findIndex(u => u.address?.toLowerCase() === addr);
     if (idx !== -1) {
       users[idx].vip_level = nextLevel.level;
       users[idx].vip_name = nextLevel.name;
@@ -2675,7 +2675,7 @@ app.post('/api/admin/manual-deposit', adminAuth, asyncHandler(async (req, res) =
   write('deposits', deposits);
 
   const users = read('users');
-  const u = users.find(x => x.address.toLowerCase() === addr);
+  const u = users.find(x => x.address?.toLowerCase() === addr);
   if (u) { u.balance = (u.balance||0) + amt; u.total_deposited = (u.total_deposited||0) + amt; }
   else { users.push({ address: addr, balance: amt, total_deposited: amt, total_wagered: 0, total_won: 0 }); }
   write('users', users);
@@ -2726,8 +2726,8 @@ app.get('/api/invite/earnings', asyncHandler((req, res) => {
   // Calculate total earned from invite rewards
   const bets = read('bets');
   const invitedUsers = users.filter(u => u.invited_by === user.invite_code);
-  const invitedAddresses = invitedUsers.map(u => u.address.toLowerCase());
-  const invitedBets = bets.filter(b => invitedAddresses.includes(b.address.toLowerCase()));
+  const invitedAddresses = invitedUsers.map(u => u.address?.toLowerCase());
+  const invitedBets = bets.filter(b => invitedAddresses.includes(b.address?.toLowerCase()));
   const totalVolume = invitedBets.reduce((s, b) => s + (b.amount || 0), 0);
   // Calculate total earned: commission_l1 on direct invitees' volume
   const l1Earned = +(totalVolume * agent.commission_l1).toFixed(4);
@@ -2735,9 +2735,9 @@ app.get('/api/invite/earnings', asyncHandler((req, res) => {
   const l2Addresses = [];
   for (const iu of invitedUsers) {
     const l2Users = users.filter(u => u.invited_by === iu.invite_code);
-    l2Addresses.push(...l2Users.map(u => u.address.toLowerCase()));
+    l2Addresses.push(...l2Users.map(u => u.address?.toLowerCase()));
   }
-  const l2Bets = bets.filter(b => l2Addresses.includes(b.address.toLowerCase()));
+  const l2Bets = bets.filter(b => l2Addresses.includes(b.address?.toLowerCase()));
   const l2Volume = l2Bets.reduce((s, b) => s + (b.amount || 0), 0);
   const l2Earned = +(l2Volume * agent.commission_l2).toFixed(4);
   const totalEarned = +(l1Earned + l2Earned).toFixed(4);
@@ -2844,7 +2844,7 @@ app.post('/api/bets/:id/cancel', asyncHandler(async (req, res) => {
 
   // Use lockedUpdate for atomicity
   await lockedUpdate('bets', (bets) => {
-    const bet = bets.find(b => b.id === betId && b.address.toLowerCase() === addr);
+    const bet = bets.find(b => b.id === betId && b.address?.toLowerCase() === addr);
     if (!bet) throw { status: 404, code: 1, msg: '投注不存在或不属于您' };
     if (bet.status !== 'pending') throw { status: 400, code: 1, msg: '只能取消待结算的投注' };
     bet.status = 'cancelled';
@@ -2854,7 +2854,7 @@ app.post('/api/bets/:id/cancel', asyncHandler(async (req, res) => {
 
   // Refund balance atomically
   await lockedUpdate('users', (users) => {
-    const user = users.find(u => u.address.toLowerCase() === addr);
+    const user = users.find(u => u.address?.toLowerCase() === addr);
     if (user) {
       const bet = read('bets').find(b => b.id === betId);
       if (!bet || bet.status !== 'cancelled') throw { status: 500, code: 1, msg: '取消失败，请重试' };
@@ -2879,21 +2879,21 @@ app.get('/api/user/transactions', asyncHandler((req, res) => {
 
   // Deposits
   if (type === 'all' || type === 'deposit') {
-    read('deposits').filter(d => d.address.toLowerCase() === addr).forEach(d => {
+    read('deposits').filter(d => d.address?.toLowerCase() === addr).forEach(d => {
       txs.push({ type:'deposit', id:d.id, amount:d.amount, status:d.status, tx_hash:d.tx_hash, created_at:d.created_at });
     });
   }
 
   // Withdrawals
   if (type === 'all' || type === 'withdraw') {
-    read('withdrawals').filter(w => w.address.toLowerCase() === addr).forEach(w => {
+    read('withdrawals').filter(w => w.address?.toLowerCase() === addr).forEach(w => {
       txs.push({ type:'withdraw', id:w.id, amount:-w.amount, status:w.status, to_address:w.to_address, created_at:w.created_at });
     });
   }
 
   // Bets
   if (type === 'all' || type === 'bet') {
-    read('bets').filter(b => b.address.toLowerCase() === addr).forEach(b => {
+    read('bets').filter(b => b.address?.toLowerCase() === addr).forEach(b => {
       const result = b.status === 'won' ? b.potential_win : (b.status === 'lost' || b.status === 'cancelled' ? -(b.amount || 0) : 0);
       txs.push({
         type:'bet', id:b.id, game_type:b.game_type, team_name:b.team_name,
