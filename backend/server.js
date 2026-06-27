@@ -833,7 +833,7 @@ app.post('/api/ai-hosting/activate', asyncHandler((req, res) => {
     return res.status(400).json({ code:1, msg:'冻结金额最少为 10 USDT' });
   }
 
-  const available = (user.balance || 0) - (user.frozen_bet || 0) - (user.frozen_ai || 0);
+  const available = (user.balance || 0) - (user.frozen_bet || 0) - (user.frozen_ai || 0) - (user.frozen_withdraw || 0);
   if (freezeAmt > available) {
     return res.status(400).json({ code:1, msg:`余额不足，可用余额: ${available.toFixed(2)} USDT` });
   }
@@ -2175,11 +2175,16 @@ app.post('/api/withdraw', asyncHandler(async (req, res) => {
       const user = users.find(u => u.address?.toLowerCase() === addr);
       if (!user) throw { code: 404, msg: '用户不存在' };
 
-      const available = (user.balance || 0) - (user.frozen_bet || 0) - (user.frozen_ai || 0);
+      // Available balance = balance - all frozen amounts
+      const available = (user.balance || 0) - (user.frozen_bet || 0) - (user.frozen_ai || 0) - (user.frozen_withdraw || 0);
 
-      // Large withdraw: pending review (don't deduct yet)
+      // Large withdraw: pending review (freeze amount, don't deduct yet)
       const isLarge = amt >= (riskConfig.large_withdraw_threshold || 500);
       if (isLarge) {
+        // Check balance before freezing
+        if (available < amt) {
+          throw { code: 400, msg: `余额不足。可用: ${available.toFixed(2)} USDT` };
+        }
         // Freeze amount instead of deducting
         user.frozen_withdraw = (user.frozen_withdraw || 0) + amt;
         addRiskAlert('large_withdraw', 'warning',
@@ -2195,6 +2200,11 @@ app.post('/api/withdraw', asyncHandler(async (req, res) => {
       user.balance = Math.max(0, +(user.balance - amt).toFixed(4));
       return { user, users, delayed: false };
     });
+
+    // Check lockedUpdate result for errors
+    if (result && result.error) {
+      return res.status(result.code || 400).json({ code: 1, msg: result.msg || '余额不足' });
+    }
 
     // Record withdrawal (separate lock for withdrawals file)
     const withdrawStatus = result.delayed ? 'pending_review' : 'pending';
