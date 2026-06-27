@@ -1760,7 +1760,7 @@ app.get('/api/admin/bets', adminAuth, asyncHandler((req, res) => {
   res.json({ code:0, data: bets });
 }));
 
-app.put('/api/admin/bets/:id/settle', adminAuth, asyncHandler((req, res) => {
+app.put('/api/admin/bets/:id/settle', adminAuth, asyncHandler(async (req, res) => {
   const betId = parseInt(req.params.id, 10);
   if (isNaN(betId)) {
     return res.status(400).json({ code:1, msg:'无效的投注ID' });
@@ -1771,33 +1771,40 @@ app.put('/api/admin/bets/:id/settle', adminAuth, asyncHandler((req, res) => {
     return res.status(400).json({ code:1, msg:'结算结果必须是 win 或 lost' });
   }
 
-  const bets = read('bets');
-  const bet = bets.find(b => b.id === betId);
-  if (!bet) return res.status(404).json({ code:1, msg:'投注不存在' });
-
-  if (bet.status !== 'pending') {
-    return res.status(400).json({ code:1, msg:'该投注已结算' });
-  }
-
-  const users = read('users');
-  const user = users.find(u => u.address?.toLowerCase() === bet.address?.toLowerCase());
-
-  bet.status = result === 'win' ? 'won' : 'lost';
-  if (bet.status === 'won') {
-    if (user) {
-      user.balance = (user.balance || 0) + bet.potential_win;
-    }
+  // Atomic settle: lock bets then users
+  const betResult = await lockedUpdate('bets', (bets) => {
+    const bet = bets.find(b => b.id === betId);
+    if (!bet) throw { code: 404, msg: '投注不存在' };
+    if (bet.status !== 'pending') throw { code: 400, msg: '该投注已结算' };
+    bet.status = result === 'win' ? 'won' : 'lost';
     bet.settled_at = new Date().toISOString();
+    return bet;
+  });
+  if (betResult.error) return res.status(betResult.code || 400).json({ code:1, msg: betResult.msg || betResult.error });
+
+  // Credit user if won
+  if (betResult.status === 'won') {
+    const userResult = await lockedUpdate('users', (users) => {
+      const user = users.find(u => u.address?.toLowerCase() === betResult.address?.toLowerCase());
+      if (!user) throw { code: 404, msg: '用户不存在' };
+      user.balance = Math.max(0, +(user.balance || 0) + (betResult.potential_win || 0));
+      user.frozen_bet = Math.max(0, (user.frozen_bet || 0) - (betResult.amount || 0));
+      return user;
+    });
+    if (userResult.error) return res.status(500).json({ code:1, msg: '结算失败: ' + userResult.error });
+  } else {
+    // Lost: unfreeze balance
+    await lockedUpdate('users', (users) => {
+      const user = users.find(u => u.address?.toLowerCase() === betResult.address?.toLowerCase());
+      if (user) {
+        user.frozen_bet = Math.max(0, (user.frozen_bet || 0) - (betResult.amount || 0));
+      }
+      return user;
+    });
   }
 
-  // Always unfreeze bet amount
-  if (user) {
-    user.frozen_bet = Math.max(0, (user.frozen_bet || 0) - (bet.amount || 0));
-  }
-
-  write('bets', bets);
-  write('users', users);
-  res.json({ code:0, msg: bet.status === 'won' ? '已结算(赢)' : '已结算(输)', data: bet });
+  adminLog('bet_settle', `投单 #${betId} 结算: ${result}`);
+  res.json({ code:0, msg:'投注已结算', data: betResult });
 }));
 
 // ── Admin: Users ──────────────────────────────────
@@ -2367,11 +2374,19 @@ app.post('/api/deposit', asyncHandler(async (req, res) => {
       return res.status(401).json({ code: 1, msg: '直充需要管理员权限或提供交易哈希' });
     }
     console.log('[Deposit] Admin direct deposit:', addr, amt);
-    const user = getOrCreateUser(addr);
-    user.balance = Math.max(0, +(user.balance || 0) + amt);
-    user.total_deposited = Math.max(0, +(user.total_deposited || 0) + amt);
-    write('users', read('users').map(function(u){ return u.address === addr ? user : u; }));
-    return res.json({ code: 0, msg: '充值成功', data: { available: user.balance, balance: user.balance } });
+    const depResult = await lockedUpdate('users', (users) => {
+      let user = users.find(u => u.address?.toLowerCase() === addr);
+      if (!user) {
+        user = createUserObject(addr);
+        users.push(user);
+      }
+      user.balance = Math.max(0, +(user.balance || 0) + amt);
+      user.total_deposited = Math.max(0, +(user.total_deposited || 0) + amt);
+      return user;
+    });
+    if (depResult.error) return res.status(500).json({ code: 1, msg: '充值失败' });
+    adminLog('deposit_admin', `管理员直充 ${amt} USDT → ${addr.slice(0,10)}...`);
+    return res.json({ code: 0, msg: '充值成功', data: { available: depResult.balance, balance: depResult.balance } });
   }
 
   // On-chain verification mode (original)
