@@ -33,6 +33,7 @@ const bcrypt = require('bcryptjs');
 const app = express();
 const PORT = process.env.PORT || 3088;
 const DATA_DIR = path.join(__dirname, 'data');
+const STATE_FILE = path.join(DATA_DIR, 'chain_state.json');
 
 // ── JWT Config ──────────────────────────────────
 // JWT_SECRET: env var required in production
@@ -102,14 +103,56 @@ app.use((req, res, next) => {
   next();
 });
 
+// ═══════════════════════════════════════════════════
+//  HEALTH PROBE SHORTCUTS (19888-ops compatibility)
+// ═══════════════════════════════════════════════════
+
+// GET /api/ws-health → 200 OK if socket.io is attached
+app.get('/api/ws-health', asyncHandler((req, res) => {
+  const count = typeof io !== 'undefined' ? (io.engine && io.engine.clientsCount) : 0;
+  res.json({ code: 0, ws_attached: true, ws_clients: count, status: 'ok', timestamp: new Date().toISOString() });
+}));
+
+// GET /pool → must return same shape as /api/finance/pool-status
+app.get('/pool', asyncHandler((req, res) => {
+  const users = (require('./data/users.json')) || [];
+  const totalBalance = users.reduce((s, u) => s + (u.balance || 0), 0);
+  const totalFrozen = users.reduce((s, u) => s + (u.frozen_bet || 0) + (u.frozen_ai || 0), 0);
+  const deposits = (require('./data/deposits.json')) || [];
+  const totalDeposited = deposits.filter(d => d.status === 'confirmed').reduce((s, d) => s + (d.amount || 0), 0);
+  const withdrawals = (require('./data/withdrawals.json')) || [];
+  const totalWithdrawn = withdrawals.reduce((s, w) => s + (w.amount || 0), 0);
+  const bets = (require('./data/bets.json')) || [];
+  const pendingWithdrawals = withdrawals.filter(w => w.status === 'pending').length;
+  const totalPendingBets = bets.filter(b => b.status === 'pending').length;
+  res.json({ code: 0, data: { total_balance: +totalBalance.toFixed(2), total_frozen: +totalFrozen.toFixed(2), total_deposited: +totalDeposited.toFixed(2), total_withdrawn: +totalWithdrawn.toFixed(2), pending_withdrawals: pendingWithdrawals, pending_bets: totalPendingBets, user_count: users.length } });
+}));
+
+// GET /bets → all bets summary
+app.get('/bets', asyncHandler((req, res) => {
+  const bets = (require('./data/bets.json')) || [];
+  const total = bets.length;
+  const byStatus = bets.reduce((a, b) => { a[b.status] = (a[b.status]||0) + 1; return a; }, {});
+  const totalVolume = bets.reduce((s, b) => s + (b.amount || 0), 0);
+  res.json({ code: 0, data: { total, by_status: byStatus, total_volume: +totalVolume.toFixed(2) } });
+}));
+
+// GET /withdrawals → withdrawals summary
+app.get('/withdrawals', asyncHandler((req, res) => {
+  const withdrawals = (require('./data/withdrawals.json')) || [];
+  const pending = withdrawals.filter(w => w.status === 'pending').length;
+  const totalAmount = withdrawals.reduce((s, w) => s + (w.amount || 0), 0);
+  res.json({ code: 0, data: { total: withdrawals.length, pending, total_amount: +totalAmount.toFixed(2) } });
+}));
+
 // ── Security Headers (Helmet) ────────────────────
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'none'"],
       connectSrc: ["'self'", "https://one9888-api.onrender.com", "wss://one9888-api.onrender.com"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://19888.netlify.app"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'", "https://19888.netlify.app"],
+      styleSrc: ["'self'"],
       imgSrc: ["'self'", "data:", "https:"],
       fontSrc: ["'self'"],
       frameAncestors: ["'self'", "https://19888.netlify.app", "https://19888.asia"],
@@ -599,21 +642,21 @@ function dailyUpdate() {
               b.status = b.pick === result ? 'won' : 'lost'; b.payout = b.pick === result ? b.amount * (b.odds || 2.0) : 0; settled++;
             }
             if (b.status === 'pending') { b.status = 'lost'; settled++; }
+            b.payout_settled = true;  // idempotency marker
           }
         }
       }
       return settled;
     }).then(() => {
-      // Unfreeze user balances for settled bets
+      // Unfreeze user balances for settled bets (skip already paid out)
       lockedUpdate('users', (users) => {
         const bets = read('bets');
         for (const b of bets) {
-          if (b.status !== 'pending' && b.payout > 0) {
-            const user = users.find(u => u.address?.toLowerCase() === b.address?.toLowerCase());
-            if (user) {
-              if (b.status === 'won') user.balance = (user.balance || 0) + (b.payout || 0);
-              user.frozen_bet = Math.max(0, (user.frozen_bet || 0) - (b.amount || 0));
-            }
+          if (b.payout_settled !== true) continue;
+          const user = users.find(u => u.address?.toLowerCase() === b.address?.toLowerCase());
+          if (user) {
+            if (b.status === 'won') user.balance = (user.balance || 0) + (b.payout || 0);
+            user.frozen_bet = Math.max(0, (user.frozen_bet || 0) - (b.amount || 0));
           }
         }
       });
@@ -1298,6 +1341,29 @@ app.post('/api/champion-bet/place', riskCheck, asyncHandler(async (req, res) => 
     console.warn(`[ChampionBet] No tx_hash provided - deducting immediately (two-phase recommended for security)`);
   }
 
+  // Check for duplicate bet BEFORE lockedUpdate to avoid charge-then-fail
+  const dupBets = read('bets');
+  const dupBet = dupBets.find(b =>
+    b.address?.toLowerCase() === addr &&
+    b.team_id === tid &&
+    b.bet_type === btype &&
+    b.status === 'pending'
+  );
+  if (dupBet) {
+    return res.status(400).json({ code:1, msg:'您已对该球队下过相同类型的投注，请等待结算' });
+  }
+
+  // Exposure cap: prevent platform insolvency
+  try {
+    const allBets = read('bets');
+    const pendingBets = allBets.filter(b => b.status === 'pending' && b.team_id === tid && b.bet_type === btype);
+    const existingExposure = pendingBets.reduce((s, b) => s + (b.potential_win || 0), 0);
+    const newExposure = existingExposure + (amt * (btype === 1 ? team.champion_odds : team.runner_odds));
+    if (newExposure > 5000) {
+      return res.status(400).json({ code:1, msg:'该球队当前投注已达风控上限，暂不可投' });
+    }
+  } catch(e) { /* ignore if first bet */ }
+
   // Atomic balance check via lockedUpdate
   const result = await lockedUpdate('users', (users) => {
     const user = users.find(u => u.address?.toLowerCase() === addr);
@@ -1312,19 +1378,8 @@ app.post('/api/champion-bet/place', riskCheck, asyncHandler(async (req, res) => 
   });
   if (result.error) return res.status(result.code || 400).json({ code:1, msg: result.msg || result.error });
 
-  // Check for duplicate bet (same user, same team, same type, pending)
-  const bets = read('bets');
-  const dupBet = bets.find(b =>
-    b.address?.toLowerCase() === addr &&
-    b.team_id === tid &&
-    b.bet_type === btype &&
-    b.status === 'pending'
-  );
-  if (dupBet) {
-    return res.status(400).json({ code:1, msg:'您已对该球队下过相同类型的投注，请等待结算' });
-  }
-
   const odds = btype === 1 ? team.champion_odds : team.runner_odds;
+  const bets = read('bets');
   const bet = {
     id: (bets[bets.length - 1]?.id || 0) + 1,
     address: addr,
@@ -1341,6 +1396,8 @@ app.post('/api/champion-bet/place', riskCheck, asyncHandler(async (req, res) => 
   };
   bets.push(bet);
   write('bets', bets);  // balance already deducted in lockedUpdate above
+
+  recordTransaction('bet', addr, amt, `冠军投注: ${team.name} ${btype===1?'冠军':'亚军'}`);
 
   res.json({ code:0, msg:'投注成功！', data: { bet_id: bet.id, potential_win: bet.potential_win } });
 }));
@@ -1413,10 +1470,18 @@ app.post('/api/bet/confirm', riskCheck, asyncHandler(async (req, res) => {
   bets.push(bet);
   write('bets', bets);
 
-  // Deduct from available balance
-  user.balance = Math.max(0, +(user.balance - amt).toFixed(4));
-  user.frozen_bet = (user.frozen_bet || 0) + amt;
-  write('users', users);
+  // Deduct from available balance atomically
+  await lockedUpdate('users', (users) => {
+    const u = users.find(x => x.address?.toLowerCase() === addr);
+    if (u) {
+      u.balance = Math.max(0, +(u.balance - amt).toFixed(4));
+      u.frozen_bet = (u.frozen_bet || 0) + amt;
+    }
+    return u;
+  });
+
+  recordTransaction('bet_confirm', addr, amt, `投注确认 #${bid}: ${game_type || 'champion'}`);
+  adminLog('bet_confirm', `投注确认 #${bid} ${game_type} ${amt} USDT → ${addr.slice(0,10)}...`);
 
   res.json({ code:0, msg:'投注确认成功！', data: { bet_id: bid, tx_hash: txHash } });
 }));
@@ -1490,6 +1555,8 @@ app.post('/api/anti-bet/place', riskCheck, asyncHandler(async (req, res) => {
   if (dupAnti) return res.status(400).json({ code:1, msg: '您已对该比分下过反波胆，请等待结算' });
   bets.push(bet);
   write('bets', bets);  // balance already deducted in lockedUpdate above
+
+  recordTransaction('bet', addr, amt, `反波胆投注: ${match.home} vs ${match.away} 非${cell}`);
 
   res.json({ code:0, msg:'反波膽投注成功！', data: { bet_id: bet.id, potential_win: bet.potential_win } });
 }));
@@ -1565,6 +1632,8 @@ app.post('/api/score-bet/place', riskCheck, asyncHandler(async (req, res) => {
   bets.push(bet);
   write('bets', bets);
 
+  recordTransaction('bet', addr, amt, `正波胆投注: ${match.home} vs ${match.away} 比分${cell}`);
+
   // Balance already deducted inside lockedUpdate above
 
   res.json({ code:0, msg:'正波膽投注成功！', data: { bet_id: bet.id, potential_win: bet.potential_win } });
@@ -1583,6 +1652,24 @@ app.get('/api/bets', asyncHandler((req, res) => {
   const bets = read('bets').filter(b => b.address?.toLowerCase() === addr).reverse();
   res.json({ code:0, data: bets });
 }));
+
+// ── Transaction Logger ──────────────────────────
+function recordTransaction(type, address, amount, description) {
+  try {
+    const txns = require('fs').existsSync(path.join(DATA_DIR, 'transactions.json'))
+      ? JSON.parse(require('fs').readFileSync(path.join(DATA_DIR, 'transactions.json'), 'utf8'))
+      : [];
+    txns.push({
+      id: txns.length + 1,
+      type,
+      address: address.toLowerCase(),
+      amount: +amount.toFixed(4),
+      description,
+      created_at: new Date().toISOString()
+    });
+    require('fs').writeFileSync(path.join(DATA_DIR, 'transactions.json'), JSON.stringify(txns, null, 2));
+  } catch(e) { console.error('[TxLogger]', e.message); }
+}
 
 // ── Admin Audit Log & Persistence ──────────────
 function adminLog(action, detail) {
@@ -1653,6 +1740,8 @@ app.post('/api/admin/login', asyncHandler((req, res) => {
     { expiresIn: JWT_EXPIRY }
   );
 
+  adminLog('admin_login', `管理员 ${admin.username} 登录`);
+
   res.json({ code:0, msg:'登录成功', data: { token, expiresIn: JWT_EXPIRY } });
 }));
 
@@ -1703,6 +1792,7 @@ app.post('/api/admin/matches', adminWriteAuth, asyncHandler((req, res) => {
   };
   matches.push(newMatch);
   write('matches', matches);
+  adminLog('match_create', `创建比赛: ${newMatch.home} vs ${newMatch.away} (${newMatch.league})`);
   res.json({ code:0, msg:'比赛已添加', data: newMatch });
 }));
 
@@ -1732,6 +1822,7 @@ app.put('/api/admin/matches/:id', adminWriteAuth, asyncHandler((req, res) => {
     if (req.body[k] !== undefined) m[k] = k.startsWith('odds_') ? Number(req.body[k]) : req.body[k];
   });
   write('matches', matches);
+  adminLog('match_update', `更新比赛 #${matchId}: ${m.home} vs ${m.away}`);
   res.json({ code:0, msg:'已更新', data: m });
 }));
 
@@ -1746,6 +1837,7 @@ app.delete('/api/admin/matches/:id', adminWriteAuth, asyncHandler((req, res) => 
   matches = matches.filter(m => m.id !== matchId);
   if (matches.length === before) return res.status(404).json({ code:1, msg:'比赛不存在' });
   write('matches', matches);
+  adminLog('match_delete', `删除比赛 #${matchId}`);
   res.json({ code:0, msg:'已删除' });
 }));
 
@@ -1829,6 +1921,9 @@ app.put('/api/admin/bets/:id/settle', adminWriteAuth, asyncHandler(async (req, r
   }
 
   adminLog('bet_settle', `投单 #${betId} 结算: ${result}`);
+  if (result === 'win' && betResult.potential_win) {
+    recordTransaction('payout', betResult.address, betResult.potential_win, `结算派奖 #${betId}: ${betResult.bet_type_name || ''}`);
+  }
   res.json({ code:0, msg:'投注已结算', data: betResult });
 }));
 
@@ -2230,27 +2325,18 @@ app.post('/api/withdraw', asyncHandler(async (req, res) => {
       // Available balance = balance - all frozen amounts
       const available = (user.balance || 0) - (user.frozen_bet || 0) - (user.frozen_ai || 0) - (user.frozen_withdraw || 0);
 
-      // Large withdraw: pending review (freeze amount, don't deduct yet)
-      const isLarge = amt >= (riskConfig.large_withdraw_threshold || 500);
-      if (isLarge) {
-        // Check balance before freezing
-        if (available < amt) {
-          throw { code: 400, msg: `余额不足。可用: ${available.toFixed(2)} USDT` };
-        }
-        // Freeze amount instead of deducting
-        user.frozen_withdraw = (user.frozen_withdraw || 0) + amt;
-        addRiskAlert('large_withdraw', 'warning',
-          `${addr.slice(0, 10)}... 提现 ${amt} USDT → ${toAddr.slice(0, 10)}... [待审核]`);
-        return { user, users, delayed: true };
-      }
-
+      // All withdrawals: freeze amount, don't deduct yet (requires admin review)
       if (available < amt) {
         throw { code: 400, msg: `余额不足。可用: ${available.toFixed(2)} USDT` };
       }
-
-      // Balance floor
-      user.balance = Math.max(0, +(user.balance - amt).toFixed(4));
-      return { user, users, delayed: false };
+      // Freeze amount instead of deducting
+      user.frozen_withdraw = (user.frozen_withdraw || 0) + amt;
+      const isLarge = amt >= (riskConfig.large_withdraw_threshold || 500);
+      if (isLarge) {
+        addRiskAlert('large_withdraw', 'warning',
+          `${addr.slice(0, 10)}... 提现 ${amt} USDT → ${toAddr.slice(0, 10)}... [待审核]`);
+      }
+      return { user, users, delayed: true };
     });
 
     // Check lockedUpdate result for errors
@@ -2259,7 +2345,6 @@ app.post('/api/withdraw', asyncHandler(async (req, res) => {
     }
 
     // Record withdrawal (separate lock for withdrawals file)
-    const withdrawStatus = result.delayed ? 'pending_review' : 'pending';
     const wResult = await lockedUpdate('withdrawals', (withdrawals) => {
       const withdrawal = {
         id: (withdrawals[withdrawals.length - 1]?.id || 0) + 1,
@@ -2267,24 +2352,28 @@ app.post('/api/withdraw', asyncHandler(async (req, res) => {
         to_address: toAddr,
         amount: amt,
         tx_hash: tx_hash || null,
-        status: withdrawStatus,
+        status: 'pending_review',
         created_at: new Date().toISOString(),
       };
       withdrawals.push(withdrawal);
       return withdrawal;
     });
+    // Error check for withdrawals lockedUpdate
+    if (wResult && wResult.error) {
+      return res.status(500).json({ code: 1, msg: '提现记录失败: ' + (wResult.msg || wResult.error) });
+    }
 
-    const logTag = result.delayed ? '[Withdraw REVIEW]' : '[Withdraw]';
-    console.log(`${logTag} ${addr.slice(0, 10)}... → ${toAddr.slice(0, 10)}... ${amt} USDT (${withdrawStatus})`);
+    console.log(`[Withdraw REVIEW] ${addr.slice(0, 10)}... → ${toAddr.slice(0, 10)}... ${amt} USDT (pending_review)`);
+    recordTransaction('withdraw_request', addr, amt, `提现 ${amt} USDT → ${toAddr.slice(0,10)}...`);
 
     res.json({
       code: 0,
-      msg: result.delayed ? `大额提现(${amt} USDT)已提交审核，24小时内处理` : '提现申请已提交',
+      msg: `提现(${amt} USDT)已提交审核，24小时内处理`,
       data: {
         withdraw_id: wResult.id,
         amount: amt,
         to_address: toAddr,
-        status: withdrawStatus,
+        status: 'pending_review',
       }
     });
   } catch (e) {
@@ -2329,9 +2418,15 @@ app.post('/api/admin/withdrawals/review', adminWriteAuth, asyncHandler(async (re
     }
   });
 
+  // Check lockedUpdate error before processing
+  if (result && result.error) {
+    return res.status(result.code || 500).json({ code: 1, msg: result.msg || result.error });
+  }
+
   // Update user balance outside withdrawals lock (avoids nested lock)
   if (result === 'approve') {
     adminLog('withdraw_approve', `提现 #${withdraw_id} 已批准: ${wInfo.amount} USDT → ${wInfo.address.slice(0,10)}...`);
+    recordTransaction('withdraw_approve', wInfo.address, wInfo.amount, `提现审核通过 #${withdraw_id}`);
     await lockedUpdate('users', (users) => {
       const user = users.find(u => u.address?.toLowerCase() === wInfo.address?.toLowerCase());
       if (user) {
@@ -2417,68 +2512,77 @@ app.post('/api/deposit', asyncHandler(async (req, res) => {
   // On-chain verification mode (original)
   const txHash = tx_hash.trim();
 
-  // Check for duplicate tx
-  const deposits = read('deposits');
-  if (deposits.some(d => d.tx_hash === txHash)) {
-    return res.status(400).json({ code: 1, msg: '该交易已处理' });
-  }
-
   // --- On-chain verification ---
-  // Verify the tx_hash is a real Sepolia transaction to LuckyPool contract
   const amountWei = ethers.parseUnits(amt.toFixed(18), 18);
   const verification = await verifyOnChainTx(txHash, addr, CONTRACT_ADDRESSES.LUCKY_POOL, amountWei);
   if (!verification.valid) {
     console.error(`[Deposit] On-chain verify failed: addr=${addr} tx=${txHash}`, verification.reason);
     // Record failed attempt for audit
-    const failedDep = {
-      id: (deposits[deposits.length - 1]?.id || 0) + 1,
-      address: addr,
-      tx_hash: txHash,
-      amount: amt,
-      status: 'failed',
-      reason: verification.reason,
-      created_at: new Date().toISOString(),
-    };
-    deposits.push(failedDep);
-    write('deposits', deposits);
+    await lockedUpdate('deposits', (deposits) => {
+      const failedDep = {
+        id: (deposits[deposits.length - 1]?.id || 0) + 1,
+        address: addr,
+        tx_hash: txHash,
+        amount: amt,
+        status: 'failed',
+        reason: verification.reason,
+        created_at: new Date().toISOString(),
+      };
+      deposits.push(failedDep);
+      return failedDep;
+    });
     return res.status(400).json({ code: 1, msg: `充值验证失败: ${verification.reason}` });
   }
 
   console.log(`[Deposit] On-chain verified: block=${verification.blockNumber} tx=${txHash.slice(0,10)}...`);
 
-  // Create or get user
-  const user = getOrCreateUser(addr);
+  // Atomic: check duplicate and credit in lockedUpdate
+  const depResult = await lockedUpdate('deposits', (deposits) => {
+    // Check for duplicate tx (case-insensitive, inside lock)
+    if (deposits.some(d => d.tx_hash && d.tx_hash.toLowerCase() === txHash.toLowerCase())) {
+      throw { code: 400, msg: '该交易已处理' };
+    }
+    const deposit = {
+      id: (deposits[deposits.length - 1]?.id || 0) + 1,
+      address: addr,
+      tx_hash: txHash,
+      amount: amt,
+      status: 'confirmed',
+      block_number: verification.blockNumber,
+      created_at: new Date().toISOString(),
+    };
+    deposits.push(deposit);
+    return deposit;
+  });
+  if (depResult.error) return res.status(depResult.code || 400).json({ code:1, msg: depResult.msg || depResult.error });
 
-  // Record deposit as confirmed
-  const deposit = {
-    id: (deposits[deposits.length - 1]?.id || 0) + 1,
-    address: addr,
-    tx_hash: txHash,
-    amount: amt,
-    status: 'confirmed',
-    block_number: verification.blockNumber,
-    created_at: new Date().toISOString(),
-  };
-  deposits.push(deposit);
-  write('deposits', deposits);
+  // Credit user balance atomically
+  const uResult = await lockedUpdate('users', (users) => {
+    const user = users.find(x => x.address?.toLowerCase() === addr);
+    if (!user) {
+      const newUser = createUserObject(addr);
+      newUser.balance = amt;
+      newUser.total_deposited = amt;
+      users.push(newUser);
+      return newUser;
+    }
+    user.balance = (user.balance || 0) + amt;
+    user.total_deposited = Math.max(0, +(user.total_deposited || 0) + amt);
+    return user;
+  });
 
-  // Credit user balance
-  const users = read('users');
-  const u = users.find(x => x.address?.toLowerCase() === addr);
-  if (u) {
-    u.balance = (u.balance || 0) + amt;
-    write('users', users);
-  }
+  recordTransaction('deposit', addr, amt, `充值 ${amt} USDT`);
+  adminLog('deposit', `充值 ${amt} USDT → ${addr.slice(0,10)}...`);
 
   res.json({
     code: 0,
     msg: '充值成功',
     data: {
-      deposit_id: deposit.id,
+      deposit_id: depResult.id,
       amount: amt,
       tx_hash: txHash,
       block_number: verification.blockNumber,
-      new_balance: computeBalance(u || user),
+      new_balance: computeBalance(uResult),
     }
   });
 }));
@@ -2714,11 +2818,13 @@ app.post('/api/admin/risk/circuit-break', adminWriteAuth, asyncHandler((req, res
     riskConfig.circuit_reason = reason || '管理员手动熔断';
     riskConfig.circuit_since = new Date().toISOString();
     addRiskAlert('circuit_break', 'critical', `熔断已启用: ${riskConfig.circuit_reason}`);
+    adminLog('circuit_break', `熔断已启用: ${riskConfig.circuit_reason}`);
   } else if (action === 'release') {
     riskConfig.circuit_breaker = false;
     riskConfig.circuit_reason = '';
     riskConfig.circuit_since = null;
     addRiskAlert('circuit_release', 'info', '熔断已解除');
+    adminLog('circuit_release', '熔断已解除');
   } else {
     return res.status(400).json({ code:1, msg:'action 必须是 engage 或 release' });
   }
@@ -3157,14 +3263,37 @@ process.on('unhandledRejection', (reason) => {
 function startChainEventListener() {
   if (process.env.DISABLE_CHAIN_LISTENER) return;
   console.log('[ChainListener] Starting BSC event monitor...');
-  
+
+  // Load persisted state
   var lastBlock = 0;
+  var processedTxHashes = new Set();
+  try {
+    if (require('fs').existsSync(STATE_FILE)) {
+      var state = JSON.parse(require('fs').readFileSync(STATE_FILE, 'utf8'));
+      lastBlock = state.lastBlock || 0;
+      if (state.processedTxHashes) {
+        processedTxHashes = new Set(state.processedTxHashes);
+      }
+      console.log('[ChainListener] Restored state: lastBlock=' + lastBlock + ' processed=' + processedTxHashes.size);
+    }
+  } catch(e) { /* corrupt state — start fresh */ }
+
+  function saveState() {
+    try {
+      require('fs').writeFileSync(STATE_FILE, JSON.stringify({
+        lastBlock: lastBlock,
+        processedTxHashes: Array.from(processedTxHashes),
+        updated_at: new Date().toISOString()
+      }, null, 2));
+    } catch(e) { console.error('[ChainListener] saveState error:', e.message); }
+  }
+
   setInterval(async function() {
     try {
       var block = await getProvider().getBlockNumber();
-      if (lastBlock === 0) { lastBlock = block - 10; return; }
+      if (lastBlock === 0) { lastBlock = block - 10; saveState(); return; }
       if (block <= lastBlock) return;
-      
+
       var usdt = new ethers.Contract(CONTRACT_ADDRESSES.USDT, [
         'event Transfer(address indexed from, address indexed to, uint256 value)'
       ], getProvider());
@@ -3173,6 +3302,11 @@ function startChainEventListener() {
         lastBlock + 1, block
       );
       for (var ev of events) {
+        var txKey = ev.transactionHash || (ev.blockNumber + '_' + ev.logIndex);
+        // Deduplicate by tx hash
+        if (processedTxHashes.has(txKey)) continue;
+        processedTxHashes.add(txKey);
+
         var amount = Number(ev.args.value) / 1e18;
         console.log(`[ChainListener] 💰 Deposit: ${ev.args.from.slice(0,8)} → ${amount} USDT (block ${ev.blockNumber})`);
         try {
@@ -3183,9 +3317,26 @@ function startChainEventListener() {
             user.total_deposited = Math.max(0, Number(user.total_deposited || 0) + Number(amount));
           }
           write('users', users);
-        } catch(e){}
+          // Record in deposits file
+          var deposits = read('deposits');
+          if (!deposits.some(function(d) { return d.tx_hash && d.tx_hash.toLowerCase() === ev.transactionHash.toLowerCase(); })) {
+            deposits.push({
+              id: (deposits[deposits.length - 1]?.id || 0) + 1,
+              address: ev.args.from.toLowerCase(),
+              tx_hash: ev.transactionHash,
+              amount: +amount.toFixed(4),
+              status: 'confirmed',
+              block_number: ev.blockNumber,
+              created_at: new Date().toISOString(),
+              source: 'chain_listener'
+            });
+            write('deposits', deposits);
+          }
+          recordTransaction('deposit', ev.args.from.toLowerCase(), amount, '链上自动充值');
+        } catch(e){ console.error('[ChainListener] process event error:', e.message); }
       }
       lastBlock = block;
+      saveState();
     } catch(e) { /* RPC failure — retry next cycle */ }
   }, 30000);
 }
