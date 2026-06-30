@@ -827,6 +827,7 @@
         if (res.data && res.data.odds && Array.isArray(res.data.odds)) return res.data.odds;
         if (res.code === 0 && res.data) {
             if (Array.isArray(res.data)) return res.data;
+            if (res.data.list && Array.isArray(res.data.list)) return res.data.list;
             if (res.data.odds && Array.isArray(res.data.odds)) return res.data.odds;
         }
         return fallback;
