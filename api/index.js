@@ -113,7 +113,10 @@ app.get('/api/user/balance', (req, res) => {
 });
 
 // Admin
-const ADMIN_TOKEN = '19888-admin-secret-token';
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN || '19888-admin-secret-token';
+if (!process.env.ADMIN_TOKEN) {
+  console.warn('⚠️  WARNING: ADMIN_TOKEN not set — using default. Set ADMIN_TOKEN env var in production.');
+}
 function adminAuth(req, res, next) {
   if ((req.headers.authorization||'').replace('Bearer ','') !== ADMIN_TOKEN) return res.status(401).json({ code:1 });
   next();

@@ -7,6 +7,6 @@ services:
     healthCheckPath: /api/status
     envVars:
       - key: JWT_SECRET
-        value: 19888-prod-change-me
+        generateValue: true
       - key: ADMIN_PASSWORD
-        value: 19888admin
+        generateValue: true

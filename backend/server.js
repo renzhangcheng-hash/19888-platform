@@ -160,7 +160,36 @@ app.use(helmet({
     },
   },
   crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  permissionsPolicy: {
+    directives: {
+      camera: [],
+      microphone: [],
+      geolocation: [],
+    },
+  },
 }));
+
+// ── JSON parse error middleware — return 400 instead of 500 ──
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    return res.status(400).json({ code: 1, msg: '请求体格式错误（无效JSON）' });
+  }
+  next();
+});
+
+// ── CSRF origin validation for state-changing endpoints ──
+app.use((req, res, next) => {
+  if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') return next();
+  const origin = req.headers.origin || '';
+  const referer = req.headers.referer || '';
+  if (!origin && !referer) return next();
+  const isAllowed = (str) => ALLOWED_ORIGINS.some(o => str.startsWith(o));
+  if ((origin && !isAllowed(origin)) || (referer && !isAllowed(referer) && !referer.startsWith('http://localhost:3088'))) {
+    return res.status(403).json({ code: 1, msg: '来源不被允许' });
+  }
+  next();
+});
 
 // ── CORS — allow only explicit origins ──
 // FP-V19888-4: Exact origins only. NO suffix matching (prevents subdomain takeover).
@@ -211,6 +240,13 @@ const sensitiveLimiter = rateLimit({
 
 app.use(generalLimiter);
 app.use('/api/admin', adminLimiter);
+app.use('/api/admin/login', rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 3,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { code: 2, msg: '登录尝试过于频繁，请15分钟后再试' },
+}));
 app.use('/api/deposit', sensitiveLimiter);
 app.use('/api/withdraw', sensitiveLimiter);
 app.use('/api/bet/confirm', sensitiveLimiter);
@@ -322,6 +358,18 @@ function isValidWallet(addr) {
 function isValidAmount(val) {
   const n = Number(val);
   return Number.isFinite(n) && n > 0 && n <= 10000;
+}
+
+// Check max_single_bet from risk config
+function validateBetAmount(amt) {
+  if (!isValidAmount(amt)) return '投注金额无效（1-10000 USDT）';
+  try {
+    const cfg = read('risk_config') || {};
+    if (cfg.max_single_bet && amt > cfg.max_single_bet) {
+      return `单笔投注不能超过 ${cfg.max_single_bet} USDT`;
+    }
+  } catch(e) { /* use defaults */ }
+  return null;
 }
 
 // ── Deduplication Helper ───────────────────────────
@@ -1333,6 +1381,9 @@ app.post('/api/champion-bet/place', riskCheck, asyncHandler(async (req, res) => 
   if (!isValidAmount(amount)) {
     return res.status(400).json({ code:1, msg:'投注金额必须是正数' });
   }
+  // Enforce max_single_bet from risk config
+  const betErr = validateBetAmount(amount);
+  if (betErr) return res.status(400).json({ code:1, msg: betErr });
   if (Number(amount) < 1) {
     return res.status(400).json({ code:1, msg:'最小投注 1 USDT' });
   }
@@ -1443,6 +1494,9 @@ app.post('/api/bet/confirm', riskCheck, asyncHandler(async (req, res) => {
   if (!isValidAmount(amt)) {
     return res.status(400).json({ code:1, msg:'投注金额无效' });
   }
+  // Enforce max_single_bet from risk config
+  const betErr = validateBetAmount(amt);
+  if (betErr) return res.status(400).json({ code:1, msg: betErr });
 
   const addr = wallet_address.toLowerCase().trim();
   const txHash = tx_hash.trim();
@@ -1522,6 +1576,9 @@ app.post('/api/anti-bet/place', riskCheck, asyncHandler(async (req, res) => {
   if (!isValidAmount(amount)) {
     return res.status(400).json({ code:1, msg:'投注金额必须是正数' });
   }
+  // Enforce max_single_bet from risk config
+  const betErr = validateBetAmount(amount);
+  if (betErr) return res.status(400).json({ code:1, msg: betErr });
   if (Number(amount) < 1) {
     return res.status(400).json({ code:1, msg:'最小投注 1 USDT' });
   }
@@ -1599,6 +1656,9 @@ app.post('/api/score-bet/place', riskCheck, asyncHandler(async (req, res) => {
   if (!isValidAmount(amount)) {
     return res.status(400).json({ code:1, msg:'投注金额必须是正数' });
   }
+  // Enforce max_single_bet from risk config
+  const betErr = validateBetAmount(amount);
+  if (betErr) return res.status(400).json({ code:1, msg: betErr });
   if (Number(amount) < 1) {
     return res.status(400).json({ code:1, msg:'最小投注 1 USDT' });
   }

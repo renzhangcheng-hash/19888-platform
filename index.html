@@ -490,6 +490,7 @@
         .tx-table th{background:#f5f5f5;padding:6px;text-align:center;color:#666;font-weight:500}
         .tx-table td{padding:6px;text-align:center;border-bottom:1px solid #eee;color:#333}
     </style>
+    <script src="js/vendor/purify.min.js"></script>
 </head>
 
 <body class="index">
@@ -697,10 +698,25 @@
 (function(){
     'use strict';
 
+    // XSS protection: sanitize HTML before inserting user/API data
+    function sanitize(str) {
+        if (typeof str !== 'string') return '';
+        if (typeof DOMPurify !== 'undefined' && DOMPurify.sanitize) {
+            return DOMPurify.sanitize(str, {ALLOWED_TAGS: ['b','i','em','strong','span','a','img','br'], ALLOWED_ATTR: ['href','class','src','alt','style','target']});
+        }
+        var el = document.createElement('div');
+        el.appendChild(document.createTextNode(str));
+        return el.innerHTML;
+    }
+
     // Dynamic API base resolution (FP-V19888-1 fix: avoids stale tunnel URLs)
     const DEFAULT_API = 'https://one9888-api.onrender.com/api';
     function getApiBase() {
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            return '/api';
+        }
+        // Tunnel proxies localhost:3088, use relative path so API calls go through the tunnel too
+        if (window.location.hostname.indexOf('trycloudflare.com') !== -1) {
             return '/api';
         }
         return DEFAULT_API;
@@ -1028,17 +1044,21 @@
             const homeName = m.home_team || m.home || '主队';
             const awayName = m.away_team || m.away || '客队';
             const leagueName = m.match_name || m.league || '热门赛事';
+            // Sanitize API data before rendering (XSS protection)
+            const safeHome = sanitize(homeName);
+            const safeAway = sanitize(awayName);
+            const safeLeague = sanitize(leagueName);
 
             const li = document.createElement('li');
             li.innerHTML =
                 '<a class="con">' +
                     '<div class="league-name">' +
-                        '<p class="p1 league-logo-wc26">' + leagueName + '</p>' +
+                        '<p class="p1 league-logo-wc26">' + safeLeague + '</p>' +
                     '</div>' +
                     '<div class="match-content">' +
                         '<div class="team-left">' +
-                            '<div class="team-logo"><img src="img/teams/' + homeName + '.png" onerror="this.src=\'img/none.png\'" alt="' + homeName + '"></div>' +
-                            '<div class="team-name">' + homeName + '</div>' +
+                            '<div class="team-logo"><img src="img/teams/' + safeHome + '.png" onerror="this.src=\'img/none.png\'" alt="' + safeHome + '"></div>' +
+                            '<div class="team-name">' + safeHome + '</div>' +
                         '</div>' +
                         '<div class="match-time">' +
                             (m.status === 'finished' ?
@@ -1049,8 +1069,8 @@
                             ) +
                         '</div>' +
                         '<div class="team-right">' +
-                            '<div class="team-logo"><img src="img/teams/' + awayName + '.png" onerror="this.src=\'img/none.png\'" alt="' + awayName + '"></div>' +
-                            '<div class="team-name">' + awayName + '</div>' +
+                            '<div class="team-logo"><img src="img/teams/' + safeAway + '.png" onerror="this.src=\'img/none.png\'" alt="' + safeAway + '"></div>' +
+                            '<div class="team-name">' + safeAway + '</div>' +
                         '</div>' +
                     '</div>' +
                 '</a>';
@@ -1062,8 +1082,8 @@
             btnRow.style.cssText = 'display:flex;gap:8px;padding:8px 12px;background:#fafafa;border-top:1px solid #eee';
             const mid = m.id || m.match_id || '';
             btnRow.innerHTML =
-                '<button class="anti-bet-btn" data-match-id="' + mid + '" data-home="' + homeName + '" data-away="' + awayName + '" style="flex:1;padding:6px;border:1px solid #667eea;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border-radius:4px;font-size:12px;cursor:pointer">反波胆</button>' +
-                '<button class="score-bet-btn" data-match-id="' + mid + '" data-home="' + homeName + '" data-away="' + awayName + '" style="flex:1;padding:6px;border:1px solid #2e7d32;background:linear-gradient(135deg,#2e7d32,#66bb6a);color:#fff;border-radius:4px;font-size:12px;cursor:pointer">猜比分</button>';
+                '<button class="anti-bet-btn" data-match-id="' + mid + '" data-home="' + safeHome + '" data-away="' + safeAway + '" style="flex:1;padding:6px;border:1px solid #667eea;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border-radius:4px;font-size:12px;cursor:pointer">反波胆</button>' +
+                '<button class="score-bet-btn" data-match-id="' + mid + '" data-home="' + safeHome + '" data-away="' + safeAway + '" style="flex:1;padding:6px;border:1px solid #2e7d32;background:linear-gradient(135deg,#2e7d32,#66bb6a);color:#fff;border-radius:4px;font-size:12px;cursor:pointer">猜比分</button>';
             li.appendChild(btnRow);
 
             // Bind anti-score bet
@@ -1447,10 +1467,11 @@
             const runnerOdds = parseFloat(team.runner_up_odds || 0).toFixed(2);
             const flagEmoji = team.flag || (team.name ? '' : '🏆');
             const teamName = team.team_name || team.name || '未知球队';
+            const safeTeamName = sanitize(teamName);
             const teamLogoFile = teamName;
             card.innerHTML =
-                '<div class="team-logo"><img src="img/teams/' + teamLogoFile + '.png" onerror="this.src=\'img/none.png\'" alt="' + teamName + '" style="width:60px;height:60px;object-fit:contain"></div>' +
-                '<div class="team-name">' + flagEmoji + ' ' + teamName + '</div>' +
+                '<div class="team-logo"><img src="img/teams/' + teamLogoFile + '.png" onerror="this.src=\'img/none.png\'" alt="' + safeTeamName + '" style="width:60px;height:60px;object-fit:contain"></div>' +
+                '<div class="team-name">' + flagEmoji + ' ' + safeTeamName + '</div>' +
                 '<div class="odds-group">' +
                     '<div class="odds-item">' +
                         '<span class="odds-label">冠军</span>' +
