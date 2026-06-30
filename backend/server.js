@@ -573,6 +573,25 @@ function seed() {
     console.log('✅ World Cup 2026 seed data loaded');
   }
 
+  // Data migration: normalize wallet_address → address (prevents P1-9: inconsistent field names)
+  try {
+    var users = read('users');
+    var migrated = 0;
+    users.forEach(function(u) {
+      if (u.wallet_address && !u.address) {
+        u.address = u.wallet_address.toLowerCase().trim();
+        delete u.wallet_address;
+        migrated++;
+      }
+    });
+    if (migrated > 0) {
+      write('users', users);
+      console.log(`✅ Data migration: normalized ${migrated} user(s) — wallet_address → address`);
+    }
+  } catch(e) {
+    console.error('[Seed] Migration failed:', e.message);
+  }
+
   // Always seed admin account if it doesn't exist (FP fix)
   const admins = read('admins');
   if (admins.length === 0) {
@@ -1420,6 +1439,10 @@ app.post('/api/bet/confirm', riskCheck, asyncHandler(async (req, res) => {
   if (!tx_hash || typeof tx_hash !== 'string' || tx_hash.trim().length === 0) {
     return res.status(400).json({ code:1, msg:'请提供交易哈希' });
   }
+  const amt = Number(amount || 0);
+  if (!isValidAmount(amt)) {
+    return res.status(400).json({ code:1, msg:'投注金额无效' });
+  }
 
   const addr = wallet_address.toLowerCase().trim();
   const txHash = tx_hash.trim();
@@ -1432,8 +1455,7 @@ app.post('/api/bet/confirm', riskCheck, asyncHandler(async (req, res) => {
   }
 
   // Verify the tx_hash on-chain
-  const amtNum = Number(amount || 0);
-  const amountWei = ethers.parseUnits(amtNum.toFixed(18), 18);
+  const amountWei = ethers.parseUnits(amt.toFixed(18), 18);
   const expectedTo = game_type === 'champion' ? CONTRACT_ADDRESSES.CHAMPION_BET : CONTRACT_ADDRESSES.ANTI_SCORE_BET;
   const verification = await verifyOnChainTx(txHash, addr, expectedTo, amountWei);
   if (!verification.valid) {
@@ -1442,17 +1464,22 @@ app.post('/api/bet/confirm', riskCheck, asyncHandler(async (req, res) => {
 
   console.log(`[BetConfirm] On-chain verified: bet_id=${bid} block=${verification.blockNumber} tx=${txHash.slice(0,10)}...`);
 
-  // Check user balance
-  const users = read('users');
-  const user = users.find(u => u.address?.toLowerCase() === addr);
-  if (!user) return res.status(404).json({ code:1, msg:'用户不存在' });
-  const balance = computeBalance(user);
-  const amt = Number(amount || 0);
-  if (amt > balance.available) {
-    return res.status(400).json({ code:1, msg:`余额不足，可用: ${balance.available.toFixed(2)} USDT` });
-  }
+  // STEP 1: Atomically deduct balance BEFORE creating bet record (prevents P0-1: no-risk bet)
+  const uResult = await lockedUpdate('users', (users) => {
+    const u = users.find(x => x.address?.toLowerCase() === addr);
+    if (!u) throw { code: 404, msg: '用户不存在，请先连接钱包' };
+    const balance = computeBalance(u);
+    if (amt > balance.available) {
+      throw { code: 400, msg: `余额不足，可用: ${balance.available.toFixed(2)} USDT` };
+    }
+    u.balance = Math.max(0, +(u.balance - amt).toFixed(4));
+    u.frozen_bet = (u.frozen_bet || 0) + amt;
+    return u;
+  });
+  if (uResult.error) return res.status(uResult.code || 400).json({ code:1, msg: uResult.msg || uResult.error });
 
-  // Create the bet record
+  // STEP 2: Create bet record (only after balance successfully deducted)
+  const allBets = read('bets');
   const bet = {
     id: bid,
     address: addr,
@@ -1467,18 +1494,8 @@ app.post('/api/bet/confirm', riskCheck, asyncHandler(async (req, res) => {
     bet_type: bet_type || null,
     created_at: new Date().toISOString(),
   };
-  bets.push(bet);
-  write('bets', bets);
-
-  // Deduct from available balance atomically
-  await lockedUpdate('users', (users) => {
-    const u = users.find(x => x.address?.toLowerCase() === addr);
-    if (u) {
-      u.balance = Math.max(0, +(u.balance - amt).toFixed(4));
-      u.frozen_bet = (u.frozen_bet || 0) + amt;
-    }
-    return u;
-  });
+  allBets.push(bet);
+  write('bets', allBets);
 
   recordTransaction('bet_confirm', addr, amt, `投注确认 #${bid}: ${game_type || 'champion'}`);
   adminLog('bet_confirm', `投注确认 #${bid} ${game_type} ${amt} USDT → ${addr.slice(0,10)}...`);
@@ -1518,7 +1535,12 @@ app.post('/api/anti-bet/place', riskCheck, asyncHandler(async (req, res) => {
   const match = matches.find(m => m.id === mid);
   if (!match) return res.status(404).json({ code:1, msg:'比赛不存在' });
 
-  // Atomic balance check via lockedUpdate
+  // Duplicate check BEFORE lockedUpdate (prevents P0-2: balance deducted on repeat)
+  const existingBets = read('bets');
+  const dupAnti = existingBets.find(b => (b.address || '').toLowerCase() === addr && b.match_id === mid && b.cell_score === cell && b.game_type === 'anti-score' && b.status === 'pending');
+  if (dupAnti) return res.status(400).json({ code:1, msg: '您已对该比分下过反波胆，请等待结算' });
+
+  // Atomic balance check via lockedUpdate (only if not a duplicate)
   const result = await lockedUpdate('users', (users) => {
     const user = users.find(u => u.address?.toLowerCase() === addr);
     if (!user) throw { code: 404, msg: '用户不存在，请先连接钱包' };
@@ -1550,11 +1572,8 @@ app.post('/api/anti-bet/place', riskCheck, asyncHandler(async (req, res) => {
     status: 'pending',
     created_at: new Date().toISOString(),
   };
-  // Duplicate anti-score bet check
-  const dupAnti = bets.find(b => (b.address || '').toLowerCase() === addr && b.match_id === mid && b.cell_score === cell && b.game_type === 'anti-score' && b.status === 'pending');
-  if (dupAnti) return res.status(400).json({ code:1, msg: '您已对该比分下过反波胆，请等待结算' });
   bets.push(bet);
-  write('bets', bets);  // balance already deducted in lockedUpdate above
+  write('bets', bets);
 
   recordTransaction('bet', addr, amt, `反波胆投注: ${match.home} vs ${match.away} 非${cell}`);
 
@@ -1593,7 +1612,12 @@ app.post('/api/score-bet/place', riskCheck, asyncHandler(async (req, res) => {
   const match = matches.find(m => m.id === mid);
   if (!match) return res.status(404).json({ code:1, msg:'比赛不存在' });
 
-  // Atomic balance check via lockedUpdate
+  // Duplicate check BEFORE lockedUpdate (prevents P0-3: balance deducted on repeat)
+  const existingBets = read('bets');
+  const dupScore = existingBets.find(b => (b.address || '').toLowerCase() === addr && b.match_id === mid && b.cell_score === cell && b.game_type === 'score' && b.status === 'pending');
+  if (dupScore) return res.status(400).json({ code:1, msg: '您已对该比分下过猜比分，请等待结算' });
+
+  // Atomic balance check via lockedUpdate (only if not a duplicate)
   const result = await lockedUpdate('users', (users) => {
     const user = users.find(u => u.address?.toLowerCase() === addr);
     if (!user) throw { code: 404, msg: '用户不存在，请先连接钱包' };
@@ -1626,15 +1650,10 @@ app.post('/api/score-bet/place', riskCheck, asyncHandler(async (req, res) => {
     status: 'pending',
     created_at: new Date().toISOString(),
   };
-  // Duplicate score bet check
-  const dupScore = bets.find(b => (b.address || '').toLowerCase() === addr && b.match_id === mid && b.cell_score === cell && b.game_type === 'score' && b.status === 'pending');
-  if (dupScore) return res.status(400).json({ code:1, msg: '您已对该比分下过猜比分，请等待结算' });
   bets.push(bet);
   write('bets', bets);
 
   recordTransaction('bet', addr, amt, `正波胆投注: ${match.home} vs ${match.away} 比分${cell}`);
-
-  // Balance already deducted inside lockedUpdate above
 
   res.json({ code:0, msg:'正波膽投注成功！', data: { bet_id: bet.id, potential_win: bet.potential_win } });
 }));
@@ -2048,19 +2067,19 @@ app.post('/api/admin/settle-match', adminWriteAuth, asyncHandler(async (req, res
   }
 
   const mid = Number(match_id);
-  const matches = read('matches');
-  const match = matches.find(m => m.id === mid);
-  if (!match) return res.status(404).json({ code: 1, msg: '比赛不存在' });
 
-  if (match.status === 'finished') {
-    return res.status(400).json({ code: 1, msg: '该比赛已结算' });
-  }
-
-  // Mark match as finished with result
-  match.status = 'finished';
-  match.result = result;
-  match.settled_at = new Date().toISOString();
-  write('matches', matches);
+  // Atomic match status check + update (prevents P1-8: double settlement race condition)
+  const matchResult = await lockedUpdate('matches', (matches) => {
+    const match = matches.find(m => m.id === mid);
+    if (!match) throw { code: 404, msg: '比赛不存在' };
+    if (match.status === 'finished') throw { code: 400, msg: '该比赛已结算' };
+    match.status = 'finished';
+    match.result = result;
+    match.settled_at = new Date().toISOString();
+    return match;
+  });
+  if (matchResult.error) return res.status(matchResult.code || 400).json({ code:1, msg: matchResult.msg || matchResult.error });
+  const match = matchResult;
 
   // Settle all pending bets on this match — atomic via lockedUpdate
   let settledCount = 0;
@@ -2236,7 +2255,7 @@ app.post('/api/invite/referral-tracking', asyncHandler((req, res) => {
 }));
 
 // POST /api/invite/claim-reward — claim invite rewards
-app.post('/api/invite/claim-reward', asyncHandler((req, res) => {
+app.post('/api/invite/claim-reward', asyncHandler(async (req, res) => {
   const { wallet_address } = req.body;
 
   if (!wallet_address || !isValidWallet(wallet_address)) {
@@ -2273,11 +2292,15 @@ app.post('/api/invite/claim-reward', asyncHandler((req, res) => {
     return res.status(400).json({ code: 1, msg: '暂无新的可领取奖励' });
   }
 
-  // Credit rewards to user balance
-  user.balance = (user.balance || 0) + unclaimedRewards;
-  user.last_claimed_reward = new Date().toISOString();
-
-  write('users', users);
+  // Credit rewards to user balance — atomic via lockedUpdate (prevents P1-3: double claim)
+  var claimResult = await lockedUpdate('users', (users) => {
+    var u = users.find(x => x.address?.toLowerCase() === addr);
+    if (!u) throw { code: 404, msg: '用户不存在' };
+    u.balance = (u.balance || 0) + unclaimedRewards;
+    u.last_claimed_reward = new Date().toISOString();
+    return u;
+  });
+  if (claimResult.error) return res.status(claimResult.code || 500).json({ code:1, msg: claimResult.msg || claimResult.error });
 
   res.json({
     code: 0,
@@ -2427,23 +2450,40 @@ app.post('/api/admin/withdrawals/review', adminWriteAuth, asyncHandler(async (re
   if (result === 'approve') {
     adminLog('withdraw_approve', `提现 #${withdraw_id} 已批准: ${wInfo.amount} USDT → ${wInfo.address.slice(0,10)}...`);
     recordTransaction('withdraw_approve', wInfo.address, wInfo.amount, `提现审核通过 #${withdraw_id}`);
-    await lockedUpdate('users', (users) => {
+    var balResult = await lockedUpdate('users', (users) => {
       const user = users.find(u => u.address?.toLowerCase() === wInfo.address?.toLowerCase());
       if (user) {
         user.frozen_withdraw = Math.max(0, (user.frozen_withdraw || 0) - wInfo.amount);
         user.balance = Math.max(0, +(user.balance - wInfo.amount).toFixed(4));
       }
       return null;
-    }).catch(e => console.error('[Review] balance deduction failed:', e.message));
+    });
+    if (balResult && balResult.error) {
+      console.error('[Review] balance deduction failed:', balResult.error);
+      // Rollback: revert withdrawal status back to pending_review
+      await lockedUpdate('withdrawals', (wdList) => {
+        const w = wdList.find(wd => wd.id === Number(withdraw_id));
+        if (w && w.status === 'pending') {
+          w.status = 'pending_review';
+          w.reviewed_at = null;
+          w.reviewed_by = null;
+        }
+        return null;
+      });
+      return res.status(500).json({ code:1, msg:'余额扣款失败，提现已回滚' });
+    }
   } else {
     // Reject — unfreeze balance
-    await lockedUpdate('users', (users) => {
+    var unfreezeResult = await lockedUpdate('users', (users) => {
       const user = users.find(u => u.address?.toLowerCase() === wInfo.address?.toLowerCase());
       if (user) {
         user.frozen_withdraw = Math.max(0, (user.frozen_withdraw || 0) - wInfo.amount);
       }
       return null;
-    }).catch(e => console.error('[Review] unfreeze failed:', e.message));
+    });
+    if (unfreezeResult && unfreezeResult.error) {
+      console.error('[Review] unfreeze failed:', unfreezeResult.error);
+    }
   }
 
   console.log(`[Admin] Withdraw #${withdraw_id} ${action}d`);
@@ -2856,9 +2896,10 @@ app.post('/api/admin/manual-deposit', adminWriteAuth, asyncHandler(async (req, r
   }
   const addr = wallet_address.toLowerCase().trim();
   const amt = Number(amount);
-  const deposits = read('deposits');
   const txHash = '0xadmin_manual_' + Date.now();
 
+  // Record deposit first
+  const deposits = read('deposits');
   const deposit = {
     id: (deposits[deposits.length - 1]?.id || 0) + 1,
     address: addr, tx_hash: txHash, amount: amt,
@@ -2868,11 +2909,27 @@ app.post('/api/admin/manual-deposit', adminWriteAuth, asyncHandler(async (req, r
   deposits.push(deposit);
   write('deposits', deposits);
 
-  const users = read('users');
-  const u = users.find(x => x.address?.toLowerCase() === addr);
-  if (u) { u.balance = (u.balance||0) + amt; u.total_deposited = (u.total_deposited||0) + amt; }
-  else { users.push({ address: addr, balance: amt, total_deposited: amt, total_wagered: 0, total_won: 0 }); }
-  write('users', users);
+  // Atomic user balance update (prevents P1-2: concurrent deposit race)
+  var mResult = await lockedUpdate('users', (users) => {
+    var u = users.find(x => x.address?.toLowerCase() === addr);
+    if (u) {
+      u.balance = (u.balance||0) + amt;
+      u.total_deposited = (u.total_deposited||0) + amt;
+    } else {
+      users.push({
+        address: addr, balance: amt, total_deposited: amt,
+        total_wagered: 0, total_won: 0,
+        frozen_bet: 0, frozen_ai: 0, frozen_withdraw: 0,
+        created_at: new Date().toISOString()
+      });
+    }
+    return null;
+  });
+  if (mResult && mResult.error) {
+    return res.status(500).json({ code:1, msg:'余额更新失败' });
+  }
+
+  adminLog('admin_deposit', `管理员直充 ${amt} USDT → ${addr.slice(0,10)}...`);
 
   console.log(`[Admin] Manual deposit: ${addr} +${amt} USDT`);
   res.json({ code: 0, msg: '手动充值成功', data: { deposit_id: deposit.id, amount: amt } });
@@ -3310,13 +3367,21 @@ function startChainEventListener() {
         var amount = Number(ev.args.value) / 1e18;
         console.log(`[ChainListener] 💰 Deposit: ${ev.args.from.slice(0,8)} → ${amount} USDT (block ${ev.blockNumber})`);
         try {
-          var users = read('users');
-          var user = users.find(function(u) { return (u.address || '').toLowerCase() === ev.args.from.toLowerCase(); });
-          if (user) {
-            user.balance = Math.max(0, Number(user.balance || 0) + Number(amount));
-            user.total_deposited = Math.max(0, Number(user.total_deposited || 0) + Number(amount));
+          // Use lockedUpdate for atomic balance update (prevents P0-4: concurrent deposit loss)
+          var depositAddr = ev.args.from.toLowerCase();
+          var depositAmt = +amount.toFixed(4);
+          var dResult = await lockedUpdate('users', function(users) {
+            var u = users.find(function(x) { return (x.address || '').toLowerCase() === depositAddr; });
+            if (u) {
+              u.balance = Math.max(0, Number(u.balance || 0) + depositAmt);
+              u.total_deposited = Math.max(0, Number(u.total_deposited || 0) + depositAmt);
+            }
+            return u;
+          });
+          if (dResult && dResult.error) {
+            console.error('[ChainListener] lockedUpdate failed:', dResult.error);
+            continue;
           }
-          write('users', users);
           // Record in deposits file
           var deposits = read('deposits');
           if (!deposits.some(function(d) { return d.tx_hash && d.tx_hash.toLowerCase() === ev.transactionHash.toLowerCase(); })) {
